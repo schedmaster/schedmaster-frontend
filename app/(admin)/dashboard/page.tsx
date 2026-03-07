@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '../../components/AdminSidebar';
-import styles from './page.module.css';
 
 export default function DashboardPage() {
   const router = useRouter();
