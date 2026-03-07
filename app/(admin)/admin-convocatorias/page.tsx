@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, CalendarDays, Pencil, Power, PowerOff, X, Save } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 
@@ -15,22 +15,193 @@ interface Convocatoria {
 
 type FormState = Omit<Convocatoria, 'id'>;
 
-export default function AdminConvocatoriasPage() {
-  const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([
-    { id: 1, periodo: 'Enero - Abril 2026', fechaInicio: '2026-01-05', fechaFin: '2026-01-20', fechaIngreso: '2026-01-27', estado: 'activada' },
-  ]);
+/* =========================
+   MODAL (FUERA DEL COMPONENTE)
+==========================*/
 
-  const [modalCrear,  setModalCrear]  = useState(false);
+interface ModalProps {
+  onClose: () => void;
+  title: string;
+  subtitle: string;
+  form: FormState;
+  field: any;
+  guardarConvocatoria: () => void;
+}
+
+const ModalContent = ({
+  onClose,
+  title,
+  subtitle,
+  field,
+  guardarConvocatoria
+}: ModalProps) => (
+
+  <div className="modal-box modal-box--wide">
+
+    <div className="modal-header">
+      <div>
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+
+      <button
+        type="button"
+        className="btn-close"
+        onClick={onClose}
+      >
+        <X />
+      </button>
+    </div>
+
+    <div className="modal-body">
+
+      <div className="form-group">
+        <label><CalendarDays /> Periodo</label>
+        <input
+          className="form-select"
+          type="text"
+          placeholder="Ej. Mayo – Agosto 2026"
+          {...field('periodo')}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Fecha inicio inscripciones</label>
+        <input
+          className="form-select"
+          type="date"
+          {...field('fechaInicio')}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Fecha fin inscripciones</label>
+        <input
+          className="form-select"
+          type="date"
+          {...field('fechaFin')}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Fecha ingreso oficial</label>
+        <input
+          className="form-select"
+          type="date"
+          {...field('fechaIngreso')}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Estado</label>
+        <select className="form-select" {...field('estado')}>
+          <option value="activada">Activada</option>
+          <option value="desactivada">Desactivada</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div className="modal-footer">
+
+      <button
+        type="button"
+        className="btn btn--outline"
+        onClick={onClose}
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        className="btn btn--blue"
+        onClick={guardarConvocatoria}
+      >
+        <Save /> Guardar
+      </button>
+
+    </div>
+
+  </div>
+);
+
+/* =========================
+   COMPONENTE PRINCIPAL
+==========================*/
+
+export default function AdminConvocatoriasPage() {
+
+  const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
+  const [modalCrear, setModalCrear] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
 
-  const emptyForm: FormState = { periodo: '', fechaInicio: '', fechaFin: '', fechaIngreso: '', estado: 'activada' };
+  const emptyForm: FormState = {
+    periodo: '',
+    fechaInicio: '',
+    fechaFin: '',
+    fechaIngreso: '',
+    estado: 'activada'
+  };
+
   const [form, setForm] = useState<FormState>(emptyForm);
 
-  const openCrear  = () => { setForm(emptyForm); setModalCrear(true);  document.body.style.overflow = 'hidden'; };
-  const closeCrear = () => { setModalCrear(false);  document.body.style.overflow = ''; };
+  /* =========================
+     CARGAR CONVOCATORIAS
+  ==========================*/
 
-  const openEditar  = (c: Convocatoria) => { setForm(c); setModalEditar(true);  document.body.style.overflow = 'hidden'; };
-  const closeEditar = () => { setModalEditar(false); document.body.style.overflow = ''; };
+  useEffect(() => {
+    cargarConvocatorias();
+  }, []);
+
+  const cargarConvocatorias = async () => {
+
+    try {
+
+      const res = await fetch('http://localhost:3001/api/admin-convocatoria');
+      const data = await res.json();
+
+      const formateadas = data.map((p: any) => ({
+        id: p.id_periodo,
+        periodo: p.nombre_periodo,
+        fechaInicio: p.fecha_inicio_inscripcion.split('T')[0],
+        fechaFin: p.fecha_fin_inscripcion.split('T')[0],
+        fechaIngreso: p.fecha_inicio_actividades.split('T')[0],
+        estado: p.estado === 'activo' ? 'activada' : 'desactivada'
+      }));
+
+      setConvocatorias(formateadas);
+
+    } catch (error) {
+      console.error("Error cargando convocatorias", error);
+    }
+
+  };
+
+  /* =========================
+     MODALES
+  ==========================*/
+
+  const openCrear = () => {
+    setForm(emptyForm);
+    setModalCrear(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeCrear = () => {
+    setModalCrear(false);
+    document.body.style.overflow = '';
+  };
+
+  const openEditar = (c: Convocatoria) => {
+    setForm(c);
+    setModalEditar(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeEditar = () => {
+    setModalEditar(false);
+    document.body.style.overflow = '';
+  };
 
   const field = (key: keyof FormState) => ({
     value: form[key] as string,
@@ -38,74 +209,80 @@ export default function AdminConvocatoriasPage() {
       setForm({ ...form, [key]: e.target.value }),
   });
 
-  /* ── Contenido del modal (compartido crear/editar) ── */
-  const ModalContent = ({ onClose, title, subtitle }: { onClose: () => void; title: string; subtitle: string }) => (
-    <div className="modal-box modal-box--wide">
-      {/* modal-header reemplaza modal-admin-header */}
-      <div className="modal-header">
-        <div>
-          <h3>{title}</h3>
-          <p>{subtitle}</p>
-        </div>
-        <button type="button" className="btn-close" onClick={onClose} title="Cerrar" aria-label="Cerrar"><X /></button>
-      </div>
+  /* =========================
+     GUARDAR CONVOCATORIA
+  ==========================*/
 
-      {/* modal-body reemplaza modal-admin-body */}
-      <div className="modal-body">
-        <div className="form-group">
-          <label><CalendarDays /> Periodo</label>
-          <input className="form-select" type="text" placeholder="Ej. Mayo – Agosto 2026" {...field('periodo')} />
-        </div>
-        <div className="form-group">
-          <label>Fecha inicio inscripciones</label>
-          <input className="form-select" type="date" {...field('fechaInicio')} />
-        </div>
-        <div className="form-group">
-          <label>Fecha fin inscripciones</label>
-          <input className="form-select" type="date" {...field('fechaFin')} />
-        </div>
-        <div className="form-group">
-          <label>Fecha ingreso oficial</label>
-          <input className="form-select" type="date" {...field('fechaIngreso')} />
-        </div>
-        <div className="form-group">
-          <label>Estado</label>
-          <select className="form-select" {...field('estado')}>
-            <option value="activada">Activada</option>
-            <option value="desactivada">Desactivada</option>
-          </select>
-        </div>
-      </div>
+  const guardarConvocatoria = async () => {
 
-      {/* modal-footer reemplaza modal-admin-footer */}
-      <div className="modal-footer">
-        <button className="btn btn--outline" onClick={onClose}>Cancelar</button>
-        <button className="btn btn--blue"><Save /> Guardar</button>
-      </div>
-    </div>
-  );
+    try {
+
+      const res = await fetch('http://localhost:3001/api/admin-convocatoria', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nombre_periodo: form.periodo,
+          fecha_inicio_inscripcion: form.fechaInicio,
+          fecha_fin_inscripcion: form.fechaFin,
+          fecha_inicio_actividades: form.fechaIngreso,
+          fecha_fin_periodo: form.fechaIngreso,
+          estado: form.estado === 'activada' ? 'activo' : 'inactivo',
+          id_entrenador: 1
+        })
+      });
+
+      if (!res.ok) throw new Error("Error al guardar");
+
+      closeCrear();
+      cargarConvocatorias();
+
+    } catch (error) {
+
+      console.error(error);
+      alert("Error al guardar convocatoria");
+
+    }
+
+  };
+
+  /* =========================
+     VISTA
+  ==========================*/
 
   return (
     <>
       <div className="app">
+
         <AdminSidebar onLogout={() => console.log('logout')} />
 
         <main className="main">
+
           <div className="main-inner">
 
             <header className="section-header">
+
               <div>
                 <h2>Convocatorias</h2>
                 <p>Administra los periodos de inscripción disponibles</p>
               </div>
-              <button className="btn btn--yellow" onClick={openCrear}>
+
+              <button
+                className="btn btn--yellow"
+                onClick={openCrear}
+              >
                 <Plus /> Nueva convocatoria
               </button>
+
             </header>
 
             <section className="table-area">
+
               <div className="table-scroll">
+
                 <table>
+
                   <thead>
                     <tr>
                       <th>Periodo</th>
@@ -116,48 +293,90 @@ export default function AdminConvocatoriasPage() {
                       <th>Acciones</th>
                     </tr>
                   </thead>
+
                   <tbody>
+
                     {convocatorias.map(c => (
+
                       <tr key={c.id}>
+
                         <td>{c.periodo}</td>
                         <td className="muted">{c.fechaInicio}</td>
                         <td className="muted">{c.fechaFin}</td>
                         <td className="muted">{c.fechaIngreso}</td>
+
                         <td>
                           <span className={`chip chip--${c.estado}`}>
-                            {c.estado === 'activada' ? <Power size={14} /> : <PowerOff size={14} />}
+                            {c.estado === 'activada'
+                              ? <Power size={14} />
+                              : <PowerOff size={14} />}
                             {c.estado}
                           </span>
                         </td>
+
                         <td>
                           <div className="row-actions">
-                            <button className="btn-icon btn-icon--cyan" onClick={() => openEditar(c)} aria-label="Editar">
+
+                            <button
+                              className="btn-icon btn-icon--cyan"
+                              onClick={() => openEditar(c)}
+                            >
                               <Pencil size={14} />
                             </button>
+
                           </div>
                         </td>
+
                       </tr>
+
                     ))}
+
                   </tbody>
+
                 </table>
+
               </div>
+
             </section>
 
           </div>
+
         </main>
+
       </div>
 
-      {/* Modales — usan .modal-overlay en vez de .modal-admin */}
       {modalCrear && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeCrear()}>
-          <ModalContent onClose={closeCrear} title="Nueva convocatoria" subtitle="Configura un nuevo periodo de inscripciones" />
+        <div
+          className="modal-overlay"
+          onClick={e => e.target === e.currentTarget && closeCrear()}
+        >
+          <ModalContent
+            onClose={closeCrear}
+            title="Nueva convocatoria"
+            subtitle="Configura un nuevo periodo de inscripciones"
+            form={form}
+            field={field}
+            guardarConvocatoria={guardarConvocatoria}
+          />
         </div>
       )}
+
       {modalEditar && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeEditar()}>
-          <ModalContent onClose={closeEditar} title="Editar convocatoria" subtitle="Actualiza la información del periodo" />
+        <div
+          className="modal-overlay"
+          onClick={e => e.target === e.currentTarget && closeEditar()}
+        >
+          <ModalContent
+            onClose={closeEditar}
+            title="Editar convocatoria"
+            subtitle="Actualiza la información del periodo"
+            form={form}
+            field={field}
+            guardarConvocatoria={guardarConvocatoria}
+          />
         </div>
       )}
+
     </>
   );
 }
