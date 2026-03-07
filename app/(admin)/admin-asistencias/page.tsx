@@ -98,9 +98,16 @@ export default function AdminAsistenciasPage() {
             <select className="select" value={filterCarrera} onChange={e => setFilterCarrera(e.target.value)} aria-label="Filtrar por carrera">
               <option value="">Todas las carreras</option>
             </select>
-            <button className="btn btn--outline" type="button" onClick={() => console.log('Refrescar:', fecha)}>
+            <button className="btn btn--blue" type="button" onClick={() => console.log('Refrescar:', fecha)}>
               <RefreshCw /> Actualizar
             </button>
+            <button 
+  className="btn btn--outline"
+  type="button"
+  onClick={() => window.location.href='/admin-asistencias/historico'}
+>
+  Histórico
+</button>
           </div>
 
           {/* Stats */}
