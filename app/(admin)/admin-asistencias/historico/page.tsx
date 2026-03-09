@@ -145,20 +145,12 @@ export default function HistoricoAsistenciasPage(){
 
           {/* SUBIR ARCHIVO */}
 
-          <div
-            className="filter-bar"
-            style={{
-              display:"flex",
-              gap:"12px",
-              alignItems:"center",
-              flexWrap:"nowrap"
-            }}
-          >
+          <div className="filter-bar upload-controls">
 
             <input
               type="file"
               id="archivoHistorico"
-              style={{display:'none'}}
+              className="hidden-input"
               onChange={(e)=>{
                 const file = e.target.files?.[0] || null
                 setArchivo(file)
@@ -171,8 +163,8 @@ export default function HistoricoAsistenciasPage(){
 
             <input
               type="date"
-              className="form-select"
-              style={{width:"180px"}}
+              className="form-select date-input"
+              title="Selecciona la fecha de la lista"
               value={fecha}
               onChange={(e)=>setFecha(e.target.value)}
             />
