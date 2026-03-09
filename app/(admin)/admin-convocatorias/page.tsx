@@ -13,7 +13,8 @@ interface Convocatoria {
   estado: 'activada' | 'desactivada';
 }
 
-type FormState = Omit<Convocatoria, 'id'>;
+// Único cambio aquí: Igualamos FormState a Convocatoria para que incluya el 'id'
+type FormState = Convocatoria;
 
 /* =========================
    MODAL (FUERA DEL COMPONENTE)
@@ -32,6 +33,7 @@ const ModalContent = ({
   onClose,
   title,
   subtitle,
+  form,
   field,
   guardarConvocatoria
 }: ModalProps) => (
@@ -135,7 +137,9 @@ export default function AdminConvocatoriasPage() {
   const [modalCrear, setModalCrear] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
 
+  // Le agregamos el id: 0 por defecto
   const emptyForm: FormState = {
+    id: 0, 
     periodo: '',
     fechaInicio: '',
     fechaFin: '',
@@ -157,11 +161,12 @@ export default function AdminConvocatoriasPage() {
 
     try {
 
-      const res = await fetch('http://localhost:3001/api/admin-convocatoria');
+      // Cambiamos la URL por la variable de entorno
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`);
       const data = await res.json();
 
       const formateadas = data.map((p: any) => ({
-        id: p.id_periodo,
+        id: p.id_periodo, // Aseguramos que el ID se guarde
         periodo: p.nombre_periodo,
         fechaInicio: p.fecha_inicio_inscripcion.split('T')[0],
         fechaFin: p.fecha_fin_inscripcion.split('T')[0],
@@ -217,8 +222,14 @@ export default function AdminConvocatoriasPage() {
 
     try {
 
-      const res = await fetch('http://localhost:3001/api/admin-convocatoria', {
-        method: 'POST',
+      // Lógica para saber si es PUT (editar) o POST (crear nuevo)
+      const esEdicion = form.id > 0;
+      const url = esEdicion 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria/${form.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`;
+
+      const res = await fetch(url, {
+        method: esEdicion ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -236,6 +247,7 @@ export default function AdminConvocatoriasPage() {
       if (!res.ok) throw new Error("Error al guardar");
 
       closeCrear();
+      closeEditar(); // Agregado para que también cierre el modal de edición
       cargarConvocatorias();
 
     } catch (error) {
