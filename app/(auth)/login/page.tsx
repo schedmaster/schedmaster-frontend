@@ -11,17 +11,80 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // 1. Solicitar la clave pública RSA al servidor (genera un par nuevo por sesión)
+      const keyRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/public-key`);
+      const { keyId, publicKey: publicKeyPem } = await keyRes.json();
+
+      // 2. Importar la clave pública PEM al Web Crypto API del navegador
+      const pemBody = publicKeyPem
+        .replace('-----BEGIN PUBLIC KEY-----', '')
+        .replace('-----END PUBLIC KEY-----', '')
+        .replace(/\n/g, '');
+      const pemBuffer = Uint8Array.from(atob(pemBody), (c: string) => c.charCodeAt(0));
+      const rsaPublicKey = await crypto.subtle.importKey(
+        'spki',
+        pemBuffer,
+        { name: 'RSA-OAEP', hash: 'SHA-256' },
+        false,
+        ['encrypt']
+      );
+
+      // 3. Generar una clave AES-256 aleatoria (única por sesión)
+      const aesKey = await crypto.subtle.generateKey(
+        { name: 'AES-CBC', length: 256 },
+        true, // exportable para cifrarla con RSA
+        ['encrypt']
+      );
+
+      // 4. Generar IV aleatorio de 16 bytes (viaja junto al mensaje, no se reutiliza)
+      const iv = crypto.getRandomValues(new Uint8Array(16));
+
+      // 5. Cifrar las credenciales con AES-256-CBC
+      const plaintext = JSON.stringify({ correo, password });
+      const encryptedDataBuffer = await crypto.subtle.encrypt(
+        { name: 'AES-CBC', iv },
+        aesKey,
+        new TextEncoder().encode(plaintext)
+      );
+      // 6. Exportar la clave AES raw y cifrarla con la clave pública RSA-OAEP
+      const rawAesKey = await crypto.subtle.exportKey('raw', aesKey);
+      const encryptedKeyBuffer = await crypto.subtle.encrypt(
+        { name: 'RSA-OAEP' },
+        rsaPublicKey,
+        rawAesKey
+      );
+      // 7. Convertir buffers a Base64 para armar el payload JSON
+      const toBase64 = (buf: ArrayBuffer) =>
+        btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+      const payload = {
+        keyId,
+        encryptedKey:  toBase64(encryptedKeyBuffer),
+        iv:            btoa(String.fromCharCode(...iv)),
+        encryptedData: toBase64(encryptedDataBuffer),
+      };
+      // 8. Enviar — las credenciales nunca viajan en texto plano
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo, password }),
+        body: JSON.stringify(payload),
       });
+
       const data = await res.json();
+
       if (res.ok) {
         if (data.status === 'pending')  { window.location.href = '/pending';   return; }
-        if (data.status === 'approved') { window.location.href = '/dashboard'; return; }
+        if (data.status === 'approved') {
+          // Guardar sesión en localStorage para que el dashboard la detecte
+          localStorage.setItem('token', JSON.stringify(data.usuario));
+          window.location.href = '/dashboard';
+          return;
+        }
       } else { alert(data.message); }
-    } catch { alert('Error de conexión'); }
+    } catch (err) {
+      console.error('[Seguridad] Error en el flujo de login cifrado:', err);
+      alert('Error de conexión');
+    }
   };
 
   return (

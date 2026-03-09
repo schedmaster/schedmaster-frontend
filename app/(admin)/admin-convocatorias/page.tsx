@@ -50,6 +50,7 @@ const ModalContent = ({
         type="button"
         className="btn-close"
         onClick={onClose}
+        title="Cerrar"
       >
         <X />
       </button>
@@ -330,8 +331,10 @@ export default function AdminConvocatoriasPage() {
                           <div className="row-actions">
 
                             <button
+                              type="button"
                               className="btn-icon btn-icon--cyan"
                               onClick={() => openEditar(c)}
+                              title="Editar convocatoria"
                             >
                               <Pencil size={14} />
                             </button>
