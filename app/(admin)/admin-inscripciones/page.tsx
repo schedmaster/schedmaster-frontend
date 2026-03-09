@@ -75,7 +75,7 @@ export default function AdminInscripcionesPage() {
   // 🔹 Cargar inscripciones reales
   const fetchInscripciones = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/inscripciones/pendientes');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/pendientes`);
       if (res.ok) {
         const data = await res.json();
         setInscripciones(data);
@@ -107,7 +107,7 @@ export default function AdminInscripcionesPage() {
   // 🔹 Aceptar
   const handleAccept = async (id: number) => {
     try {
-      const res = await fetch('http://localhost:3001/api/inscripciones/aceptar', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/aceptar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
@@ -128,7 +128,7 @@ export default function AdminInscripcionesPage() {
     if (!window.confirm('¿Rechazar inscripción?')) return;
 
     try {
-      const res = await fetch('http://localhost:3001/api/inscripciones/rechazar', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/rechazar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),

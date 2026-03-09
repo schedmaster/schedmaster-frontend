@@ -34,8 +34,7 @@ export default function HistoricoAsistenciasPage(){
   const cargarHistorico = async () => {
 
     try{
-
-      const res = await fetch("http://localhost:3001/api/admin-asistencia/historico")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`);
 
       const data = await res.json()
 
@@ -80,8 +79,7 @@ export default function HistoricoAsistenciasPage(){
 
     try{
 
-      const res = await fetch(
-        "http://localhost:3001/api/admin-asistencia/upload-and-hash",
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin-asistencia/upload-and-hash`,
         {
           method:"POST",
           body:formData
@@ -267,7 +265,7 @@ export default function HistoricoAsistenciasPage(){
                               title="Ver archivo"
                               onClick={()=>{
                                 window.open(
-                                  `http://localhost:3001/${a.ruta_archivo}`,
+                                  `${process.env.NEXT_PUBLIC_API_URL}/${a.ruta_archivo}`,
                                   "_blank"
                                 )
                               }}

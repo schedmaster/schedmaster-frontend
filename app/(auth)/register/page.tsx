@@ -21,7 +21,7 @@ export default function RegisterPage() {
   const [success,     setSuccess]     = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/horarios')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios`)
       .then(r => r.json())
       .then(d => setHorarios(Array.isArray(d) ? d : d?.data || []))
       .catch(() => setHorarios([]));
@@ -29,7 +29,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!form.horarioId) return setDiasHorario([]);
-    fetch(`http://localhost:3001/api/horarios/${form.horarioId}/dias`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios/${form.horarioId}/dias`)
       .then(r => r.json()).then(setDiasHorario).catch(() => setDiasHorario([]));
   }, [form.horarioId]);
 
@@ -62,7 +62,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) return alert('Las contraseñas no coinciden');
-    const res = await fetch('http://localhost:3001/api/auth/register', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
     });
     if (!res.ok) return alert('Error al registrar');
