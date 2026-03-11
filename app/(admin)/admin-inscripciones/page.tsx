@@ -2,88 +2,63 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Users, Download, RefreshCw, Search, XCircle,
-  Check, X, Clock, AlertTriangle, GraduationCap, Briefcase,
-  Dumbbell, Stethoscope, Shield, Flame, Sparkles,
-  CalendarDays
+  Users, RefreshCw, Check, X, Clock, AlertTriangle, 
+  GraduationCap, Briefcase, Dumbbell, Stethoscope, 
+  Shield, CalendarDays, Mail
 } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 
-const generarHorarios = (inicio: number, fin: number, intervalo = 30) => {
-  const h: string[] = [];
-  for (let hora = inicio; hora <= fin; hora++) {
-    for (let min = 0; min < 60; min += intervalo) {
-      if (hora === fin && min > 0) break;
-      h.push(`${hora.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`);
-    }
-  }
-  return h;
+const ROL_CONFIG: Record<number, { icon: any, nombre: string, color: string }> = {
+  2: { icon: GraduationCap, nombre: 'Estudiante', color: 'var(--blue-light)' },
+  3: { icon: Briefcase,     nombre: 'Docente',     color: 'var(--purple-light)' },
+  1: { icon: Shield,        nombre: 'Admin',       color: 'var(--red-light)' },
 };
-
-const HORARIOS_INICIO = generarHorarios(6, 21);
-const HORARIOS_FIN    = generarHorarios(6, 22).slice(1);
-const DIAS_SEMANA     = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
-
-const CAPACIDADES: Record<string, number> = {
-  '06:00':25,'06:30':25,'07:00':28,'07:30':28,'08:00':30,'08:30':30,
-  '09:00':30,'09:30':30,'10:00':30,'10:30':28,'11:00':28,'11:30':28,
-  '12:00':25,'12:30':25,'13:00':25,'13:30':25,'14:00':28,'14:30':28,
-  '15:00':30,'15:30':30,'16:00':32,'16:30':32,'17:00':32,'17:30':32,
-  '18:00':35,'18:30':35,'19:00':35,'19:30':30,'20:00':30,'20:30':25,'21:00':25,
-};
-
-const ROL_CONFIG = {
-  estudiante:             { icon: GraduationCap, nombre: 'Estudiante'     },
-  docente:                { icon: Briefcase,     nombre: 'Docente'        },
-  entrenador:             { icon: Dumbbell,      nombre: 'Entrenador'     },
-  nutriologa:             { icon: Stethoscope,   nombre: 'Nutrióloga'     },
-  administrador_general:  { icon: Shield,        nombre: 'Admin general'  },
-} as const;
-
-const DIVISIONES = [
-  { value: 'dtai', label: 'DTAI' }, { value: 'dmec', label: 'DMEC' },
-  { value: 'dind', label: 'DIND' }, { value: 'dea',  label: 'DEA'  }, { value: 'dae', label: 'DAE' },
-];
-const ROLES = [
-  { value: 'estudiante', label: 'Estudiante' },
-  { value: 'docente', label: 'Docente' },
-  { value: 'entrenador', label: 'Entrenador' },
-  { value: 'nutriologa', label: 'Nutrióloga' },
-  { value: 'administrador_general', label: 'Administrador general' },
-];
 
 interface Inscripcion {
-  id: number; nombre: string; apellido_paterno: string; apellido_materno: string;
-  correo: string; rol: string; division: string; carrera: string;
-  cuatrimestre: string; prioridad: 'alta' | 'baja'; registro: string;
+  id_inscripcion?: number;
+  id?: number; 
+  prioridad?: string;
+  fecha_inscripcion?: string;
+  estado?: string;
+  nombre?: string; 
+  apellido_paterno?: string; 
+  apellido_materno?: string; 
+  correo?: string; 
+  rol?: string; 
+  usuario?: {
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+    correo: string;
+    id_rol: number;
+  };
+  horario?: {
+    hora_inicio: string;
+    hora_fin: string;
+  };
+  diasSeleccionados?: { // 👈 CORREGIDO EN EL FRONTEND TAMBIÉN
+    dia: {
+      nombre: string;
+    }
+  }[];
 }
 
-interface ModalData { userId: number; userName: string; userEmail: string; }
-
 export default function AdminInscripcionesPage() {
-
   const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
-  const [filteredInscripciones, setFilteredInscripciones] = useState<Inscripcion[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterRol, setFilterRol] = useState('');
-  const [filterPrioridad, setFilterPrioridad] = useState('');
-  const [filterDivision, setFilterDivision] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [modalActive, setModalActive] = useState(false);
-  const [modalData, setModalData] = useState<ModalData | null>(null);
-
-  // 🔹 Cargar inscripciones reales
   const fetchInscripciones = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/pendientes`);
       if (res.ok) {
         const data = await res.json();
         setInscripciones(data);
-      } else {
-        console.error('Error cargando:', res.status);
       }
     } catch (err) {
       console.error('Error conexión:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,136 +66,146 @@ export default function AdminInscripcionesPage() {
     fetchInscripciones();
   }, []);
 
-  // 🔹 Filtros
-  useEffect(() => {
-    let f = [...inscripciones];
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      f = f.filter(i => `${i.id} ${i.nombre} ${i.apellido_paterno} ${i.apellido_materno} ${i.correo}`.toLowerCase().includes(q));
-    }
-    if (filterRol)       f = f.filter(i => i.rol === filterRol);
-    if (filterPrioridad) f = f.filter(i => i.prioridad === filterPrioridad);
-    if (filterDivision)  f = f.filter(i => i.division.toLowerCase() === filterDivision.toLowerCase());
-    setFilteredInscripciones(f);
-  }, [searchQuery, filterRol, filterPrioridad, filterDivision, inscripciones]);
+  const handleStatusChange = async (id: number, nuevoEstado: string) => {
+    const confirmacion = nuevoEstado === 'aprobado' ? '¿Aprobar esta inscripción?' : '¿Rechazar esta inscripción?';
+    if (!window.confirm(confirmacion)) return;
 
-  // 🔹 Aceptar
-  const handleAccept = async (id: number) => {
+    const rutaEndpoint = nuevoEstado === 'aprobado' ? '/api/inscripciones/aceptar' : '/api/inscripciones/rechazar';
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/aceptar`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${rutaEndpoint}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id_inscripcion: id }), 
       });
 
       if (res.ok) {
-        setInscripciones(prev => prev.filter(i => i.id !== id));
+        setInscripciones(prev => prev.filter(i => (i.id_inscripcion || i.id) !== id));
       } else {
-        alert('Error al aceptar');
+        alert('Error al actualizar estado en el servidor');
       }
     } catch (err) {
       alert('Error de conexión');
     }
   };
 
-  // 🔹 Rechazar
-  const handleReject = async (id: number) => {
-    if (!window.confirm('¿Rechazar inscripción?')) return;
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/rechazar`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-
-      if (res.ok) {
-        setInscripciones(prev => prev.filter(i => i.id !== id));
-      } else {
-        alert('Error al rechazar');
-      }
-    } catch (err) {
-      alert('Error de conexión');
-    }
+  const formatDias = (dias: any[] | undefined) => {
+    if (!dias || dias.length === 0) return 'No seleccionados';
+    return dias.map(d => d?.dia?.nombre?.substring(0, 3)).join(', ');
   };
 
-  const getRolInfo = (rol: string) => {
-    const cfg = ROL_CONFIG[rol as keyof typeof ROL_CONFIG];
-    if (cfg) { const I = cfg.icon; return { icon: <I size={14} />, nombre: cfg.nombre }; }
-    return { icon: <Users size={14} />, nombre: rol };
-  };
-
-  const countPendientes = filteredInscripciones.length;
-  const countAlta = filteredInscripciones.filter(i => i.prioridad === 'alta').length;
-
-  const openModal = (userId: number, userName: string, userEmail: string) => {
-    setModalData({ userId, userName, userEmail });
-    setModalActive(true);
-  };
-
-  const closeModal = () => {
-    setModalActive(false);
-    setModalData(null);
+  const formatHora = (hora: string | undefined) => {
+    return hora ? hora.substring(0, 5) : '--:--';
   };
 
   return (
     <div className="app">
-      <AdminSidebar onLogout={() => console.log('logout')} />
+      <AdminSidebar />
 
       <main className="main">
         <div className="main-inner">
-
           <header className="section-header">
             <div>
-              <h2>Inscripciones de usuarios</h2>
-              <p>Valida registros pendientes.</p>
+              <h2>Validación de Inscripciones</h2>
+              <p>Revisa y aprueba las solicitudes de acceso al gimnasio.</p>
             </div>
             <div className="row-actions">
-              <div className="chip chip--pendiente"><Users size={14}/> {countPendientes}</div>
-              <div className="chip chip--alta"><AlertTriangle size={14}/> {countAlta}</div>
-
-              <button className="btn btn--blue" onClick={fetchInscripciones}>
-                <RefreshCw/> Actualizar
+              <div className="chip chip--pendiente">
+                <Clock size={14}/> {inscripciones.length} Solicitudes
+              </div>
+              <button className={`btn btn--blue ${loading ? 'loading' : ''}`} onClick={fetchInscripciones}>
+                <RefreshCw size={16} /> {loading ? 'Cargando...' : 'Actualizar'}
               </button>
             </div>
           </header>
 
-          {/* tabla */}
           <section className="table-area">
             <div className="table-scroll">
-              <table>
+              <table className="modern-table">
                 <thead>
                   <tr>
-                    <th>ID</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Prioridad</th><th>Acciones</th>
+                    <th>Usuario</th>
+                    <th>Contacto</th>
+                    <th>Rol</th>
+                    <th>Horario Solicitado</th>
+                    <th>Días</th>
+                    <th>Prioridad</th>
+                    <th className="text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInscripciones.map(insc => (
-                    <tr key={insc.id}>
-                      <td>{insc.id}</td>
-                      <td>{insc.nombre}</td>
-                      <td>{insc.correo}</td>
-                      <td>{getRolInfo(insc.rol).nombre}</td>
-                      <td>{insc.prioridad}</td>
-                      <td>
-                        <button className="btn-mini btn-mini--green" onClick={() => handleAccept(insc.id)}>
-                          <Check size={12}/> Aceptar
-                        </button>
-                        <button className="btn-mini btn-mini--red" onClick={() => handleReject(insc.id)}>
-                          <X size={12}/> Rechazar
-                        </button>
-                        <button className="btn-mini btn-mini--yellow"
-                          onClick={() => openModal(insc.id, insc.nombre, insc.correo)}>
-                          <Clock size={12}/> Contrapropuesta
-                        </button>
+                  {inscripciones.length > 0 ? (
+                    inscripciones.map((insc, index) => (
+                      <tr key={insc.id_inscripcion || insc.id || index}>
+                        <td>
+                          <div className="user-cell">
+                            <span className="user-name">
+                              {insc.usuario?.nombre || insc.nombre || 'Desconocido'} {insc.usuario?.apellido_paterno || insc.apellido_paterno || ''}
+                            </span>
+                            <span className="user-subtext">{insc.usuario?.apellido_materno || insc.apellido_materno || ''}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="info-badge">
+                            <Mail size={12} /> {insc.usuario?.correo || insc.correo || 'Sin correo'}
+                          </div>
+                        </td>
+                        <td>
+                          <span className="role-tag">
+                            {ROL_CONFIG[insc.usuario?.id_rol as number]?.nombre || insc.rol || 'Usuario'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="time-badge">
+                            <Clock size={12} /> 
+                            {formatHora(insc.horario?.hora_inicio)} - {formatHora(insc.horario?.hora_fin)}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="days-list">
+                            {/* 👈 CORREGIDO EN EL FRONTEND TAMBIÉN */}
+                            <CalendarDays size={12} /> {formatDias(insc.diasSeleccionados)}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`priority-tag ${insc.prioridad || 'baja'}`}>
+                            {(insc.prioridad || 'baja').toUpperCase()}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <button 
+                              className="btn-mini btn-mini--green" 
+                              title="Aprobar"
+                              onClick={() => handleStatusChange((insc.id_inscripcion || insc.id) as number, 'aprobado')}
+                            >
+                              <Check size={12}/> Aceptar
+                            </button>
+                            <button 
+                              className="btn-mini btn-mini--red" 
+                              title="Rechazar"
+                              onClick={() => handleStatusChange((insc.id_inscripcion || insc.id) as number, 'rechazado')}
+                            >
+                              <X size={12}/> Rechazar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr key="empty-state">
+                      <td colSpan={7} className="empty-state">
+                        <div className="empty-content">
+                          <Users size={48} />
+                          <p>No hay inscripciones pendientes por ahora.</p>
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
           </section>
-
         </div>
       </main>
     </div>

@@ -8,12 +8,13 @@ export default function DashboardPage() {
   const router = useRouter();
   const [autorizado, setAutorizado] = useState(false);
 
-  // 🔐 Verificar token (misma lógica que tu versión anterior)
+  // 🔐 Verificar acceso con el nombre correcto ('user')
   useEffect(() => {
     const verificarAcceso = () => {
-      const token = localStorage.getItem('token');
+      // Ahora buscamos 'user', que es lo que guardó el Login
+      const usuarioLogueado = localStorage.getItem('user');
 
-      if (!token) {
+      if (!usuarioLogueado) {
         router.push('/login');
       } else {
         setAutorizado(true);
@@ -24,9 +25,9 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [router]);
 
-  // 🚪 Logout
+  // 🚪 Logout: Borramos la credencial correcta
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     router.push('/login');
   };
 
