@@ -1,309 +1,310 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Upload, CheckCircle, Eye } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import AdminSidebar from '../../../components/AdminSidebar';
-import AlertModal from "../../../components/AlertModal";
+import { useState, useEffect } from 'react'
+import { ArrowLeft, Upload, CheckCircle, Eye } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import AdminSidebar from '../../../components/AdminSidebar'
+import AlertModal from "../../../components/AlertModal"
 
-interface ArchivoHistorico {
-  id:number
-  archivo:string
-  fecha:string
-  fecha_subida:string
-  hash:string
-  subidoPor:string
-  ruta_archivo:string
+interface ArchivoHistorico{
+id:number
+archivo:string
+fecha:string
+fecha_subida:string
+subidoPor:string
+ruta_archivo:string
 }
 
 export default function HistoricoAsistenciasPage(){
 
-  const router = useRouter()
+const router = useRouter()
 
-  const [archivos,setArchivos] = useState<ArchivoHistorico[]>([])
-  const [archivo,setArchivo] = useState<File | null>(null)
-  const [fecha,setFecha] = useState('')
+const [archivos,setArchivos] = useState<ArchivoHistorico[]>([])
+const [archivo,setArchivo] = useState<File | null>(null)
+const [fecha,setFecha] = useState("")
 
-  const [alertOpen,setAlertOpen] = useState(false)
-  const [alertMessage,setAlertMessage] = useState("")
+const [alertOpen,setAlertOpen] = useState(false)
+const [alertMessage,setAlertMessage] = useState("")
 
-  /* ==========================
-     CARGAR HISTÓRICO
-  ========================== */
+/* ==========================
+CARGAR HISTORICO
+========================== */
 
-  const cargarHistorico = async () => {
+const cargarHistorico = async()=>{
 
-    try{
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`);
+try{
 
-      const data = await res.json()
+const res = await fetch(
+`${process.env.NEXT_PUBLIC_API_URL}/api/admin-asistencia/historico`
+)
 
-      setArchivos(data)
+const data = await res.json()
 
-    }catch(error){
+console.log("HISTORICO:",data)
 
-      console.error("Error cargando histórico:",error)
+setArchivos(data)
 
-      setAlertMessage("Error cargando el histórico de archivos")
-      setAlertOpen(true)
+}catch(error){
 
-    }
+console.error(error)
 
-  }
+setAlertMessage("Error cargando histórico")
+setAlertOpen(true)
 
-  useEffect(()=>{
+}
 
-    cargarHistorico()
+}
 
-  },[])
+useEffect(()=>{
 
-  /* ==========================
-     SUBIR ARCHIVO
-  ========================== */
+cargarHistorico()
 
-  const handleSubir = async () => {
+},[])
 
-    if(!archivo || !fecha){
+/* ==========================
+SUBIR ARCHIVO
+========================== */
 
-      setAlertMessage("Selecciona un archivo y una fecha")
-      setAlertOpen(true)
-      return
+const handleSubir = async()=>{
 
-    }
+if(!archivo || !fecha){
 
-    const formData = new FormData()
+setAlertMessage("Selecciona archivo y fecha")
+setAlertOpen(true)
+return
 
-    formData.append("archivo",archivo)
-    formData.append("fecha",fecha)
-    formData.append("id_usuario","1")
+}
 
-    try{
+const formData = new FormData()
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin-asistencia/upload-and-hash`,
-        {
-          method:"POST",
-          body:formData
-        }
-      )
+formData.append("archivo",archivo)
+formData.append("fecha",fecha)
+formData.append("id_usuario","1")
 
-      const data = await res.json()
+try{
 
-      setAlertMessage(data.message || "Operación realizada")
-      setAlertOpen(true)
+const res = await fetch(
+`${process.env.NEXT_PUBLIC_API_URL}/api/admin-asistencia/upload-and-hash`,
+{
+method:"POST",
+body:formData
+}
+)
 
-      setArchivo(null)
-      setFecha('')
+const data = await res.json()
 
-      cargarHistorico()
+setAlertMessage(data.message)
+setAlertOpen(true)
 
-    }catch(error){
+setArchivo(null)
+setFecha("")
 
-      console.error(error)
+cargarHistorico()
 
-      setAlertMessage("Error al subir el archivo")
-      setAlertOpen(true)
+}catch(error){
 
-    }
+console.error(error)
 
-  }
+setAlertMessage("Error subiendo archivo")
+setAlertOpen(true)
 
-  /* ==========================
-     FORMATO FECHA
-  ========================== */
+}
 
-  const formatDate = (date:string)=>{
-    if(!date) return "-"
-    return new Date(date).toLocaleDateString("es-MX")
-  }
+}
 
-  return(
+/* ==========================
+FORMATEAR FECHA
+========================== */
 
-    <div className="app">
+const formatDate = (date:string)=>{
 
-      <AdminSidebar onLogout={()=>console.log('logout')}/>
+if(!date) return "-"
 
-      <main className="main">
-        <div className="main-inner">
+return new Date(date).toLocaleDateString("es-MX")
 
-          {/* HEADER */}
+}
 
-          <header className="section-header">
+return(
 
-            <div>
-              <h2>Histórico de Asistencias</h2>
-              <p>Sube y consulta listas físicas digitalizadas</p>
-            </div>
+<div className="app">
 
-            <button
-              className="btn btn--outline"
-              onClick={()=>router.push('/admin-asistencias')}
-            >
-              <ArrowLeft size={16}/> Regresar
-            </button>
+<AdminSidebar onLogout={()=>console.log("logout")}/>
 
-          </header>
+<main className="main">
+<div className="main-inner">
 
-          {/* SUBIR ARCHIVO */}
+<header className="section-header">
 
-          <div
-            className="filter-bar"
-            style={{
-              display:"flex",
-              gap:"12px",
-              alignItems:"center",
-              flexWrap:"nowrap"
-            }}
-          >
+<div>
+<h2>Histórico de Asistencias</h2>
+<p>Sube y consulta listas físicas digitalizadas</p>
+</div>
 
-            <input
-              type="file"
-              id="archivoHistorico"
-              style={{display:'none'}}
-              onChange={(e)=>{
-                const file = e.target.files?.[0] || null
-                setArchivo(file)
-              }}
-            />
+<button
+className="btn btn--outline"
+onClick={()=>router.push('/admin-asistencias')}
+>
+<ArrowLeft size={16}/> Regresar
+</button>
 
-            <label htmlFor="archivoHistorico" className="btn btn--blue">
-              <Upload size={18}/> Seleccionar archivo
-            </label>
+</header>
 
-            <input
-              type="date"
-              className="form-select"
-              style={{width:"180px"}}
-              value={fecha}
-              onChange={(e)=>setFecha(e.target.value)}
-            />
+{/* CONTROLES */}
 
-            <button
-              className="btn btn--yellow"
-              onClick={handleSubir}
-              disabled={!archivo || !fecha}
-            >
-              Subir lista
-            </button>
+<div style={{
+display:"flex",
+gap:"12px",
+alignItems:"center",
+flexWrap:"wrap",
+marginBottom:"20px"
+}}>
 
-          </div>
+<label
+htmlFor="archivoHistorico"
+className="btn btn--blue"
+>
+<Upload size={18}/> Seleccionar archivo
+</label>
 
-          {/* ARCHIVO SELECCIONADO */}
+<input
+type="file"
+id="archivoHistorico"
+style={{display:"none"}}
+onChange={(e)=>{
 
-          {archivo && (
+const file = e.target.files?.[0] || null
+setArchivo(file)
 
-            <div className="row-card">
+}}
+/>
 
-              <div className="row-info">
+<input
+type="date"
+className="form-select"
+value={fecha}
+onChange={(e)=>setFecha(e.target.value)}
+/>
 
-                <span className="row-name">
-                  <CheckCircle size={16}/> Archivo seleccionado
-                </span>
+<button
+className="btn btn--yellow"
+onClick={handleSubir}
+disabled={!archivo || !fecha}
+>
+Subir lista
+</button>
 
-                <span className="row-sub muted">
-                  {archivo.name} · Solo falta agregar la fecha
-                </span>
+</div>
 
-              </div>
+{/* ARCHIVO SELECCIONADO */}
 
-            </div>
+{archivo && (
 
-          )}
+<div className="row-card">
 
-          {/* TABLA HISTÓRICO */}
+<div className="row-info">
 
-          <section className="table-area">
+<span className="row-name">
+<CheckCircle size={16}/> Archivo seleccionado
+</span>
 
-            <div className="table-scroll">
+<span className="row-sub muted">
+{archivo.name}
+</span>
 
-              <table>
+</div>
 
-                <thead>
+</div>
 
-                  <tr>
-                    <th>Fecha lista</th>
-                    <th>Archivo</th>
-                    <th>Fecha subida</th>
-                    <th>Acciones</th>
-                  </tr>
+)}
 
-                </thead>
+{/* TABLA */}
 
-                <tbody>
+<section className="table-area">
 
-                  {archivos.length === 0 ? (
+<div className="table-scroll">
 
-                    <tr>
-                      <td colSpan={4} className="muted">
-                        No hay archivos registrados
-                      </td>
-                    </tr>
+<table>
 
-                  ) : (
+<thead>
 
-                    archivos.map((a)=>(
+<tr>
+<th>Fecha lista</th>
+<th>Archivo</th>
+<th>Fecha subida</th>
+<th>Acciones</th>
+</tr>
 
-                      <tr key={a.id}>
+</thead>
 
-                        <td className="muted">
-                          {formatDate(a.fecha)}
-                        </td>
+<tbody>
 
-                        <td>
-                          {a.archivo}
-                        </td>
+{archivos.length === 0 ?(
 
-                        <td className="muted">
-                          {formatDate(a.fecha_subida)}
-                        </td>
+<tr>
+<td colSpan={4} className="muted">
+No hay archivos registrados
+</td>
+</tr>
 
-                        <td>
+):(
 
-                          <div className="row-actions">
+archivos.map((a,index)=>(
+<tr key={`${a.id}-${index}`}>
 
-                            <button
-                              className="btn-icon btn-icon--cyan"
-                              title="Ver archivo"
-                              onClick={()=>{
-                                window.open(
-                                  `${process.env.NEXT_PUBLIC_API_URL}/${a.ruta_archivo}`,
-                                  "_blank"
-                                )
-                              }}
-                            >
-                              <Eye size={14}/>
-                            </button>
+<td className="muted">
+{formatDate(a.fecha)}
+</td>
 
-                          </div>
+<td>
+{a.archivo}
+</td>
 
-                        </td>
+<td className="muted">
+{formatDate(a.fecha_subida)}
+</td>
 
-                      </tr>
+<td>
 
-                    ))
+<button
+className="btn-icon btn-icon--cyan"
+onClick={()=>{
 
-                  )}
+window.open(
+`${process.env.NEXT_PUBLIC_API_URL}/${a.ruta_archivo}`,
+"_blank"
+)
 
-                </tbody>
+}}
+>
+<Eye size={14}/>
+</button>
 
-              </table>
+</td>
 
-            </div>
+</tr>
+))
 
-          </section>
+)}
 
-        </div>
-      </main>
+</tbody>
 
-      {/* MODAL ALERTA */}
+</table>
 
-      <AlertModal
-        open={alertOpen}
-        message={alertMessage}
-        onClose={()=>setAlertOpen(false)}
-      />
+</div>
 
-    </div>
+</section>
 
-  )
+</div>
+</main>
+
+<AlertModal
+open={alertOpen}
+message={alertMessage}
+onClose={()=>setAlertOpen(false)}
+/>
+
+</div>
+
+)
 
 }
