@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // 👈 Agregamos useRouter
 import {
   Home,
   Users,
@@ -15,32 +15,36 @@ import {
 } from 'lucide-react';
 
 interface AdminSidebarProps {
-  onLogout?: () => void;
   userName?:     string;
   userRole?:     string;
   userInitials?: string;
 }
 
-
 const NAV_ITEMS = [
-  { href: '/dashboard',            icon: Home,         label: 'Dashboard'      },
-  { href: '/admin-usuarios',       icon: Users,        label: 'Usuarios'       },
-  { href: '/admin-convocatorias',  icon: CalendarDays, label: 'Convocatorias'  },
-  { href: '/admin-inscripciones',  icon: UserPlus,     label: 'Inscripciones'  },
-  { href: '/admin-asistencias',    icon: CalendarCheck,label: 'Asistencias'    },
-  { href: '/admin-anuncios',       icon: Megaphone,    label: 'Anuncios'       },
-  { href: '/admin-estadisticas',   icon: BarChart3,    label: 'Estadísticas'   },
-  { href: '/admin-configuracion',  icon: Settings,     label: 'Configuración'  },
+  { href: '/dashboard',            icon: Home,          label: 'Dashboard'       },
+  { href: '/admin-usuarios',       icon: Users,         label: 'Usuarios'        },
+  { href: '/admin-convocatorias',  icon: CalendarDays,  label: 'Convocatorias'   },
+  { href: '/admin-inscripciones',  icon: UserPlus,      label: 'Inscripciones'   },
+  { href: '/admin-asistencias',    icon: CalendarCheck, label: 'Asistencias'     },
+  { href: '/admin-anuncios',       icon: Megaphone,     label: 'Anuncios'        },
+  { href: '/admin-estadisticas',   icon: BarChart3,     label: 'Estadísticas'    },
+  { href: '/admin-configuracion',  icon: Settings,      label: 'Configuración'   },
 ];
 
 export default function AdminSidebar({
-  onLogout,
   userName     = 'Admin UTEQ',
   userRole     = 'Administrador',
   userInitials = 'AU',
 }: AdminSidebarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter(); // 👈 Inicializamos el router
+
+  // 🚪 Lógica independiente de Logout
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
 
   return (
     <>
@@ -77,7 +81,8 @@ export default function AdminSidebar({
               <span>{userRole}</span>
             </div>
           </div>
-          <button className="btn-logout" type="button" onClick={onLogout ?? (() => console.log('logout'))}>
+          {/* 🚨 Conectamos el botón directamente a nuestra función local */}
+          <button className="btn-logout" type="button" onClick={handleLogout}>
             <LogOut /> Cerrar sesión
           </button>
         </div>

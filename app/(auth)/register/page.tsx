@@ -62,12 +62,38 @@ export default function RegisterPage() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) return alert('Las contraseñas no coinciden');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
-    });
-    if (!res.ok) return alert('Error al registrar');
-    setSuccess(true);
-    setTimeout(() => router.push('/login'), 2000);
+    
+    // TRADUCCIÓN PARA EL BACKEND
+    const datosParaBackend = {
+      nombre: form.nombre,
+      apellido_paterno: form.apellido_paterno,
+      apellido_materno: form.apellido_materno,
+      correo: form.email, 
+      password: form.password,
+      id_carrera: form.carrera,
+      id_division: form.division,
+      id_rol: form.tipo === 'estudiante' ? 2 : 3, 
+      id_horario: form.horarioId,
+      dias_seleccionados: form.diasSeleccionados 
+    };
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(datosParaBackend),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        return alert(`Error al registrar: ${errorData.message || 'Revisa la consola'}`);
+      }
+      
+      setSuccess(true);
+      setTimeout(() => router.push('/login'), 2000);
+    } catch (error) {
+      alert('Error de conexión al registrar');
+    }
   };
 
   return (

@@ -16,12 +16,32 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo, password }),
       });
+      
       const data = await res.json();
+      
       if (res.ok) {
-        if (data.status === 'pending')  { window.location.href = '/pending';   return; }
-        if (data.status === 'approved') { window.location.href = '/dashboard'; return; }
-      } else { alert(data.message); }
-    } catch { alert('Error de conexión'); }
+        // 🚨 AQUÍ ESTÁ LA SOLUCIÓN: Guardamos la sesión en la memoria del navegador
+        if (data.usuario) {
+          localStorage.setItem('user', JSON.stringify(data.usuario));
+        }
+
+        // Redirigimos según el estado
+        if (data.status === 'pending')  { 
+          window.location.href = '/pending';   
+          return; 
+        }
+        if (data.status === 'approved') { 
+          // OJO: Asegúrate de que tu pantalla principal realmente se llame '/dashboard'. 
+          // Si es otra ruta (como '/admin-convocatorias' o '/inicio'), cámbiala aquí.
+          window.location.href = '/dashboard'; 
+          return; 
+        }
+      } else { 
+        alert(data.message || 'Error al iniciar sesión'); 
+      }
+    } catch (error) { 
+      alert('Error de conexión con el servidor'); 
+    }
   };
 
   return (
@@ -71,7 +91,6 @@ export default function LoginPage() {
                 value={password} onChange={e => setPassword(e.target.value)} required />
               <div className="forgot-password"><a href="#">¿Olvidaste tu contraseña?</a></div>
             </div>
-            {/* btn--full + btn--lg reemplaza btn-primary */}
             <button type="submit" className="btn btn--blue btn--full btn--lg">
               Iniciar sesión
             </button>
