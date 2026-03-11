@@ -134,7 +134,6 @@ export default function LoginPage() {
                 value={password} onChange={e => setPassword(e.target.value)} required />
               <div className="forgot-password"><a href="#">¿Olvidaste tu contraseña?</a></div>
             </div>
-            {/* btn--full + btn--lg reemplaza btn-primary */}
             <button type="submit" className="btn btn--blue btn--full btn--lg">
               Iniciar sesión
             </button>

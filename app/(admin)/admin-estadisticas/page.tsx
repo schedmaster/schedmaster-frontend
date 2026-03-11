@@ -74,7 +74,7 @@ const getHeatColor = (v: number) =>
 const getInitials  = (n: string) => n.split(' ').slice(0,2).map(x => x[0]).join('').toUpperCase();
 const avatarColors = ['#00a4e0','#3b82f6','#8b5cf6','#ebbA3d','#22c55e','#ef4444'];
 
-// ── Sub-componentes (sin cambios internos) ────────────────────────
+// ── Sub-componentes ──────────────────────────────────────────────
 const Sparkline = ({ data, secondary, color = '#00a4e0' }: { data: number[]; secondary?: number[]; color?: string }) => {
   const h = 120, w = 800;
   const max  = Math.max(...data, ...(secondary ?? []));
@@ -112,7 +112,7 @@ const Donut = ({ data, total }: { data: { label: string; count: number; color: s
           ))}
         </svg>
         <div className="donut-center">
-          <div className="donut-center-value">{total.toLocaleString()}</div>
+          <div className="donut-center-value">{total.toLocaleString('en-US')}</div>
           <div className="donut-center-label">Total</div>
         </div>
       </div>
@@ -123,7 +123,7 @@ const Donut = ({ data, total }: { data: { label: string; count: number; color: s
               <div className="donut-dot" data-color={d.color} />
               <span className="donut-legend-label">{d.label}</span>
             </div>
-            <span className="donut-legend-count">{d.count.toLocaleString()}</span>
+            <span className="donut-legend-count">{d.count.toLocaleString('en-US')}</span>
           </div>
         ))}
       </div>
@@ -141,7 +141,7 @@ const BarChart = ({ data }: { data: { label: string; count: number }[] }) => {
         <div key={i} className="bar-group">
           <div className="bar-stack">
             <div className="bar" data-index={i} data-height={`${(d.count/max)*100}%`} data-color={colors[i%colors.length]}>
-              <div className="bar-tooltip">{d.count.toLocaleString()}</div>
+              <div className="bar-tooltip">{d.count.toLocaleString('en-US')}</div>
             </div>
           </div>
           <div className="bar-label">{d.label}</div>
@@ -161,7 +161,7 @@ const Funnel = () => {
           <div className="funnel-row">
             <div className="funnel-header">
               <span>{row.label}</span>
-              <span className="funnel-count">{row.count.toLocaleString()}</span>
+              <span className="funnel-count">{row.count.toLocaleString('en-US')}</span>
             </div>
             <div className="funnel-track">
               <div className="funnel-fill" data-width={`${(row.count/max)*100}%`} data-color={row.color}>
@@ -200,7 +200,8 @@ const Heatmap = () => (
   </div>
 );
 
-const formatNumber = (num: number) => new Intl.NumberFormat('es-MX').format(num);
+// ✅ Arreglado para prevenir el hydration error
+const formatNumber = (num: number) => num.toLocaleString('en-US');
 
 const KpiCard = ({ icon, iconClass, label, value, cambio, suffix = '' }: {
   icon: React.ReactNode; iconClass: string; label: string;
@@ -285,7 +286,7 @@ export default function AdminEstadisticasPage() {
                 <p>Visión completa del ciclo: interesados → notificados → inscritos → asistencia.</p>
               </div>
               <div className="row-actions">
-                <div className="pill"><Users size={16} /> Inscritos totales: <strong>{totalInscritos.toLocaleString()}</strong></div>
+                <div className="pill"><Users size={16} /> Inscritos totales: <strong>{totalInscritos.toLocaleString('en-US')}</strong></div>
                 <div className="pill"><Activity size={16} /> Convocatorias activas: <strong>{convActivas}</strong></div>
                 <button className="btn btn--outline" type="button"><RefreshCw size={16} /> Actualizar</button>
                 <button className="btn btn--blue" type="button" onClick={() => setModalExport(true)}>
@@ -307,8 +308,8 @@ export default function AdminEstadisticasPage() {
             </div>
 
             <div className="kpi-grid">
-              <KpiCard icon={<Eye />}           iconClass="blue"   label="Interesados registrados"   value={mockKPIs.interesados.valor} cambio={mockKPIs.interesados.cambio} />
-              <KpiCard icon={<Mail />}          iconClass="purple" label="Notificados por correo"    value={mockKPIs.notificados.valor} cambio={mockKPIs.notificados.cambio} />
+              <KpiCard icon={<Eye />}         iconClass="blue"   label="Interesados registrados"   value={mockKPIs.interesados.valor} cambio={mockKPIs.interesados.cambio} />
+              <KpiCard icon={<Mail />}        iconClass="purple" label="Notificados por correo"    value={mockKPIs.notificados.valor} cambio={mockKPIs.notificados.cambio} />
               <KpiCard icon={<UserPlus />}      iconClass="green"  label="Inscripciones completadas" value={mockKPIs.inscritos.valor}   cambio={mockKPIs.inscritos.cambio} />
               <KpiCard icon={<CalendarCheck />} iconClass="yellow" label="Asistencia promedio"       value={mockKPIs.asistencia.valor} cambio={mockKPIs.asistencia.cambio} suffix="%" />
               <KpiCard icon={<Activity />}      iconClass="blue"   label="Anuncios publicados"       value={mockKPIs.anuncios.valor}   cambio={mockKPIs.anuncios.cambio} />
@@ -438,9 +439,9 @@ export default function AdminEstadisticasPage() {
                         <tr key={i}>
                           <td className="table-convocatoria">{row.convocatoria}</td>
                           <td className="muted">{row.periodo}</td>
-                          <td>{row.interesados.toLocaleString()}</td>
-                          <td>{row.notificados.toLocaleString()}</td>
-                          <td className="table-inscritos">{row.inscritos.toLocaleString()}</td>
+                          <td>{row.interesados.toLocaleString('en-US')}</td>
+                          <td>{row.notificados.toLocaleString('en-US')}</td>
+                          <td className="table-inscritos">{row.inscritos.toLocaleString('en-US')}</td>
                           <td><span className="chip chip--pendiente"><TrendingUp size={12} /> {conv}%</span></td>
                           <td>
                             <span className={`chip ${row.asistencia >= 80 ? 'chip--activo' : row.asistencia >= 70 ? 'chip--pendiente' : 'chip--baja'}`}>
