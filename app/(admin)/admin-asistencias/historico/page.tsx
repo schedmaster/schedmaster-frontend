@@ -12,8 +12,6 @@ nombre_archivo:string
 ruta_archivo:string
 fecha_lista:string
 fecha_subida:string
-subidoPor:string
-ruta_archivo:string
 }
 
 export default function HistoricoAsistenciasPage(){
