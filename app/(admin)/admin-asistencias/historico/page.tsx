@@ -10,10 +10,10 @@ interface ArchivoHistorico{
 id_historico:number
 nombre_archivo:string
 ruta_archivo:string
-hash_archivo:string
 fecha_lista:string
 fecha_subida:string
-id_usuario:number
+subidoPor:string
+ruta_archivo:string
 }
 
 export default function HistoricoAsistenciasPage(){
@@ -129,7 +129,8 @@ return(
 
 <div className="app">
 
-<AdminSidebar onLogout={()=>console.log("logout")}/>
+      <AdminSidebar />
+       
 
 <main className="main">
 <div className="main-inner">

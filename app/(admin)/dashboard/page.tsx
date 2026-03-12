@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
   return (
     <div className="app">
-      <AdminSidebar onLogout={handleLogout} />
+     <AdminSidebar />
 
       <main className="main">
         <div className="main-inner">
