@@ -66,7 +66,12 @@ html, body {
   bottom: -2px; left: 0; right: 0;
   height: 3px; background: var(--yellow); border-radius: 2px;
 }
-
+.error-text{
+color:#ff4d4f;
+font-size:12px;
+margin-top:4px;
+display:block;
+}
 /* ==========================================
    4. FORMULARIOS
    ========================================== */
