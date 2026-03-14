@@ -35,8 +35,7 @@ export default function DashboardPage() {
 
   return (
     <div className="app">
-      {/* Tu menú lateral (el logout ya se maneja por dentro) */}
-      <AdminSidebar />
+     <AdminSidebar />
 
       <main className="main">
         <div className="main-inner">

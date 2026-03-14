@@ -5,201 +5,292 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, CircleCheck } from 'lucide-react';
 
 export default function RegisterPage() {
+
   const router = useRouter();
 
-  const [form, setForm] = useState({
-    nombre: '', apellido_paterno: '', apellido_materno: '',
-    email: '', tipo: 'estudiante', division: '', carrera: '',
-    horarioId: '', diasSeleccionados: [] as number[],
-    password: '', confirmPassword: '', terms: false,
+  const [form,setForm] = useState({
+    nombre: '',
+    apellido_paterno: '',
+    apellido_materno: '',
+    email: '',
+    tipo: 'estudiante', // estudiante o docente
+    division: '',
+    carrera: '',
+    horarioId: '',
+    diasSeleccionados: [] as number[],
+    password: '',
+    confirmPassword: '',
+    terms: false
   });
 
-  const [horarios,    setHorarios]    = useState<any[]>([]);
-  const [diasHorario, setDiasHorario] = useState<any[]>([]);
-  const [strength,    setStrength]    = useState(0);
-  const [progress,    setProgress]    = useState(0);
-  const [success,     setSuccess]     = useState(false);
+  const [errors,setErrors] = useState<any>({});
+  const [horarios,setHorarios] = useState<any[]>([]);
+  const [diasHorario,setDiasHorario] = useState<any[]>([]);
+  const [divisiones,setDivisiones] = useState<any[]>([]);
+  const [carreras,setCarreras] = useState<any[]>([]);
+  const [strength,setStrength] = useState(0);
+  const [progress,setProgress] = useState(0);
+  const [success,setSuccess] = useState(false);
 
-  useEffect(() => {
+  // Cargar horarios
+  useEffect(()=>{
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios`)
-      .then(r => r.json())
-      .then(d => setHorarios(Array.isArray(d) ? d : d?.data || []))
-      .catch(() => setHorarios([]));
-  }, []);
+      .then(r=>r.json())
+      .then(d=>setHorarios(Array.isArray(d)?d:d?.data||[]))
+      .catch(()=>setHorarios([]));
+  },[]);
 
-  useEffect(() => {
-    if (!form.horarioId) return setDiasHorario([]);
+  // Cargar días del horario
+  useEffect(()=>{
+    if(!form.horarioId){
+      setDiasHorario([]);
+      return;
+    }
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios/${form.horarioId}/dias`)
-      .then(r => r.json()).then(setDiasHorario).catch(() => setDiasHorario([]));
-  }, [form.horarioId]);
+      .then(r=>r.json())
+      .then(setDiasHorario)
+      .catch(()=>setDiasHorario([]));
+  },[form.horarioId]);
 
-  useEffect(() => {
-    const fields = ['nombre','apellido_paterno','apellido_materno','email','password','confirmPassword','horarioId'];
-    let filled = fields.filter(f => (form as any)[f]).length;
-    if (form.terms) filled++;
-    setProgress((filled / (fields.length + 1)) * 100);
-  }, [form]);
+  // Cargar divisiones
+  useEffect(()=>{
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/catalogo/divisiones`)
+      .then(r=>r.json())
+      .then(setDivisiones)
+      .catch(()=>setDivisiones([]));
+  },[]);
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    if (name === 'password') {
-      let s = 0;
-      if (value.length >= 8) s++;
-      if (/[A-Z]/.test(value)) s++;
-      if (/[0-9]/.test(value)) s++;
+  // Cargar carreras según división
+  useEffect(()=>{
+    if(!form.division){
+      setCarreras([]);
+      return;
+    }
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/catalogo/carreras/${form.division}`)
+      .then(r=>r.json())
+      .then(setCarreras)
+      .catch(()=>setCarreras([]));
+  },[form.division]);
+
+  // Barra de progreso
+  useEffect(()=>{
+    const fields=['nombre','apellido_paterno','apellido_materno','email','password','confirmPassword','horarioId'];
+    let filled=fields.filter(f=>(form as any)[f]).length;
+    if(form.terms) filled++;
+    setProgress((filled/(fields.length+1))*100);
+  },[form]);
+
+  // Manejo de inputs
+  const handleChange=(e:any)=>{
+    const {name,value,type,checked}=e.target;
+    setForm(prev=>({
+      ...prev,
+      [name]:type==='checkbox'?checked:value
+    }));
+
+    if(name==='password'){
+      let s=0;
+      if(value.length>=8) s++;
+      if(/[A-Z]/.test(value)) s++;
+      if(/[0-9]/.test(value)) s++;
       setStrength(s);
     }
   };
 
-  const toggleDia = (id: number) => setForm(prev => ({
-    ...prev,
-    diasSeleccionados: prev.diasSeleccionados.includes(id)
-      ? prev.diasSeleccionados.filter(d => d !== id)
-      : [...prev.diasSeleccionados, id],
-  }));
+  // Toggle selección de días
+  const toggleDia=(id:number)=>{
+    setForm(prev=>({
+      ...prev,
+      diasSeleccionados: prev.diasSeleccionados.includes(id)
+        ? prev.diasSeleccionados.filter(d=>d!==id)
+        : [...prev.diasSeleccionados,id]
+    }));
+  };
 
-  const handleSubmit = async (e: any) => {
+  // Validación
+  useEffect(()=>{
+    const newErrors:any={};
+    if(!form.nombre) newErrors.nombre="campo obligatorio";
+    if(!form.apellido_paterno) newErrors.apellido_paterno="campo obligatorio";
+    if(!form.apellido_materno) newErrors.apellido_materno="campo obligatorio";
+    if(!form.email) newErrors.email="campo obligatorio";
+    if(form.tipo==="estudiante"){
+      if(!form.division) newErrors.division="campo obligatorio";
+      if(!form.carrera) newErrors.carrera="campo obligatorio";
+    }
+    if(!form.horarioId) newErrors.horarioId="campo obligatorio";
+    if(form.diasSeleccionados.length===0) newErrors.dias="selecciona al menos un día";
+    if(!form.password) newErrors.password="campo obligatorio";
+    if(form.confirmPassword!==form.password) newErrors.confirmPassword="las contraseñas no coinciden";
+    if(!form.terms) newErrors.terms="acepta los términos";
+    setErrors(newErrors);
+  },[form]);
+
+  const formValid=Object.keys(errors).length===0;
+
+  // Submit
+  const handleSubmit=async(e:any)=>{
     e.preventDefault();
-    if (form.password !== form.confirmPassword) return alert('Las contraseñas no coinciden');
-    
-    // TRADUCCIÓN PARA EL BACKEND
-    const datosParaBackend = {
+    if(!formValid) return;
+
+    const datosParaBackend={
       nombre: form.nombre,
       apellido_paterno: form.apellido_paterno,
       apellido_materno: form.apellido_materno,
-      correo: form.email, 
+      correo: form.email,
       password: form.password,
       id_carrera: form.carrera,
       id_division: form.division,
-      id_rol: form.tipo === 'estudiante' ? 2 : 3, 
+      // 🔹 corrección de id_rol
+      id_rol: form.tipo==='estudiante'?1: form.tipo==='docente'?2:3,
       id_horario: form.horarioId,
-      dias_seleccionados: form.diasSeleccionados 
+      dias_seleccionados: form.diasSeleccionados
     };
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(datosParaBackend),
+    try{
+      const res=await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(datosParaBackend)
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        return alert(`Error al registrar: ${errorData.message || 'Revisa la consola'}`);
+      if(!res.ok){
+        const errorData=await res.json();
+        return alert(`Error al registrar: ${errorData.message}`);
       }
-      
+
       setSuccess(true);
-      setTimeout(() => router.push('/login'), 2000);
-    } catch (error) {
+      setTimeout(()=>router.push('/login'),2000);
+
+    }catch{
       alert('Error de conexión al registrar');
     }
   };
 
-  return (
+  return(
     <div className="register-page">
       <div className="register-page container">
-        {!success ? (
+        {!success?(
           <div className="card--glass">
-
-            {/* btn--back reemplaza btn-secondary */}
-            <button type="button" className="btn btn--back" onClick={() => router.push('/login')}>
-              <ArrowLeft size={18} /> Volver al inicio
+            <button type="button" className="btn btn--back" onClick={()=>router.push('/login')}>
+              <ArrowLeft size={18}/> Volver al inicio
             </button>
 
             <div className="page-header">
-              <div className="logo-badge"><CircleCheck size={32} /></div>
+              <div className="logo-badge"><CircleCheck size={32}/></div>
               <h1 className="title">Únete a <span className="highlight">SchedMaster</span></h1>
               <p className="subtitle">Completa tu información para crear tu cuenta</p>
             </div>
 
             <div className="progress-bar">
-              <div className="progress-fill" data-progress={progress} />
+              <div className="progress-fill" data-progress={progress}/>
             </div>
 
             <form onSubmit={handleSubmit}>
 
+              {/* Tipo usuario */}
               <div className="form-group">
-                <label htmlFor="tipo">Tipo de usuario</label>
-                <select id="tipo" name="tipo" value={form.tipo} title="Selecciona tipo de usuario" className="auth-select" onChange={handleChange}>
+                <label>Tipo de usuario</label>
+                <select name="tipo" value={form.tipo} className="auth-select" onChange={handleChange}>
                   <option value="estudiante">Estudiante</option>
                   <option value="docente">Docente</option>
                 </select>
               </div>
 
+              {/* Nombre completo */}
               <div className="form-row">
                 <div className="form-group">
                   <label>Nombre</label>
-                  <input name="nombre" value={form.nombre} className="auth-input" placeholder="Nombre" onChange={handleChange} />
+                  <input name="nombre" value={form.nombre} className="auth-input" onChange={handleChange}/>
+                  {errors.nombre && <small className="error-text">{errors.nombre}</small>}
                 </div>
                 <div className="form-group">
-                  <label>Apellido Paterno</label>
-                  <input name="apellido_paterno" value={form.apellido_paterno} className="auth-input" placeholder="Apellido Paterno" onChange={handleChange} />
+                  <label>Apellido paterno</label>
+                  <input name="apellido_paterno" value={form.apellido_paterno} className="auth-input" onChange={handleChange}/>
+                  {errors.apellido_paterno && <small className="error-text">{errors.apellido_paterno}</small>}
+                </div>
+                <div className="form-group">
+                  <label>Apellido materno</label>
+                  <input name="apellido_materno" value={form.apellido_materno} className="auth-input" onChange={handleChange}/>
+                  {errors.apellido_materno && <small className="error-text">{errors.apellido_materno}</small>}
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Apellido Materno</label>
-                <input name="apellido_materno" value={form.apellido_materno} className="auth-input" placeholder="Apellido Materno" onChange={handleChange} />
-              </div>
-
+              {/* Correo */}
               <div className="form-group">
                 <label>Correo institucional</label>
-                <input name="email" value={form.email} type="email" className="auth-input" placeholder="correo@uteq.edu.mx" onChange={handleChange} />
+                <input name="email" type="email" value={form.email} className="auth-input" onChange={handleChange}/>
+                {errors.email && <small className="error-text">{errors.email}</small>}
               </div>
 
+              {/* División y carrera */}
+              {form.tipo==="estudiante" && (
+                <>
+                  <div className="form-group">
+                    <label>División</label>
+                    <select name="division" value={form.division} className="auth-select" onChange={handleChange}>
+                      <option value="">Selecciona división</option>
+                      {divisiones.map(d=>(<option key={d.id_division} value={d.id_division}>{d.nombre_division}</option>))}
+                    </select>
+                    {errors.division && <small className="error-text">{errors.division}</small>}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Carrera</label>
+                    <select name="carrera" value={form.carrera} className="auth-select" onChange={handleChange}>
+                      <option value="">Selecciona carrera</option>
+                      {carreras.map(c=>(<option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>))}
+                    </select>
+                    {errors.carrera && <small className="error-text">{errors.carrera}</small>}
+                  </div>
+                </>
+              )}
+
+              {/* Horario */}
               <div className="form-group">
-                <label htmlFor="horarioId">Horario</label>
-                <select id="horarioId" name="horarioId" value={form.horarioId} title="Selecciona un horario" className="auth-select" onChange={handleChange}>
+                <label>Horario</label>
+                <select name="horarioId" value={form.horarioId} className="auth-select" onChange={handleChange}>
                   <option value="">Selecciona horario</option>
-                  {horarios.map(h => (
-                    <option key={h.id_horario} value={h.id_horario}>{h.hora_inicio} - {h.hora_fin}</option>
-                  ))}
+                  {horarios.map(h=>(<option key={h.id_horario} value={h.id_horario}>{h.hora_inicio} - {h.hora_fin}</option>))}
                 </select>
+                {errors.horarioId && <small className="error-text">{errors.horarioId}</small>}
               </div>
 
+              {/* Días */}
               {form.horarioId && (
                 <div className="dias-container">
-                  {diasHorario.map(d => (
-                    <button key={d.id_dia} type="button"
-                      className={`dia-btn ${form.diasSeleccionados.includes(d.id_dia) ? 'active' : ''}`}
-                      onClick={() => toggleDia(d.id_dia)}>
-                      {d.nombre}
-                    </button>
+                  {diasHorario.map(d=>(
+                    <button key={d.id_dia} type="button" className={`dia-btn ${form.diasSeleccionados.includes(d.id_dia)?'active':''}`} onClick={()=>toggleDia(d.id_dia)}>{d.nombre}</button>
                   ))}
+                  {errors.dias && <small className="error-text">{errors.dias}</small>}
                 </div>
               )}
 
+              {/* Password */}
               <div className="form-group">
                 <label>Contraseña</label>
-                <input name="password" type="password" className="auth-input" placeholder="••••••••" onChange={handleChange} />
-                <div className="password-hints">
-                  <div className={strength >= 1 ? 'hint ok' : 'hint'}>Mínimo 8 caracteres</div>
-                  <div className={strength >= 2 ? 'hint ok' : 'hint'}>Una mayúscula</div>
-                  <div className={strength >= 3 ? 'hint ok' : 'hint'}>Un número</div>
-                </div>
+                <input name="password" type="password" className="auth-input" onChange={handleChange}/>
+                {errors.password && <small className="error-text">{errors.password}</small>}
               </div>
 
               <div className="form-group">
                 <label>Confirmar contraseña</label>
-                <input name="confirmPassword" type="password" className="auth-input" placeholder="••••••••" onChange={handleChange} />
+                <input name="confirmPassword" type="password" className="auth-input" onChange={handleChange}/>
+                {errors.confirmPassword && <small className="error-text">{errors.confirmPassword}</small>}
               </div>
 
               <div className="checkbox-wrapper">
-                <input id="terms" type="checkbox" name="terms" checked={form.terms} onChange={handleChange} />
-                <label htmlFor="terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a></label>
+                <input id="terms" type="checkbox" name="terms" checked={form.terms} onChange={handleChange}/>
+                <label htmlFor="terms">Acepto los <a href="#">términos y condiciones</a></label>
               </div>
+              {errors.terms && <small className="error-text">{errors.terms}</small>}
 
-              {/* btn--full + btn--lg reemplaza btn-primary */}
-              <button type="submit" className="btn btn--blue btn--full btn--lg">
-                Crear mi cuenta
-              </button>
-
+              <button type="submit" disabled={!formValid} className="btn btn--blue btn--full btn--lg">Crear mi cuenta</button>
             </form>
           </div>
-        ) : (
+        ):(
           <div className="card--glass card--center">
-            <div className="success-icon"><CircleCheck size={40} /></div>
+            <div className="success-icon"><CircleCheck size={40}/></div>
             <h2 className="success-title">¡Cuenta creada!</h2>
             <p className="success-text">Redirigiendo al inicio de sesión…</p>
           </div>

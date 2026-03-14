@@ -7,12 +7,11 @@ import AdminSidebar from '../../../components/AdminSidebar'
 import AlertModal from "../../../components/AlertModal"
 
 interface ArchivoHistorico{
-id:number
-archivo:string
-fecha:string
-fecha_subida:string
-subidoPor:string
+id_historico:number
+nombre_archivo:string
 ruta_archivo:string
+fecha_lista:string
+fecha_subida:string
 }
 
 export default function HistoricoAsistenciasPage(){
@@ -128,7 +127,8 @@ return(
 
 <div className="app">
 
-<AdminSidebar onLogout={()=>console.log("logout")}/>
+      <AdminSidebar />
+       
 
 <main className="main">
 <div className="main-inner">
@@ -249,14 +249,14 @@ No hay archivos registrados
 ):(
 
 archivos.map((a,index)=>(
-<tr key={`${a.id}-${index}`}>
+<tr key={`${a.id_historico}-${index}`}>
 
 <td className="muted">
-{formatDate(a.fecha)}
+{formatDate(a.fecha_lista)}
 </td>
 
 <td>
-{a.archivo}
+{a.nombre_archivo}
 </td>
 
 <td className="muted">

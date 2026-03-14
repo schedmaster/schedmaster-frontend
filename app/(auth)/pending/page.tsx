@@ -1,9 +1,16 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { LogOut, Info, Clock, LifeBuoy, ChevronDown, Mail, Phone } from 'lucide-react';
 
 export default function PendingAccountPage() {
-  const handleLogout = () => alert('Cerrar sesión (UI). Integra aquí tu lógica real.');
+
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("user"); // borrar sesión
+    router.push("/login"); // redirigir
+  };
 
   return (
     <div className="page">
@@ -27,7 +34,6 @@ export default function PendingAccountPage() {
           </div>
 
           <div className="actions">
-            {/* btn--full + btn--lg reemplaza btn-primary */}
             <button className="btn btn--blue btn--full btn--lg" type="button" onClick={handleLogout}>
               <LogOut /> Cerrar sesión
             </button>
@@ -43,7 +49,9 @@ export default function PendingAccountPage() {
                 <span className="sum-left"><LifeBuoy /> Soporte</span>
                 <ChevronDown className="chev" />
               </summary>
+
               <div className="support-body">
+
                 <div className="support-item">
                   <Mail />
                   <div>
@@ -51,6 +59,7 @@ export default function PendingAccountPage() {
                     <small>Incluye tu matrícula y una breve descripción.</small>
                   </div>
                 </div>
+
                 <div className="support-item">
                   <Phone />
                   <div>
@@ -58,9 +67,11 @@ export default function PendingAccountPage() {
                     <small>Horario: Lunes a Viernes.</small>
                   </div>
                 </div>
+
               </div>
             </details>
           </div>
+
         </section>
 
       </div>
