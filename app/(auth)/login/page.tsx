@@ -75,9 +75,9 @@ export default function LoginPage() {
       if (res.ok) {
         if (data.status === 'pending')  { window.location.href = '/pending';   return; }
         if (data.status === 'approved') {
-          // Guardar sesión en localStorage para que el dashboard la detecte
-          localStorage.setItem('token', JSON.stringify(data.usuario));
-          window.location.href = '/dashboard';
+ // 78. Guardar sesión en localStorage con el nombre que el dashboard espera
+        localStorage.setItem('user', JSON.stringify(data.usuario));
+        window.location.href = '/dashboard';
           return;
         }
       } else { alert(data.message); }

@@ -8,10 +8,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const [autorizado, setAutorizado] = useState(false);
 
-  // 🔐 Verificar acceso con el nombre correcto ('user')
+  // 🔐 Verificar acceso
   useEffect(() => {
     const verificarAcceso = () => {
-      // Ahora buscamos 'user', que es lo que guardó el Login
       const usuarioLogueado = localStorage.getItem('user');
 
       if (!usuarioLogueado) {
@@ -25,12 +24,6 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [router]);
 
-  // 🚪 Logout: Borramos la credencial correcta
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
-
   // ⏳ Loader para evitar parpadeo
   if (!autorizado) {
     return (
@@ -42,12 +35,13 @@ export default function DashboardPage() {
 
   return (
     <div className="app">
-      <AdminSidebar onLogout={handleLogout} />
+      {/* Tu menú lateral (el logout ya se maneja por dentro) */}
+      <AdminSidebar />
 
       <main className="main">
         <div className="main-inner">
 
-          {/* Header con tus clases nuevas */}
+          {/* Header */}
           <header className="section-header">
             <div>
               <h2>Dashboard</h2>
@@ -77,6 +71,8 @@ export default function DashboardPage() {
               <span className="stat-card-value">0</span>
             </div>
           </section>
+
+          {/* ✨ AQUÍ QUITAMOS EL FORMULARIO DE HORARIOS ✨ */}
 
         </div>
       </main>
