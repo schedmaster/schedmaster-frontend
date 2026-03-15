@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation'; // 👈 Agregamos useRouter
+import { usePathname, useRouter } from 'next/navigation'; 
 import {
   Home,
   Users,
@@ -11,7 +11,10 @@ import {
   CalendarCheck,
   Megaphone,
   BarChart3,
-  Settings, LayoutGrid, LogOut
+  Settings, 
+  LayoutGrid, 
+  LogOut,
+  Clock // 👈 1. Importamos el ícono del reloj para los horarios
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -20,9 +23,11 @@ interface AdminSidebarProps {
   userInitials?: string;
 }
 
+// 👈 2. Agregamos "Horarios" al arreglo (lo puse debajo de Usuarios)
 const NAV_ITEMS = [
   { href: '/dashboard',            icon: Home,          label: 'Dashboard'       },
   { href: '/admin-usuarios',       icon: Users,         label: 'Usuarios'        },
+  { href: '/admin-horarios',       icon: Clock,         label: 'Horarios'        }, // NUEVO 
   { href: '/admin-convocatorias',  icon: CalendarDays,  label: 'Convocatorias'   },
   { href: '/admin-inscripciones',  icon: UserPlus,      label: 'Inscripciones'   },
   { href: '/admin-asistencias',    icon: CalendarCheck, label: 'Asistencias'     },
@@ -38,7 +43,7 @@ export default function AdminSidebar({
 }: AdminSidebarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter(); // 👈 Inicializamos el router
+  const router = useRouter(); 
 
   // 🚪 Lógica independiente de Logout
   const handleLogout = () => {

@@ -46,17 +46,17 @@ export default function LoginPage() {
         ["encrypt"]
       );
 
-      // 3️⃣ Generar clave AES
+      // Generar clave AES
       const aesKey = await crypto.subtle.generateKey(
         { name: "AES-CBC", length: 256 },
         true,
         ["encrypt"]
       );
 
-      // 4️⃣ Generar IV
+      //  Generar IV
       const iv = crypto.getRandomValues(new Uint8Array(16));
 
-      // 5️⃣ Cifrar credenciales
+      // Cifrar credenciales
       const plaintext = JSON.stringify({ correo, password });
       const encryptedDataBuffer = await crypto.subtle.encrypt(
         { name: "AES-CBC", iv },
@@ -64,7 +64,7 @@ export default function LoginPage() {
         new TextEncoder().encode(plaintext)
       );
 
-      // 6️⃣ Exportar AES y cifrarla con RSA
+      // Exportar AES y cifrarla con RSA
       const rawAesKey = await crypto.subtle.exportKey("raw", aesKey);
       const encryptedKeyBuffer = await crypto.subtle.encrypt(
         { name: "RSA-OAEP" },
@@ -72,7 +72,7 @@ export default function LoginPage() {
         rawAesKey
       );
 
-      // 7️⃣ Convertir a Base64
+      // Convertir a Base64
       const toBase64 = (buffer: ArrayBuffer) =>
         btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
         encryptedData: toBase64(encryptedDataBuffer)
       };
 
-      // 8️⃣ Enviar login
+      // Enviar login
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
@@ -98,7 +98,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 9️⃣ Redirecciones según estado y rol
+      // 9Redirecciones según estado y rol
       if (data.status === "pending") {
         // Usuario no aprobado o inscripción pendiente
         window.location.href = "/pending";
