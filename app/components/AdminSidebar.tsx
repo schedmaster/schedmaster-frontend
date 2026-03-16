@@ -2,20 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation'; 
+import { usePathname, useRouter } from 'next/navigation';
 import {
-  Home,
-  Users,
-  CalendarDays,
-  UserPlus,
-  CalendarCheck,
-  Megaphone,
-  BarChart3,
-  Settings, 
-  LayoutGrid, 
-  LogOut,
-  Clock // 👈 1. Importamos el ícono del reloj para los horarios
+  Home, Users, CalendarDays, UserPlus, CalendarCheck,
+  Megaphone, BarChart3, Settings, LayoutGrid, LogOut, Clock,
+  Sun, Moon
 } from 'lucide-react';
+import { useDarkMode } from '../hooks/useDarkMode';
 
 interface AdminSidebarProps {
   userName?:     string;
@@ -23,17 +16,16 @@ interface AdminSidebarProps {
   userInitials?: string;
 }
 
-// 👈 2. Agregamos "Horarios" al arreglo (lo puse debajo de Usuarios)
 const NAV_ITEMS = [
-  { href: '/dashboard',            icon: Home,          label: 'Dashboard'       },
-  { href: '/admin-usuarios',       icon: Users,         label: 'Usuarios'        },
-  { href: '/admin-horarios',       icon: Clock,         label: 'Horarios'        }, // NUEVO 
-  { href: '/admin-convocatorias',  icon: CalendarDays,  label: 'Convocatorias'   },
-  { href: '/admin-inscripciones',  icon: UserPlus,      label: 'Inscripciones'   },
-  { href: '/admin-asistencias',    icon: CalendarCheck, label: 'Asistencias'     },
-  { href: '/admin-anuncios',       icon: Megaphone,     label: 'Anuncios'        },
-  { href: '/admin-estadisticas',   icon: BarChart3,     label: 'Estadísticas'    },
-  { href: '/admin-configuracion',  icon: Settings,      label: 'Configuración'   },
+  { href: '/dashboard',           icon: Home,          label: 'Dashboard'     },
+  { href: '/admin-usuarios',      icon: Users,         label: 'Usuarios'      },
+  { href: '/admin-horarios',      icon: Clock,         label: 'Horarios'      },
+  { href: '/admin-convocatorias', icon: CalendarDays,  label: 'Convocatorias' },
+  { href: '/admin-inscripciones', icon: UserPlus,      label: 'Inscripciones' },
+  { href: '/admin-asistencias',   icon: CalendarCheck, label: 'Asistencias'   },
+  { href: '/admin-anuncios',      icon: Megaphone,     label: 'Anuncios'      },
+  { href: '/admin-estadisticas',  icon: BarChart3,     label: 'Estadísticas'  },
+  { href: '/admin-configuracion', icon: Settings,      label: 'Configuración' },
 ];
 
 export default function AdminSidebar({
@@ -42,10 +34,10 @@ export default function AdminSidebar({
   userInitials = 'AU',
 }: AdminSidebarProps) {
   const [open, setOpen] = useState(false);
+  const { darkMode, toggle } = useDarkMode();
   const pathname = usePathname();
-  const router = useRouter(); 
+  const router   = useRouter();
 
-  // 🚪 Lógica independiente de Logout
   const handleLogout = () => {
     localStorage.removeItem('user');
     router.push('/login');
@@ -59,14 +51,19 @@ export default function AdminSidebar({
         </button>
       )}
 
-      <aside className={`sidebar ${open ? 'active' : ''}`}
-        onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}>
-
+      <aside
+        className={`sidebar ${open ? 'active' : ''}`}
+        onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}
+      >
         <div className="sb-brand">
           <div className="sb-logo"><LayoutGrid /></div>
           <div className="sb-brand-text">
             <h1>SchedMaster</h1>
             <p>Panel de Administración</p>
+            <div className="theme-switch" onClick={toggle}>
+              {darkMode ? <Moon size={16} /> : <Sun size={16} />}
+              <span>{darkMode ? 'Oscuro' : 'Claro'}</span>
+            </div>
           </div>
         </div>
 
@@ -86,12 +83,10 @@ export default function AdminSidebar({
               <span>{userRole}</span>
             </div>
           </div>
-          {/* 🚨 Conectamos el botón directamente a nuestra función local */}
           <button className="btn-logout" type="button" onClick={handleLogout}>
             <LogOut /> Cerrar sesión
           </button>
         </div>
-
       </aside>
     </>
   );

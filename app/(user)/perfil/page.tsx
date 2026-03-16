@@ -1,9 +1,19 @@
 'use client';
 
-import { User, Calendar, Clock, Home } from 'lucide-react';
+import { User, Calendar, Clock, Home, LogOut, Sun, Moon } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 export default function PerfilPage() {
+  const router = useRouter();
+  const { darkMode, toggle } = useDarkMode();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
+
   return (
     <div className="home-page">
       <header className="home-header">
@@ -70,6 +80,25 @@ export default function PerfilPage() {
           </div>
 
         </div>
+
+        {/* Botones debajo de los cards */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: '40px',
+          paddingBottom: '60px',
+        }}>
+          <button className="dark-toggle" onClick={toggle} aria-label="Cambiar tema">
+            {darkMode ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+
+          <button className="btn btn--outline" onClick={handleLogout}>
+            <LogOut size={16} /> Cerrar sesión
+          </button>
+        </div>
+
       </section>
     </div>
   );
