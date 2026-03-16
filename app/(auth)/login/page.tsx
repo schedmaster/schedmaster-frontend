@@ -99,11 +99,13 @@ export default function LoginPage() {
       }
 
       // 9Redirecciones según estado y rol
-      if (data.status === "pending") {
-        // Usuario no aprobado o inscripción pendiente
-        window.location.href = "/pending";
-        return;
-      }
+     if (data.status === "pending") {
+
+  localStorage.setItem('user', JSON.stringify(data.usuario));
+
+  window.location.href = "/pending";
+  return;
+}
 
       if (data.status === "approved") {
         localStorage.setItem('user', JSON.stringify(data.usuario));
