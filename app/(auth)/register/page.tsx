@@ -13,7 +13,7 @@ export default function RegisterPage() {
     apellido_paterno: '',
     apellido_materno: '',
     email: '',
-    tipo: 'estudiante', // estudiante o docente
+    tipo: 'estudiante', 
     division: '',
     carrera: '',
     horarioId: '',
@@ -32,7 +32,7 @@ export default function RegisterPage() {
   const [progress,setProgress] = useState(0);
   const [success,setSuccess] = useState(false);
 
-  // Cargar horarios
+  // 1. Cargar todos los horarios (Esto ya trae los días incluidos gracias a nuestro backend)
   useEffect(()=>{
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios`)
       .then(r=>r.json())
@@ -40,17 +40,34 @@ export default function RegisterPage() {
       .catch(()=>setHorarios([]));
   },[]);
 
-  // Cargar días del horario
-  useEffect(()=>{
-    if(!form.horarioId){
+  // 2. 🔴 SOLUCIÓN: Extraer los días directamente de la lista que ya tenemos en memoria
+  useEffect(() => {
+    if (!form.horarioId) {
       setDiasHorario([]);
+      setForm(prev => ({ ...prev, diasSeleccionados: [] }));
       return;
     }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios/${form.horarioId}/dias`)
-      .then(r=>r.json())
-      .then(setDiasHorario)
-      .catch(()=>setDiasHorario([]));
-  },[form.horarioId]);
+
+    // Buscamos el horario exacto que el alumno seleccionó en el dropdown
+    const horarioElegido = horarios.find(h => h.id_horario.toString() === form.horarioId.toString());
+
+    if (horarioElegido && horarioElegido.dias_ids) {
+      // Separamos el texto de los días ("Lunes, Miércoles") en un arreglo
+      const nombresDias = horarioElegido.dias_semana.split(', ');
+      
+      // Construimos el arreglo de objetos para que tus botones se puedan dibujar
+      const diasArmados = horarioElegido.dias_ids.map((id: number, index: number) => ({
+        id_dia: id,
+        nombre: nombresDias[index]
+      }));
+      
+      setDiasHorario(diasArmados);
+      // Limpiamos los días seleccionados por si el alumno cambió de horario a mitad del registro
+      setForm(prev => ({ ...prev, diasSeleccionados: [] })); 
+    } else {
+      setDiasHorario([]);
+    }
+  }, [form.horarioId, horarios]);
 
   // Cargar divisiones
   useEffect(()=>{
@@ -124,7 +141,7 @@ export default function RegisterPage() {
     if(form.confirmPassword!==form.password) newErrors.confirmPassword="las contraseñas no coinciden";
     if(!form.terms) newErrors.terms="acepta los términos";
     setErrors(newErrors);
-  },[form]);
+  },[form, form.diasSeleccionados.length]);
 
   const formValid=Object.keys(errors).length===0;
 
@@ -141,7 +158,6 @@ export default function RegisterPage() {
       password: form.password,
       id_carrera: form.carrera,
       id_division: form.division,
-      // 🔹 corrección de id_rol
       id_rol: form.tipo==='estudiante'?1: form.tipo==='docente'?2:3,
       id_horario: form.horarioId,
       dias_seleccionados: form.diasSeleccionados
@@ -183,7 +199,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="progress-bar">
-              <div className="progress-fill" data-progress={progress}/>
+              <div className="progress-fill" style={{ width: `${progress}%` }} />
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -260,7 +276,14 @@ export default function RegisterPage() {
               {form.horarioId && (
                 <div className="dias-container">
                   {diasHorario.map(d=>(
-                    <button key={d.id_dia} type="button" className={`dia-btn ${form.diasSeleccionados.includes(d.id_dia)?'active':''}`} onClick={()=>toggleDia(d.id_dia)}>{d.nombre}</button>
+                    <button 
+                      key={d.id_dia} 
+                      type="button" 
+                      className={`dia-btn ${form.diasSeleccionados.includes(d.id_dia)?'active':''}`} 
+                      onClick={()=>toggleDia(d.id_dia)}
+                    >
+                      {d.nombre}
+                    </button>
                   ))}
                   {errors.dias && <small className="error-text">{errors.dias}</small>}
                 </div>
