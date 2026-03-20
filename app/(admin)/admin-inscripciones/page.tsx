@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Users, RefreshCw, Check, X, Clock, CalendarDays, Mail, GraduationCap, Briefcase
+  Users, RefreshCw, Check, X, Clock, Mail, GraduationCap, Briefcase
 } from 'lucide-react';
 
 import AdminSidebar from '../../components/AdminSidebar';
 import ConfirmModal from '../../components/ConfirmModal';
 import PropuestaModal from '../../components/PropuestaModal';
+import AlertModal from '../../components/AlertModal';
 
 const ROL_CONFIG: Record<number, { icon: any; nombre: string; color: string }> = {
   1: { icon: GraduationCap, nombre: 'Estudiante', color: 'var(--blue-light)' },
@@ -49,9 +50,13 @@ export default function AdminInscripcionesPage() {
 
   const [modalPropuestaOpen, setModalPropuestaOpen] = useState(false);
   const [correoPropuesta, setCorreoPropuesta] = useState('');
-
   const [inscripcionActual, setInscripcionActual] = useState<number | null>(null);
   const [propuestasEnviadas, setPropuestasEnviadas] = useState<number[]>([]);
+
+  // ALERT STATE
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('Mensaje');
 
   const fetchInscripciones = async () => {
 
@@ -68,11 +73,19 @@ export default function AdminInscripcionesPage() {
         const data = await res.json();
         setInscripciones(data);
 
+      } else {
+
+        setAlertTitle('Error');
+        setAlertMessage('No se pudieron cargar las inscripciones');
+        setAlertOpen(true);
+
       }
 
     } catch (err) {
 
-      console.error(err);
+      setAlertTitle('Error');
+      setAlertMessage('Error de conexión con el servidor');
+      setAlertOpen(true);
 
     } finally {
 
@@ -121,11 +134,27 @@ export default function AdminInscripcionesPage() {
           prev.filter(i => (i.id_inscripcion || i.id) !== id)
         );
 
+        setAlertTitle('Éxito');
+        setAlertMessage(
+          estado === 'aprobado'
+            ? 'Inscripción aprobada correctamente'
+            : 'Inscripción rechazada correctamente'
+        );
+        setAlertOpen(true);
+
+      } else {
+
+        setAlertTitle('Error');
+        setAlertMessage('No se pudo procesar la solicitud');
+        setAlertOpen(true);
+
       }
 
     } catch {
 
-      alert('Error de conexión');
+      setAlertTitle('Error');
+      setAlertMessage('Error de conexión con el servidor');
+      setAlertOpen(true);
 
     } finally {
 
@@ -203,11 +232,11 @@ export default function AdminInscripcionesPage() {
 
                   {inscripcionesFiltradas.length > 0 ? (
 
-                    inscripcionesFiltradas.map((insc,index)=>{
+                    inscripcionesFiltradas.map((insc) => {
 
                       const id = insc.id_inscripcion || insc.id || 0;
 
-                      return(
+                      return (
 
                         <tr key={id}>
 
@@ -249,21 +278,21 @@ export default function AdminInscripcionesPage() {
 
                                 <button
                                   className="btn-mini btn-mini--green"
-                                  onClick={()=>handleStatusChange(id,'aprobado')}
+                                  onClick={() => handleStatusChange(id, 'aprobado')}
                                 >
                                   <Check size={12}/> Aceptar
                                 </button>
 
                                 <button
                                   className="btn-mini btn-mini--red"
-                                  onClick={()=>handleStatusChange(id,'rechazado')}
+                                  onClick={() => handleStatusChange(id, 'rechazado')}
                                 >
                                   <X size={12}/> Rechazar
                                 </button>
 
                                 <button
                                   className="btn-mini btn-mini--blue"
-                                  onClick={()=>{
+                                  onClick={() => {
                                     setCorreoPropuesta(insc.usuario?.correo || '');
                                     setInscripcionActual(id);
                                     setModalPropuestaOpen(true);
@@ -280,7 +309,7 @@ export default function AdminInscripcionesPage() {
 
                         </tr>
 
-                      )
+                      );
 
                     })
 
@@ -307,6 +336,7 @@ export default function AdminInscripcionesPage() {
 
       </main>
 
+      {/* CONFIRM */}
       <ConfirmModal
         open={confirmOpen}
         title="Confirmar acción"
@@ -314,20 +344,33 @@ export default function AdminInscripcionesPage() {
         confirmText="Confirmar"
         cancelText="Cancelar"
         onConfirm={confirmarCambio}
-        onCancel={()=>setConfirmOpen(false)}
+        onCancel={() => setConfirmOpen(false)}
       />
 
+      {/* PROPUESTA */}
       <PropuestaModal
         isOpen={modalPropuestaOpen}
         correo={correoPropuesta}
-        onClose={()=>setModalPropuestaOpen(false)}
-        onPropuestaEnviada={()=>{
+        onClose={() => setModalPropuestaOpen(false)}
+        onPropuestaEnviada={() => {
 
-          if(inscripcionActual){
-            setPropuestasEnviadas(prev=>[...prev,inscripcionActual]);
+          if (inscripcionActual) {
+            setPropuestasEnviadas(prev => [...prev, inscripcionActual]);
           }
 
+          setAlertTitle('Éxito');
+          setAlertMessage('Propuesta enviada correctamente');
+          setAlertOpen(true);
+
         }}
+      />
+
+      {/* ALERT */}
+      <AlertModal
+        open={alertOpen}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
       />
 
     </div>
