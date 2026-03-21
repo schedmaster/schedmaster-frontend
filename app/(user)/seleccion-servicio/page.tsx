@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Dumbbell, Apple, Sparkles, X } from 'lucide-react';
+import { Dumbbell, Apple, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function HomePage() {
   const [openModal, setOpenModal] = useState(false);
@@ -14,11 +14,20 @@ export default function HomePage() {
   const router = useRouter();
 
   const images = [
-    '/gimnasio1.jpeg',
-    '/gimnasio2.jpg',
+    '/gimnasio1.png',
+    '/gimnasio2.png',
     '/gimnasio3.jpg',
     '/gimnasio4.jpg',
   ];
+
+  // 👉 AUTO SLIDE
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImg((prev) => (prev + 1) % images.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const nextImg = () => setCurrentImg((prev) => (prev + 1) % images.length);
   const prevImg = () => setCurrentImg((prev) => (prev - 1 + images.length) % images.length);
@@ -115,16 +124,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CARRUSEL */}
+      {/* CARRUSEL PRO */}
       <section className="services-section">
         <strong>Instalaciones</strong>
         <h2>Conoce el gimnasio</h2>
 
         <div className="card--glass">
           <div className="carousel">
-            <button onClick={prevImg}>◀</button>
-            <img src={images[currentImg]} className="carousel-img" />
-            <button onClick={nextImg}>▶</button>
+
+            <button className="carousel-btn left" onClick={prevImg}>
+              <ChevronLeft size={22} />
+            </button>
+
+            <div className="carousel-wrapper">
+              <img src={images[currentImg]} className="carousel-img" />
+            </div>
+
+            <button className="carousel-btn right" onClick={nextImg}>
+              <ChevronRight size={22} />
+            </button>
+
+            {/* DOTS */}
+            <div className="carousel-dots">
+              {images.map((_, index) => (
+                <span
+                  key={index}
+                  className={`dot ${index === currentImg ? 'active' : ''}`}
+                  onClick={() => setCurrentImg(index)}
+                />
+              ))}
+            </div>
+
           </div>
         </div>
       </section>
