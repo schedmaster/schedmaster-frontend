@@ -7,8 +7,11 @@ import AdminSidebar from '../../components/AdminSidebar';
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
 const getAvatarClass = (id: number) => AVATAR_COLORS[id % AVATAR_COLORS.length];
 
+// 1. Actualizamos la interfaz para que acepte los IDs reales del backend
 interface Asistencia {
-  id: number;
+  id: number; // Será el id_usuario
+  id_inscripcion: number;
+  id_horario: number;
   nombre: string;
   apellido: string;
   iniciales: string;
@@ -29,10 +32,61 @@ export default function AdminAsistenciasPage() {
 
   const [filterHorario,  setFilterHorario]  = useState('');
   const [filterTipo,     setFilterTipo]     = useState('');
-  const [filterEstado,   setFilterEstado]   = useState('pendiente');
+  const [filterEstado,   setFilterEstado]   = useState(''); // Lo cambié a vacío para que por defecto muestre todos
   const [filterCarrera,  setFilterCarrera]  = useState('');
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
 
+  // ==========================================
+  // 2. LA MAGIA: Conexión con el Backend
+  // ==========================================
+  const fetchAsistencias = async () => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/asistencias/admin?fecha=${fecha}`);
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Mapeamos lo que manda Node.js a lo que espera React
+        const datosFormateados = data.map((item: any) => {
+          // Extraer hora de inicio y fin
+          const [inicio, fin] = item.horario ? item.horario.split(' - ') : ['00:00', '00:00'];
+          
+          // Crear iniciales (ej. Emmanuel Alberto -> EA)
+          const nombres = item.usuario.split(' ');
+          const iniciales = nombres.length > 1 
+            ? (nombres[0][0] + nombres[1][0]).toUpperCase() 
+            : nombres[0][0].toUpperCase();
+
+          return {
+            id: item.id_usuario,
+            id_inscripcion: item.id_inscripcion,
+            id_horario: item.id_horario,
+            nombre: item.usuario,
+            apellido: '', // Lo dejamos vacío porque el backend ya manda el nombre completo
+            iniciales: iniciales,
+            horarioInicio: inicio,
+            horarioFin: fin,
+            tipoEntrenamiento: 'Gimnasio', // Por defecto
+            carrera: item.carrera,
+            matricula: item.correo, // Usamos el correo en el espacio de matrícula
+            estado: item.estado.toLowerCase() as 'presente' | 'ausente' | 'pendiente',
+          };
+        });
+
+        setAsistencias(datosFormateados);
+      }
+    } catch (error) {
+      console.error('Error al conectar con la API:', error);
+    }
+  };
+
+  // Traer los datos cuando la página carga o cuando cambias la fecha
+  useEffect(() => {
+    fetchAsistencias();
+  }, [fecha]);
+
+  // ==========================================
+  // LÓGICA DE FILTROS LOCALES
+  // ==========================================
   useEffect(() => {
     let f = [...asistencias];
     if (filterHorario) f = f.filter(a => `${a.horarioInicio}-${a.horarioFin}` === filterHorario);
@@ -46,13 +100,33 @@ export default function AdminAsistenciasPage() {
   const presentes      = asistencias.filter(a => a.estado === 'presente').length;
   const ausentes       = asistencias.filter(a => a.estado === 'ausente').length;
   const tasaAsistencia = presentes + ausentes > 0
-    ? Math.round((presentes / (presentes + ausentes)) * 100) : 0;
+    ? Math.round((presentes / totalReservas) * 100) : 0;
 
-  const handleMarcarPresente = (id: number) =>
-    setAsistencias(prev => prev.map(a => a.id === id ? { ...a, estado: 'presente' } : a));
+  // ==========================================
+  // 3. REGISTRAR ASISTENCIA EN LA BASE DE DATOS
+  // ==========================================
+  const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
+    try {
+      const res = await fetch('http://localhost:3001/api/asistencias/registrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_usuario: asist.id,
+          id_inscripcion: asist.id_inscripcion,
+          id_horario: asist.id_horario,
+          asistio: asistio,
+          id_registrado_por: 1 // Aquí luego puedes poner el ID del admin logueado
+        })
+      });
 
-  const handleMarcarAusente = (id: number) =>
-    setAsistencias(prev => prev.map(a => a.id === id ? { ...a, estado: 'ausente' } : a));
+      if (res.ok) {
+        // Actualiza el color en la pantalla de inmediato sin recargar toda la página
+        setAsistencias(prev => prev.map(a => a.id === asist.id ? { ...a, estado: asistio ? 'presente' : 'ausente' } : a));
+      }
+    } catch (error) {
+      console.error("Error al registrar asistencia:", error);
+    }
+  };
 
   return (
     <div className="app">
@@ -98,7 +172,8 @@ export default function AdminAsistenciasPage() {
             <select className="select" value={filterCarrera} onChange={e => setFilterCarrera(e.target.value)} aria-label="Filtrar por carrera">
               <option value="">Todas las carreras</option>
             </select>
-            <button className="btn btn--blue" type="button" onClick={() => console.log('Refrescar:', fecha)}>
+            {/* El botón ahora ejecuta la función de buscar en el backend */}
+            <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
               <RefreshCw /> Actualizar
             </button>
             <button 
@@ -147,7 +222,7 @@ export default function AdminAsistenciasPage() {
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
                 <p>No hay registros para mostrar</p>
-                <small>Los registros aparecerán aquí una vez conectada la API</small>
+                <small>Aún no hay inscripciones aprobadas para el día de hoy.</small>
               </div>
             ) : (
               filteredAsistencias.map(asist => (
@@ -167,10 +242,11 @@ export default function AdminAsistenciasPage() {
                   <div className="row-actions">
                     {asist.estado === 'pendiente' ? (
                       <>
-                        <button className="btn-mini btn-mini--green" type="button" onClick={() => handleMarcarPresente(asist.id)}>
+                        {/* Se actualizan los botones para que llamen al Backend */}
+                        <button className="btn-mini btn-mini--green" type="button" onClick={() => registrarAsistenciaBD(asist, true)}>
                           Presente
                         </button>
-                        <button className="btn-mini btn-mini--red" type="button" onClick={() => handleMarcarAusente(asist.id)}>
+                        <button className="btn-mini btn-mini--red" type="button" onClick={() => registrarAsistenciaBD(asist, false)}>
                           Ausente
                         </button>
                       </>
