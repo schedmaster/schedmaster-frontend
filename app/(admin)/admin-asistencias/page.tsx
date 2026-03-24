@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react'; // 👈 Se agregó el ícono de Search
 import AdminSidebar from '../../components/AdminSidebar';
 
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
@@ -30,9 +30,12 @@ export default function AdminAsistenciasPage() {
     new Date().toISOString().split('T')[0]
   );
 
+  // 👈 NUEVO: Estado para guardar lo que se escribe en el buscador
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [filterHorario,  setFilterHorario]  = useState('');
   const [filterTipo,     setFilterTipo]     = useState('');
-  const [filterEstado,   setFilterEstado]   = useState(''); // Lo cambié a vacío para que por defecto muestre todos
+  const [filterEstado,   setFilterEstado]   = useState(''); 
   const [filterCarrera,  setFilterCarrera]  = useState('');
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
 
@@ -85,7 +88,7 @@ export default function AdminAsistenciasPage() {
   }, [fecha]);
 
   // ==========================================
-  // LÓGICA DE FILTROS LOCALES
+  // LÓGICA DE FILTROS LOCALES + BUSCADOR
   // ==========================================
   useEffect(() => {
     let f = [...asistencias];
@@ -93,8 +96,16 @@ export default function AdminAsistenciasPage() {
     if (filterTipo)    f = f.filter(a => a.tipoEntrenamiento.toLowerCase() === filterTipo.toLowerCase());
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
+    
+    // 👈 NUEVO: Filtro del buscador por nombre
+    if (searchTerm) {
+      f = f.filter(a => 
+        a.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
     setFilteredAsistencias(f);
-  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera]);
+  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); // 👈 Se agregó searchTerm a las dependencias
 
   const totalReservas  = asistencias.length;
   const presentes      = asistencias.filter(a => a.estado === 'presente').length;
@@ -103,9 +114,35 @@ export default function AdminAsistenciasPage() {
     ? Math.round((presentes / totalReservas) * 100) : 0;
 
   // ==========================================
-  // 3. REGISTRAR ASISTENCIA EN LA BASE DE DATOS
+  // 3. REGLA DE NEGOCIO: VALIDAR HORARIO
+  // ==========================================
+  const isWithinSchedule = (inicio: string, fin: string) => {
+    if (!inicio || !fin || inicio === '00:00') return true; 
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+
+    if (inicio <= fin) {
+        return currentTime >= inicio && currentTime <= fin;
+    } else {
+        // Por si los horarios cruzan la medianoche o están invertidos
+        return currentTime >= inicio || currentTime <= fin;
+    }
+  };
+
+  // ==========================================
+  // 4. REGISTRAR ASISTENCIA EN LA BASE DE DATOS
   // ==========================================
   const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
+    
+    // 👈 NUEVO: Validación de horario pedida por Arlet
+    if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
+      alert(`⚠️ ACCIÓN DENEGADA\nNo puedes pasar asistencia fuera de horario.\nEl horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
+      return; // Detiene la ejecución, no se guarda en BD
+    }
+
     try {
       const res = await fetch('http://localhost:3001/api/asistencias/registrar', {
         method: 'POST',
@@ -157,6 +194,19 @@ export default function AdminAsistenciasPage() {
 
           {/* Filtros */}
           <div className="filter-bar">
+            
+            {/* 👈 NUEVO: Interfaz del Buscador con ícono */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
+              <Search size={18} color="#888" />
+              <input
+                type="text"
+                placeholder="Buscar alumno..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ border: 'none', outline: 'none', padding: '10px', background: 'transparent', width: '100%', fontSize: '14px' }}
+              />
+            </div>
+
             <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
               <option value="">Todos los horarios</option>
             </select>
@@ -172,9 +222,9 @@ export default function AdminAsistenciasPage() {
             <select className="select" value={filterCarrera} onChange={e => setFilterCarrera(e.target.value)} aria-label="Filtrar por carrera">
               <option value="">Todas las carreras</option>
             </select>
-            {/* El botón ahora ejecuta la función de buscar en el backend */}
+            
             <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
-              <RefreshCw /> Actualizar
+              <RefreshCw size={18} /> Actualizar
             </button>
             <button 
   className="btn btn--outline"
@@ -222,7 +272,7 @@ export default function AdminAsistenciasPage() {
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
                 <p>No hay registros para mostrar</p>
-                <small>Aún no hay inscripciones aprobadas para el día de hoy.</small>
+                <small>Aún no hay inscripciones aprobadas para el día de hoy o la búsqueda no coincide.</small>
               </div>
             ) : (
               filteredAsistencias.map(asist => (
@@ -242,7 +292,6 @@ export default function AdminAsistenciasPage() {
                   <div className="row-actions">
                     {asist.estado === 'pendiente' ? (
                       <>
-                        {/* Se actualizan los botones para que llamen al Backend */}
                         <button className="btn-mini btn-mini--green" type="button" onClick={() => registrarAsistenciaBD(asist, true)}>
                           Presente
                         </button>
