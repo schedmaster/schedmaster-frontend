@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Search } from 'lucide-react'; 
+import { RefreshCw, Check, X } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
 const getAvatarClass = (id: number) => AVATAR_COLORS[id % AVATAR_COLORS.length];
@@ -23,8 +25,8 @@ interface Asistencia {
 }
 
 export default function AdminAsistenciasPage() {
-  const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
 
+  const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [fecha, setFecha] = useState<string>(() =>
     new Date().toISOString().split('T')[0]
   );
@@ -93,6 +95,13 @@ export default function AdminAsistenciasPage() {
     setFilteredAsistencias(f);
   }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); 
 
+  useEffect(() => {
+    setFilteredAsistencias(asistencias);
+  }, [asistencias]);
+
+  /* ==========================
+     STATS
+  ========================== */
   const totalReservas  = asistencias.length;
   const presentes      = asistencias.filter(a => a.estado === 'presente').length;
   const ausentes       = asistencias.filter(a => a.estado === 'ausente').length;
@@ -151,32 +160,28 @@ export default function AdminAsistenciasPage() {
 
   return (
     <div className="app">
-      <AdminSidebar onLogout={() => console.log('logout')} />
+      <AdminSidebar />
 
       <main className="main">
         <div className="main-inner">
 
-          {/* Header */}
+          {/* HEADER */}
           <header className="section-header">
             <div>
               <h2>Control de Asistencias</h2>
-              <p>Registra y monitorea la asistencia de los usuarios</p>
+              <p>Registra y monitorea la asistencia</p>
             </div>
+
             <div className="date-container">
-              <label className="date-label" htmlFor="fechaAsistencia">
-  Seleccionar fecha
-</label>
               <input
-                id="fechaAsistencia"
                 type="date"
-                className="date-input"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
               />
             </div>
           </header>
 
-          {/* Filtros */}
+          {/* BOTONES */}
           <div className="filter-bar">
             
             <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
@@ -222,48 +227,32 @@ export default function AdminAsistenciasPage() {
             <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
               <RefreshCw size={18} /> Actualizar
             </button>
-            <button 
-  className="btn btn--outline"
-  type="button"
-  onClick={() => window.location.href='/admin-asistencias/historico'}
->
-  Histórico
-</button>
           </div>
 
-          {/* Stats */}
+          {/* STATS */}
           <div className="stat-grid">
             <div className="stat-card">
-              <div className="stat-card-info">
-                <span className="stat-card-value">{totalReservas}</span>
-                <span className="stat-card-label">TOTAL RESERVAS</span>
-              </div>
-              <div className="stat-card-circle stat-card-circle--blue" />
+              <span>{totalReservas}</span>
+              <small>TOTAL</small>
             </div>
+
             <div className="stat-card">
-              <div className="stat-card-info">
-                <span className="stat-card-value">{presentes}</span>
-                <span className="stat-card-label">PRESENTES</span>
-              </div>
-              <div className="stat-card-circle stat-card-circle--green" />
+              <span>{presentes}</span>
+              <small>PRESENTES</small>
             </div>
+
             <div className="stat-card">
-              <div className="stat-card-info">
-                <span className="stat-card-value">{ausentes}</span>
-                <span className="stat-card-label">AUSENTES</span>
-              </div>
-              <div className="stat-card-circle stat-card-circle--red" />
+              <span>{ausentes}</span>
+              <small>AUSENTES</small>
             </div>
+
             <div className="stat-card">
-              <div className="stat-card-info">
-                <span className="stat-card-value">{tasaAsistencia}%</span>
-                <span className="stat-card-label">TASA ASISTENCIA</span>
-              </div>
-              <div className="stat-card-circle stat-card-circle--yellow" />
+              <span>{tasaAsistencia}%</span>
+              <small>ASISTENCIA</small>
             </div>
           </div>
 
-          {/* Lista */}
+          {/* LISTA */}
           <section className="row-list">
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
@@ -302,8 +291,9 @@ export default function AdminAsistenciasPage() {
                     )}
                   </div>
                 </div>
-              ))
-            )}
+
+              </div>
+            ))}
           </section>
 
         </div>

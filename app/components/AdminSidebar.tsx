@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -11,8 +11,8 @@ import {
 import { useDarkMode } from '../hooks/useDarkMode';
 
 interface AdminSidebarProps {
-  userName?:     string;
-  userRole?:     string;
+  userName?: string;
+  userRole?: string;
   userInitials?: string;
 }
 
@@ -33,10 +33,20 @@ export default function AdminSidebar({
   userRole     = 'Administrador',
   userInitials = 'AU',
 }: AdminSidebarProps) {
+
   const [open, setOpen] = useState(false);
   const { darkMode, toggle } = useDarkMode();
   const pathname = usePathname();
   const router   = useRouter();
+
+  // 🔥 FIX HYDRATION
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -60,10 +70,12 @@ export default function AdminSidebar({
           <div className="sb-brand-text">
             <h1>SchedMaster</h1>
             <p>Panel de Administración</p>
+
             <div className="theme-switch" onClick={toggle}>
               {darkMode ? <Moon size={16} /> : <Sun size={16} />}
               <span>{darkMode ? 'Oscuro' : 'Claro'}</span>
             </div>
+
           </div>
         </div>
 
@@ -83,6 +95,7 @@ export default function AdminSidebar({
               <span>{userRole}</span>
             </div>
           </div>
+
           <button className="btn-logout" type="button" onClick={handleLogout}>
             <LogOut /> Cerrar sesión
           </button>

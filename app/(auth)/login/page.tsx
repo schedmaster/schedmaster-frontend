@@ -16,99 +16,117 @@ export default function LoginPage() {
   const [modalOpen,    setModalOpen]    = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (loading) return;
+  setLoading(true);
 
-    try {
-      const keyRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/public-key`);
-      if (!keyRes.ok) throw new Error('No se pudo obtener la clave pública');
-      const { keyId, publicKey: publicKeyPem } = await keyRes.json();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-      const pemBody = publicKeyPem
-        .replace('-----BEGIN PUBLIC KEY-----', '')
-        .replace('-----END PUBLIC KEY-----', '')
-        .replace(/\n/g, '');
-      const pemBuffer = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
+  try {
+    console.log("API URL:", API_URL);
 
-      const rsaPublicKey = await crypto.subtle.importKey(
-        'spki', pemBuffer,
-        { name: 'RSA-OAEP', hash: 'SHA-256' },
-        false, ['encrypt']
-      );
+    const keyRes = await fetch(`${API_URL}/api/auth/public-key`);
+    if (!keyRes.ok) throw new Error('No se pudo obtener la clave pública');
 
-      const aesKey = await crypto.subtle.generateKey(
-        { name: 'AES-CBC', length: 256 }, true, ['encrypt']
-      );
-      const iv = crypto.getRandomValues(new Uint8Array(16));
+    const { keyId, publicKey: publicKeyPem } = await keyRes.json();
 
-      const encryptedDataBuffer = await crypto.subtle.encrypt(
-        { name: 'AES-CBC', iv },
-        aesKey,
-        new TextEncoder().encode(JSON.stringify({ correo, password }))
-      );
+    const pemBody = publicKeyPem
+      .replace('-----BEGIN PUBLIC KEY-----', '')
+      .replace('-----END PUBLIC KEY-----', '')
+      .replace(/\n/g, '');
 
-      const rawAesKey        = await crypto.subtle.exportKey('raw', aesKey);
-      const encryptedKeyBuffer = await crypto.subtle.encrypt(
-        { name: 'RSA-OAEP' }, rsaPublicKey, rawAesKey
-      );
+    const pemBuffer = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
 
-      const toBase64 = (buf: ArrayBuffer) =>
-        btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const rsaPublicKey = await crypto.subtle.importKey(
+      'spki',
+      pemBuffer,
+      { name: 'RSA-OAEP', hash: 'SHA-256' },
+      false,
+      ['encrypt']
+    );
 
-      const payload = {
-        keyId,
-        encryptedKey:  toBase64(encryptedKeyBuffer),
-        iv:            btoa(String.fromCharCode(...iv)),
-        encryptedData: toBase64(encryptedDataBuffer),
-      };
+    const aesKey = await crypto.subtle.generateKey(
+      { name: 'AES-CBC', length: 256 },
+      true,
+      ['encrypt']
+    );
 
-      const res  = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
+    const iv = crypto.getRandomValues(new Uint8Array(16));
 
-      if (!res.ok) {
-        setModalMessage(data.message || 'Error en login');
-        setModalOpen(true);
-        return;
-      }
+    const encryptedDataBuffer = await crypto.subtle.encrypt(
+      { name: 'AES-CBC', iv },
+      aesKey,
+      new TextEncoder().encode(JSON.stringify({ correo, password }))
+    );
 
-      if (data.status === 'pending') {
-        localStorage.setItem('user', JSON.stringify(data.usuario));
-        window.location.href = '/pending';
-        return;
-      }
+    const rawAesKey = await crypto.subtle.exportKey('raw', aesKey);
 
-      if (data.status === 'approved') {
-        localStorage.setItem('user', JSON.stringify(data.usuario));
-        if (data.usuario.id_rol === 1 || data.usuario.id_rol === 2) {
-          window.location.href = '/anuncios';
-          return;
-        }
-        if (data.usuario.id_rol === 3 || data.usuario.id_rol === 4) {
-          window.location.href = '/dashboard';
-          return;
-        }
-        setModalMessage('Rol de usuario no reconocido');
-        setModalOpen(true);
-        return;
-      }
+    const encryptedKeyBuffer = await crypto.subtle.encrypt(
+      { name: 'RSA-OAEP' },
+      rsaPublicKey,
+      rawAesKey
+    );
 
-      setModalMessage('Estado de usuario no reconocido');
+    const toBase64 = (buf: ArrayBuffer) =>
+      btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+    const payload = {
+      keyId,
+      encryptedKey: toBase64(encryptedKeyBuffer),
+      iv: btoa(String.fromCharCode(...iv)),
+      encryptedData: toBase64(encryptedDataBuffer),
+    };
+
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setModalMessage(data.message || 'Error en login');
       setModalOpen(true);
-
-    } catch (error) {
-      console.error('Error login:', error);
-      setModalMessage('Error de conexión con el servidor');
-      setModalOpen(true);
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+    if (data.status === 'pending') {
+      localStorage.setItem('user', JSON.stringify(data.usuario));
+      window.location.href = '/pending';
+      return;
+    }
+
+    if (data.status === 'approved') {
+      localStorage.setItem('user', JSON.stringify(data.usuario));
+
+      if (data.usuario.id_rol === 1 || data.usuario.id_rol === 2) {
+        window.location.href = '/anuncios';
+        return;
+      }
+
+      if (data.usuario.id_rol === 3 || data.usuario.id_rol === 4) {
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      setModalMessage('Rol de usuario no reconocido');
+      setModalOpen(true);
+      return;
+    }
+
+    setModalMessage('Estado de usuario no reconocido');
+    setModalOpen(true);
+
+  } catch (error) {
+    console.error('Error login:', error);
+    setModalMessage('Error de conexión con el servidor');
+    setModalOpen(true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-page">
