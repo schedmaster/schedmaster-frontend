@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Search } from 'lucide-react'; // 👈 Se agregó el ícono de Search
+import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
 
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
 const getAvatarClass = (id: number) => AVATAR_COLORS[id % AVATAR_COLORS.length];
 
-// 1. Actualizamos la interfaz para que acepte los IDs reales del backend
 interface Asistencia {
-  id: number; // Será el id_usuario
+  id: number; 
   id_inscripcion: number;
   id_horario: number;
   nombre: string;
@@ -30,30 +29,22 @@ export default function AdminAsistenciasPage() {
     new Date().toISOString().split('T')[0]
   );
 
-  // 👈 NUEVO: Estado para guardar lo que se escribe en el buscador
   const [searchTerm, setSearchTerm] = useState('');
-
   const [filterHorario,  setFilterHorario]  = useState('');
   const [filterTipo,     setFilterTipo]     = useState('');
   const [filterEstado,   setFilterEstado]   = useState(''); 
   const [filterCarrera,  setFilterCarrera]  = useState('');
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
 
-  // ==========================================
-  // 2. LA MAGIA: Conexión con el Backend
-  // ==========================================
   const fetchAsistencias = async () => {
     try {
       const res = await fetch(`http://localhost:3001/api/asistencias/admin?fecha=${fecha}`);
       if (res.ok) {
         const data = await res.json();
         
-        // Mapeamos lo que manda Node.js a lo que espera React
         const datosFormateados = data.map((item: any) => {
-          // Extraer hora de inicio y fin
           const [inicio, fin] = item.horario ? item.horario.split(' - ') : ['00:00', '00:00'];
           
-          // Crear iniciales (ej. Emmanuel Alberto -> EA)
           const nombres = item.usuario.split(' ');
           const iniciales = nombres.length > 1 
             ? (nombres[0][0] + nombres[1][0]).toUpperCase() 
@@ -64,13 +55,13 @@ export default function AdminAsistenciasPage() {
             id_inscripcion: item.id_inscripcion,
             id_horario: item.id_horario,
             nombre: item.usuario,
-            apellido: '', // Lo dejamos vacío porque el backend ya manda el nombre completo
+            apellido: '', 
             iniciales: iniciales,
             horarioInicio: inicio,
             horarioFin: fin,
-            tipoEntrenamiento: 'Gimnasio', // Por defecto
+            tipoEntrenamiento: 'Gimnasio', 
             carrera: item.carrera,
-            matricula: item.correo, // Usamos el correo en el espacio de matrícula
+            matricula: item.correo, 
             estado: item.estado.toLowerCase() as 'presente' | 'ausente' | 'pendiente',
           };
         });
@@ -82,14 +73,10 @@ export default function AdminAsistenciasPage() {
     }
   };
 
-  // Traer los datos cuando la página carga o cuando cambias la fecha
   useEffect(() => {
     fetchAsistencias();
   }, [fecha]);
 
-  // ==========================================
-  // LÓGICA DE FILTROS LOCALES + BUSCADOR
-  // ==========================================
   useEffect(() => {
     let f = [...asistencias];
     if (filterHorario) f = f.filter(a => `${a.horarioInicio}-${a.horarioFin}` === filterHorario);
@@ -97,7 +84,6 @@ export default function AdminAsistenciasPage() {
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
     
-    // 👈 NUEVO: Filtro del buscador por nombre
     if (searchTerm) {
       f = f.filter(a => 
         a.nombre.toLowerCase().includes(searchTerm.toLowerCase())
@@ -105,7 +91,7 @@ export default function AdminAsistenciasPage() {
     }
 
     setFilteredAsistencias(f);
-  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); // 👈 Se agregó searchTerm a las dependencias
+  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); 
 
   const totalReservas  = asistencias.length;
   const presentes      = asistencias.filter(a => a.estado === 'presente').length;
@@ -113,13 +99,16 @@ export default function AdminAsistenciasPage() {
   const tasaAsistencia = presentes + ausentes > 0
     ? Math.round((presentes / totalReservas) * 100) : 0;
 
-  // ==========================================
-  // 3. REGLA DE NEGOCIO: VALIDAR HORARIO
-  // ==========================================
   const isWithinSchedule = (inicio: string, fin: string) => {
     if (!inicio || !fin || inicio === '00:00') return true; 
 
+    // Aquí usamos la fecha del calendario de la página, para saber si estamos editando el pasado o el presente
     const now = new Date();
+    
+    // Solo validamos las horas si el admin está intentando registrar una asistencia DEL DÍA DE HOY
+    const isToday = fecha === now.toISOString().split('T')[0];
+    if (!isToday) return true; // Si está registrando algo de ayer, lo dejamos pasar.
+
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
@@ -127,20 +116,15 @@ export default function AdminAsistenciasPage() {
     if (inicio <= fin) {
         return currentTime >= inicio && currentTime <= fin;
     } else {
-        // Por si los horarios cruzan la medianoche o están invertidos
         return currentTime >= inicio || currentTime <= fin;
     }
   };
 
-  // ==========================================
-  // 4. REGISTRAR ASISTENCIA EN LA BASE DE DATOS
-  // ==========================================
   const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
     
-    // 👈 NUEVO: Validación de horario pedida por Arlet
     if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
       alert(`⚠️ ACCIÓN DENEGADA\nNo puedes pasar asistencia fuera de horario.\nEl horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
-      return; // Detiene la ejecución, no se guarda en BD
+      return; 
     }
 
     try {
@@ -152,12 +136,12 @@ export default function AdminAsistenciasPage() {
           id_inscripcion: asist.id_inscripcion,
           id_horario: asist.id_horario,
           asistio: asistio,
-          id_registrado_por: 1 // Aquí luego puedes poner el ID del admin logueado
+          id_registrado_por: 1, 
+          fecha_registro: fecha // 👈 CORRECCIÓN: Le mandamos el día exacto seleccionado en el calendario
         })
       });
 
       if (res.ok) {
-        // Actualiza el color en la pantalla de inmediato sin recargar toda la página
         setAsistencias(prev => prev.map(a => a.id === asist.id ? { ...a, estado: asistio ? 'presente' : 'ausente' } : a));
       }
     } catch (error) {
@@ -195,7 +179,6 @@ export default function AdminAsistenciasPage() {
           {/* Filtros */}
           <div className="filter-bar">
             
-            {/* 👈 NUEVO: Interfaz del Buscador con ícono */}
             <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
               <Search size={18} color="#888" />
               <input
@@ -207,20 +190,33 @@ export default function AdminAsistenciasPage() {
               />
             </div>
 
+            {/* 👈 CORRECCIÓN: Selectores Dinámicos */}
             <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
               <option value="">Todos los horarios</option>
+              {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
             </select>
+
             <select className="select" value={filterTipo} onChange={e => setFilterTipo(e.target.value)} aria-label="Filtrar por tipo de entrenamiento">
               <option value="">Todos los tipos</option>
+              {Array.from(new Set(asistencias.map(a => a.tipoEntrenamiento))).map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
             </select>
+
             <select className="select" value={filterEstado} onChange={e => setFilterEstado(e.target.value)} aria-label="Filtrar por estado">
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendientes</option>
               <option value="presente">Presentes</option>
               <option value="ausente">Ausentes</option>
             </select>
+
             <select className="select" value={filterCarrera} onChange={e => setFilterCarrera(e.target.value)} aria-label="Filtrar por carrera">
               <option value="">Todas las carreras</option>
+              {Array.from(new Set(asistencias.map(a => a.carrera))).map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
             </select>
             
             <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
