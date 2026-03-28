@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, X } from 'lucide-react';
+import { RefreshCw, Check, X, Search } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -177,6 +177,7 @@ export default function AdminAsistenciasPage() {
                 type="date"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
+                title="Selecciona una fecha"
               />
             </div>
           </header>
@@ -184,14 +185,14 @@ export default function AdminAsistenciasPage() {
           {/* BOTONES */}
           <div className="filter-bar">
             
-            <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
+            <div className="search-box">
               <Search size={18} color="#888" />
               <input
                 type="text"
                 placeholder="Buscar alumno..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                style={{ border: 'none', outline: 'none', padding: '10px', background: 'transparent', width: '100%', fontSize: '14px' }}
+                className="search-input"
               />
             </div>
 
@@ -291,9 +292,8 @@ export default function AdminAsistenciasPage() {
                     )}
                   </div>
                 </div>
-
-              </div>
-            ))}
+              ))
+            )}
           </section>
 
         </div>
