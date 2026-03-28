@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CircleCheck } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Lock } from 'lucide-react';
 
 export default function RegisterPage() {
 
   const router = useRouter();
+  const progressFillRef = useRef<HTMLDivElement | null>(null);
 
   const [form,setForm] = useState({
     nombre: '',
@@ -28,9 +29,16 @@ export default function RegisterPage() {
   const [diasHorario,setDiasHorario] = useState<any[]>([]);
   const [divisiones,setDivisiones] = useState<any[]>([]);
   const [carreras,setCarreras] = useState<any[]>([]);
-  const [strength,setStrength] = useState(0);
   const [progress,setProgress] = useState(0);
   const [success,setSuccess] = useState(false);
+
+  const hasMinLength = form.password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(form.password);
+  const hasNumberOrSymbol = /[0-9]|[^A-Za-z0-9]/.test(form.password);
+  const passwordStrength = [hasMinLength, hasUppercase, hasNumberOrSymbol].filter(Boolean).length;
+  const passwordMeterLevel = form.password
+    ? Math.min(4, Math.floor((passwordStrength / 3) * 4))
+    : 0;
 
   // 1. Cargar todos los horarios (Esto ya trae los días incluidos gracias a nuestro backend)
   useEffect(()=>{
@@ -40,7 +48,7 @@ export default function RegisterPage() {
       .catch(()=>setHorarios([]));
   },[]);
 
-  // 2. 🔴 SOLUCIÓN: Extraer los días directamente de la lista que ya tenemos en memoria
+  // 2.  SOLUCIÓN: Extraer los días directamente de la lista que ya tenemos en memoria
   useEffect(() => {
     if (!form.horarioId) {
       setDiasHorario([]);
@@ -97,6 +105,11 @@ export default function RegisterPage() {
     setProgress((filled/(fields.length+1))*100);
   },[form]);
 
+  useEffect(() => {
+    if (!progressFillRef.current) return;
+    progressFillRef.current.style.width = `${progress}%`;
+  }, [progress]);
+
   // Manejo de inputs
   const handleChange=(e:any)=>{
     const {name,value,type,checked}=e.target;
@@ -104,14 +117,6 @@ export default function RegisterPage() {
       ...prev,
       [name]:type==='checkbox'?checked:value
     }));
-
-    if(name==='password'){
-      let s=0;
-      if(value.length>=8) s++;
-      if(/[A-Z]/.test(value)) s++;
-      if(/[0-9]/.test(value)) s++;
-      setStrength(s);
-    }
   };
 
   // Toggle selección de días
@@ -199,15 +204,15 @@ export default function RegisterPage() {
             </div>
 
             <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
+              <div ref={progressFillRef} className="progress-fill" />
             </div>
 
             <form onSubmit={handleSubmit}>
 
               {/* Tipo usuario */}
               <div className="form-group">
-                <label>Tipo de usuario</label>
-                <select name="tipo" value={form.tipo} className="auth-select" onChange={handleChange}>
+                <label htmlFor="tipo">Tipo de usuario</label>
+                <select id="tipo" title="Tipo de usuario" name="tipo" value={form.tipo} className="auth-select" onChange={handleChange}>
                   <option value="estudiante">Estudiante</option>
                   <option value="docente">Docente</option>
                 </select>
@@ -216,26 +221,26 @@ export default function RegisterPage() {
               {/* Nombre completo */}
               <div className="form-row">
                 <div className="form-group">
-                  <label>Nombre</label>
-                  <input name="nombre" value={form.nombre} className="auth-input" onChange={handleChange}/>
+                  <label htmlFor="nombre">Nombre</label>
+                  <input id="nombre" title="Nombre" name="nombre" value={form.nombre} className="auth-input" onChange={handleChange}/>
                   {errors.nombre && <small className="error-text">{errors.nombre}</small>}
                 </div>
                 <div className="form-group">
-                  <label>Apellido paterno</label>
-                  <input name="apellido_paterno" value={form.apellido_paterno} className="auth-input" onChange={handleChange}/>
+                  <label htmlFor="apellido_paterno">Apellido paterno</label>
+                  <input id="apellido_paterno" title="Apellido paterno" name="apellido_paterno" value={form.apellido_paterno} className="auth-input" onChange={handleChange}/>
                   {errors.apellido_paterno && <small className="error-text">{errors.apellido_paterno}</small>}
                 </div>
                 <div className="form-group">
-                  <label>Apellido materno</label>
-                  <input name="apellido_materno" value={form.apellido_materno} className="auth-input" onChange={handleChange}/>
+                  <label htmlFor="apellido_materno">Apellido materno</label>
+                  <input id="apellido_materno" title="Apellido materno" name="apellido_materno" value={form.apellido_materno} className="auth-input" onChange={handleChange}/>
                   {errors.apellido_materno && <small className="error-text">{errors.apellido_materno}</small>}
                 </div>
               </div>
 
               {/* Correo */}
               <div className="form-group">
-                <label>Correo institucional</label>
-                <input name="email" type="email" value={form.email} className="auth-input" onChange={handleChange}/>
+                <label htmlFor="email">Correo institucional</label>
+                <input id="email" title="Correo institucional" name="email" type="email" value={form.email} className="auth-input" onChange={handleChange}/>
                 {errors.email && <small className="error-text">{errors.email}</small>}
               </div>
 
@@ -243,8 +248,8 @@ export default function RegisterPage() {
               {form.tipo==="estudiante" && (
                 <>
                   <div className="form-group">
-                    <label>División</label>
-                    <select name="division" value={form.division} className="auth-select" onChange={handleChange}>
+                    <label htmlFor="division">División</label>
+                    <select id="division" title="División" name="division" value={form.division} className="auth-select" onChange={handleChange}>
                       <option value="">Selecciona división</option>
                       {divisiones.map(d=>(<option key={d.id_division} value={d.id_division}>{d.nombre_division}</option>))}
                     </select>
@@ -252,8 +257,8 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Carrera</label>
-                    <select name="carrera" value={form.carrera} className="auth-select" onChange={handleChange}>
+                    <label htmlFor="carrera">Carrera</label>
+                    <select id="carrera" title="Carrera" name="carrera" value={form.carrera} className="auth-select" onChange={handleChange}>
                       <option value="">Selecciona carrera</option>
                       {carreras.map(c=>(<option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>))}
                     </select>
@@ -264,8 +269,8 @@ export default function RegisterPage() {
 
               {/* Horario */}
               <div className="form-group">
-                <label>Horario</label>
-                <select name="horarioId" value={form.horarioId} className="auth-select" onChange={handleChange}>
+                <label htmlFor="horarioId">Horario</label>
+                <select id="horarioId" title="Horario" name="horarioId" value={form.horarioId} className="auth-select" onChange={handleChange}>
                   <option value="">Selecciona horario</option>
                   {horarios.map(h=>(<option key={h.id_horario} value={h.id_horario}>{h.hora_inicio} - {h.hora_fin}</option>))}
                 </select>
@@ -291,15 +296,40 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div className="form-group">
-                <label>Contraseña</label>
-                <input name="password" type="password" className="auth-input" onChange={handleChange}/>
-                {errors.password && <small className="error-text">{errors.password}</small>}
+                <label className="input-label" htmlFor="password"><Lock size={16}/> Contraseña</label>
+                <input id="password" title="Contraseña" name="password" type="password" className="auth-input" placeholder="Crea una contraseña segura" onChange={handleChange}/>
+
+                <div className="password-validator" aria-live="polite">
+                  <div className="password-validator-bars" role="presentation">
+                    <span className={`password-validator-bar ${passwordMeterLevel >= 1 ? 'is-active' : ''}`} />
+                    <span className={`password-validator-bar ${passwordMeterLevel >= 2 ? 'is-active' : ''}`} />
+                    <span className={`password-validator-bar ${passwordMeterLevel >= 3 ? 'is-active' : ''}`} />
+                    <span className={`password-validator-bar ${passwordMeterLevel >= 4 ? 'is-active' : ''}`} />
+                  </div>
+
+                  <ul className="password-validator-list">
+                    <li className={`password-validator-item ${hasMinLength ? 'is-met' : ''}`}>
+                      <span className="password-validator-dot" aria-hidden="true" />
+                      <span>Mínimo 8 caracteres</span>
+                    </li>
+                    <li className={`password-validator-item ${hasUppercase ? 'is-met' : ''}`}>
+                      <span className="password-validator-dot" aria-hidden="true" />
+                      <span>Una letra mayúscula</span>
+                    </li>
+                    <li className={`password-validator-item ${hasNumberOrSymbol ? 'is-met' : ''}`}>
+                      <span className="password-validator-dot" aria-hidden="true" />
+                      <span>Un número o símbolo</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {!!form.password && errors.password && <small className="error-text">{errors.password}</small>}
               </div>
 
               <div className="form-group">
-                <label>Confirmar contraseña</label>
-                <input name="confirmPassword" type="password" className="auth-input" onChange={handleChange}/>
-                {errors.confirmPassword && <small className="error-text">{errors.confirmPassword}</small>}
+                <label className="input-label" htmlFor="confirmPassword"><Lock size={16}/> Confirmar contraseña</label>
+                <input id="confirmPassword" title="Confirmar contraseña" name="confirmPassword" type="password" className="auth-input" placeholder="Confirma tu contraseña" onChange={handleChange}/>
+                {!!form.confirmPassword && errors.confirmPassword && <small className="error-text">{errors.confirmPassword}</small>}
               </div>
 
               <div className="checkbox-wrapper">
