@@ -465,6 +465,74 @@ html.dark .btn-logout:hover { background: rgba(255,255,255,.14); }
 .hint.ok { color: var(--blue-500); font-weight: 600; }
 .hint.ok::before { content: "✔"; }
 
+.password-validator {
+  margin-top: 12px;
+}
+
+.password-validator-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.password-validator-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(15,23,42,.10);
+  transition: background .2s ease;
+}
+
+.password-validator-bar.is-active {
+  background: var(--blue-500);
+}
+
+.password-validator-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border-left: 3px solid #00A4E0;
+  background: rgba(0,164,224,.10);
+  display: grid;
+  gap: 4px;
+}
+
+.password-validator-item {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-validator-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.password-validator-item.is-met {
+  color: var(--blue-500);
+  font-weight: 700;
+}
+
+.password-validator-item.is-met .password-validator-dot::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 /* ==========================================
    13. SUCCESS STATE
    ========================================== */
