@@ -35,17 +35,15 @@ export default function AdminUsuariosPage() {
 
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([]);
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterRol, setFilterRol] = useState('');
-  const [filterEstado, setFilterEstado] = useState('');
-  const [filterCarrera, setFilterCarrera] = useState('');
 
   const [bitacoraOpen, setBitacoraOpen] = useState(false);
   const [bitacoraUsuario, setBitacoraUsuario] = useState<{ id: number; nombre: string } | null>(null);
 
   const [openEditModal, setOpenEditModal] = useState(false);
   const [usuarioEditar, setUsuarioEditar] = useState<Usuario | null>(null);
+
+  const [openCreateModal, setOpenCreateModal] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -57,26 +55,35 @@ export default function AdminUsuariosPage() {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [usuarioEliminar, setUsuarioEliminar] = useState<number | null>(null);
 
+  const resetForm = () => {
+    setFormData({
+      nombre: '',
+      apellido_paterno: '',
+      apellido_materno: '',
+      correo: '',
+    });
+  };
+
   const fetchUsuarios = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
 
-        const formateados = data.map((u: any) => ({
-          id: u.id_usuario,
-          nombre: u.nombre,
-          apellido: `${u.apellido_paterno} ${u.apellido_materno}`,
-          iniciales: `${u.nombre[0]}${u.apellido_paterno[0]}`.toUpperCase(),
-          correo: u.correo,
-          matricula: u.id_usuario.toString(),
-          carrera: u.carrera?.nombre_carrera || 'Sin carrera',
-          rol: u.rol.nombre_rol,
-          estado: u.activo ? 'activo' : 'inactivo',
-        }));
+      const formateados = data.map((u: any) => ({
+        id: u.id_usuario,
+        nombre: u.nombre,
+        apellido: `${u.apellido_paterno} ${u.apellido_materno}`,
+        iniciales: `${u.nombre[0]}${u.apellido_paterno[0]}`.toUpperCase(),
+        correo: u.correo,
+        matricula: u.id_usuario.toString(),
+        carrera: u.carrera?.nombre_carrera || 'Sin carrera',
+        rol: u.rol.nombre_rol,
+        estado: u.activo ? 'activo' : 'inactivo',
+      }));
 
-        setUsuarios(formateados);
-      }
+      setUsuarios(formateados);
+      setFilteredUsuarios(formateados);
+
     } catch (error) {
       console.error(error);
     }
@@ -86,22 +93,79 @@ export default function AdminUsuariosPage() {
 
   useEffect(() => {
     let f = [...usuarios];
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       f = f.filter(u =>
-        `${u.nombre} ${u.apellido} ${u.correo} ${u.matricula}`
-          .toLowerCase()
-          .includes(q)
+        `${u.nombre} ${u.apellido} ${u.correo} ${u.matricula}`.toLowerCase().includes(q)
       );
     }
-
-    if (filterRol) f = f.filter(u => u.rol === filterRol);
-    if (filterEstado) f = f.filter(u => u.estado === filterEstado);
-    if (filterCarrera) f = f.filter(u => u.carrera.toLowerCase() === filterCarrera.toLowerCase());
-
     setFilteredUsuarios(f);
-  }, [usuarios, searchQuery, filterRol, filterEstado, filterCarrera]);
+  }, [usuarios, searchQuery]);
+
+  // ✅ EDITAR
+  const handleSubmitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usuarioEditar) return;
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/editar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_usuario: usuarioEditar.id,
+          ...formData,
+        }),
+      });
+
+      setOpenEditModal(false);
+      document.body.style.overflow = '';
+      fetchUsuarios();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // ✅ CREAR
+  const handleSubmitCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/crear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      setOpenCreateModal(false);
+      document.body.style.overflow = '';
+      resetForm();
+      fetchUsuarios();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // ✅ ELIMINAR
+  const confirmarEliminar = async () => {
+    if (!usuarioEliminar) return;
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/eliminar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario: usuarioEliminar }),
+      });
+
+      setOpenConfirm(false);
+      setUsuarioEliminar(null);
+      fetchUsuarios();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleEditar = (usr: Usuario) => {
     const [ap, am] = usr.apellido.split(' ');
@@ -118,69 +182,15 @@ export default function AdminUsuariosPage() {
     document.body.style.overflow = 'hidden';
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmitEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!usuarioEditar) return;
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/editar`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_usuario: usuarioEditar.id,
-            ...formData
-          }),
-        }
-      );
-
-      if (res.ok) {
-        setOpenEditModal(false);
-        document.body.style.overflow = '';
-        fetchUsuarios();
-      }
-
-    } catch (error) {
-      console.error(error);
-    }
+  const handleBitacora = (id: number, nombre: string) => {
+    setBitacoraUsuario({ id, nombre });
+    setBitacoraOpen(true);
+    document.body.style.overflow = 'hidden';
   };
 
   const handleEliminar = (id: number) => {
     setUsuarioEliminar(id);
     setOpenConfirm(true);
-  };
-
-  const confirmarEliminar = async () => {
-    if (!usuarioEliminar) return;
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/eliminar`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_usuario: usuarioEliminar }),
-        }
-      );
-
-      if (res.ok) fetchUsuarios();
-
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setOpenConfirm(false);
-    }
-  };
-
-  const handleBitacora = (id: number, nombre: string) => {
-    setBitacoraUsuario({ id, nombre });
-    setBitacoraOpen(true);
   };
 
   return (
@@ -195,7 +205,13 @@ export default function AdminUsuariosPage() {
               <h2>Gestión de Usuarios</h2>
               <p>Administra los usuarios de la plataforma</p>
             </div>
-            <button className="btn btn--yellow">
+
+            <button className="btn btn--yellow"
+              onClick={() => {
+                resetForm();
+                setOpenCreateModal(true);
+                document.body.style.overflow = 'hidden';
+              }}>
               <UserPlus /> Nuevo Usuario
             </button>
           </header>
@@ -221,108 +237,194 @@ export default function AdminUsuariosPage() {
                 </div>
 
                 <div className="row-info">
-                  <span className="row-name">
-                    {usr.nombre} {usr.apellido}
-                  </span>
+                  <span className="row-name">{usr.nombre} {usr.apellido}</span>
                   <span className="row-sub muted">{usr.correo}</span>
                 </div>
 
                 <div className="row-actions">
 
-                  <span className={`chip chip--${usr.rol}`}>
-                    {ROL_LABELS[usr.rol]}
-                  </span>
+  <span className={`chip chip--${usr.rol}`}>
+    {ROL_LABELS[usr.rol]}
+  </span>
 
-                  <span className={`chip chip--${usr.estado}`}>
-                    {usr.estado}
-                  </span>
+  <span className={`chip chip--${usr.estado}`}>
+    {usr.estado}
+  </span>
 
-                  <button className="btn-icon btn-icon--blue"
-                    onClick={() => handleBitacora(usr.id, `${usr.nombre} ${usr.apellido}`)}>
-                    <ClipboardList />
-                  </button>
+  <button className="btn-icon btn-icon--blue"
+    onClick={() => handleBitacora(usr.id, `${usr.nombre} ${usr.apellido}`)}>
+    <ClipboardList />
+  </button>
 
-                  <button className="btn-icon btn-icon--cyan"
-                    onClick={() => handleEditar(usr)}>
-                    <Pencil />
-                  </button>
+  <button className="btn-icon btn-icon--cyan"
+    onClick={() => handleEditar(usr)}>
+    <Pencil />
+  </button>
 
-                  <button className="btn-icon btn-icon--red"
-                    onClick={() => handleEliminar(usr.id)}>
-                    <Trash2 />
-                  </button>
+  <button className="btn-icon btn-icon--red"
+    onClick={() => handleEliminar(usr.id)}>
+    <Trash2 />
+  </button>
 
-                </div>
+</div>
               </div>
             ))}
           </section>
+
         </div>
       </main>
 
-      {/* MODAL EDITAR ESTILO CONVOCATORIAS */}
-      {openEditModal && (
+      {/* MODAL CREAR */}
+     {openCreateModal && (
+  <div className="modal-overlay">
+    <div className="modal-box modal-box--wide">
+
+      <div className="modal-header">
+        <div>
+          <h3>Nuevo usuario</h3>
+          <p>Registra un nuevo usuario en la plataforma</p>
+        </div>
+        <button className="btn-close" onClick={() => {
+          setOpenCreateModal(false);
+          document.body.style.overflow = '';
+        }}>
+          <X />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmitCreate}>
+        <div className="modal-body">
+
+          <div className="form-group">
+            <label>Nombre</label>
+            <input
+              className="form-select"
+              value={formData.nombre}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group half-width">
+              <label>Apellido Paterno</label>
+              <input
+                className="form-select"
+                value={formData.apellido_paterno}
+                onChange={(e) =>
+                  setFormData({ ...formData, apellido_paterno: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="form-group half-width">
+              <label>Apellido Materno</label>
+              <input
+                className="form-select"
+                value={formData.apellido_materno}
+                onChange={(e) =>
+                  setFormData({ ...formData, apellido_materno: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Correo</label>
+            <input
+              className="form-select"
+              value={formData.correo}
+              onChange={(e) =>
+                setFormData({ ...formData, correo: e.target.value })
+              }
+            />
+          </div>
+
+        </div>
+
+        <div className="modal-footer">
+          <button
+            type="button"
+            className="btn btn--outline"
+            onClick={() => {
+              setOpenCreateModal(false);
+              document.body.style.overflow = '';
+            }}
+          >
+            Cancelar
+          </button>
+
+          <button type="submit" className="btn btn--blue">
+            <Save /> Guardar
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+)}
+
+      {/* MODAL EDITAR */}
+      {openEditModal && usuarioEditar && (
         <div className="modal-overlay">
           <div className="modal-box modal-box--wide">
 
             <div className="modal-header">
-              <div>
-                <h3>Editar usuario</h3>
-                <p>Actualiza la información del usuario</p>
-              </div>
-              <button className="btn-close" onClick={() => {
-                setOpenEditModal(false);
-                document.body.style.overflow = '';
-              }}>
+              <h3>Editar usuario</h3>
+              <button className="btn-close" onClick={() => setOpenEditModal(false)}>
                 <X />
               </button>
             </div>
 
             <form onSubmit={handleSubmitEdit}>
-
               <div className="modal-body">
 
-                <div className="form-group">
-                  <label>Nombre</label>
-                  <input className="form-select" name="nombre" value={formData.nombre} onChange={handleChange}/>
-                </div>
+                <input className="form-select"
+                  value={formData.nombre}
+                  onChange={e => setFormData({...formData, nombre: e.target.value})}
+                />
 
-                <div className="form-row">
-                  <div className="form-group half-width">
-                    <label>Apellido Paterno</label>
-                    <input className="form-select" name="apellido_paterno" value={formData.apellido_paterno} onChange={handleChange}/>
-                  </div>
+                <input className="form-select"
+                  value={formData.apellido_paterno}
+                  onChange={e => setFormData({...formData, apellido_paterno: e.target.value})}
+                />
 
-                  <div className="form-group half-width">
-                    <label>Apellido Materno</label>
-                    <input className="form-select" name="apellido_materno" value={formData.apellido_materno} onChange={handleChange}/>
-                  </div>
-                </div>
+                <input className="form-select"
+                  value={formData.apellido_materno}
+                  onChange={e => setFormData({...formData, apellido_materno: e.target.value})}
+                />
 
-                <div className="form-group">
-                  <label>Correo</label>
-                  <input className="form-select" name="correo" value={formData.correo} onChange={handleChange}/>
-                </div>
+                <input className="form-select"
+                  value={formData.correo}
+                  onChange={e => setFormData({...formData, correo: e.target.value})}
+                />
 
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn--outline"
-                  onClick={() => {
-                    setOpenEditModal(false);
-                    document.body.style.overflow = '';
-                  }}>
-                  Cancelar
-                </button>
-
                 <button type="submit" className="btn btn--blue">
                   <Save /> Guardar
                 </button>
               </div>
-
             </form>
 
           </div>
         </div>
+      )}
+
+      {/* BITACORA */}
+      {bitacoraOpen && bitacoraUsuario && (
+        <Bitacora
+          isOpen={bitacoraOpen}
+          usuarioId={bitacoraUsuario.id}
+          usuarioNombre={bitacoraUsuario.nombre}
+          onClose={() => {
+            setBitacoraOpen(false);
+            setBitacoraUsuario(null);
+            document.body.style.overflow = '';
+          }}
+        />
       )}
 
       <ConfirmModal
