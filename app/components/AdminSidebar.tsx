@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Home, Users, CalendarDays, UserPlus, CalendarCheck,
   Megaphone, BarChart3, Settings, LayoutGrid, LogOut, Clock,
-  Sun, Moon
+  Sun, Moon, X
 } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 
@@ -15,6 +15,8 @@ interface AdminSidebarProps {
   userRole?: string;
   userInitials?: string;
 }
+
+const SIDEBAR_BREAKPOINT = 1200;
 
 const NAV_ITEMS = [
   { href: '/dashboard',           icon: Home,          label: 'Dashboard'     },
@@ -39,44 +41,61 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const router   = useRouter();
 
-  // 🔥 FIX HYDRATION
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
   const handleLogout = () => {
     localStorage.removeItem('user');
     router.push('/login');
   };
 
+  useEffect(() => {
+    const closeOnDesktop = () => {
+      if (window.innerWidth > SIDEBAR_BREAKPOINT) {
+        setOpen(false);
+      }
+    };
+
+    closeOnDesktop();
+
+    window.addEventListener('resize', closeOnDesktop);
+    return () => window.removeEventListener('resize', closeOnDesktop);
+  }, []);
+
   return (
     <>
-      {!open && (
-        <button className="menu-toggle" type="button" onClick={() => setOpen(true)} aria-label="Abrir menú">
-          <LayoutGrid />
-        </button>
+      <button
+        className={`menu-toggle ${open ? 'is-hidden' : ''}`}
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <LayoutGrid />
+      </button>
+
+      {open && (
+        <button
+          className="sidebar-backdrop"
+          type="button"
+          aria-label="Cerrar menú"
+          onClick={() => setOpen(false)}
+        />
       )}
 
       <aside
         className={`sidebar ${open ? 'active' : ''}`}
-        onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}
       >
         <div className="sb-brand">
           <div className="sb-logo"><LayoutGrid /></div>
           <div className="sb-brand-text">
             <h1>SchedMaster</h1>
             <p>Panel de Administración</p>
-
             <div className="theme-switch" onClick={toggle}>
               {darkMode ? <Moon size={16} /> : <Sun size={16} />}
               <span>{darkMode ? 'Oscuro' : 'Claro'}</span>
             </div>
-
           </div>
+
+          <button className="sb-close" type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú">
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="nav" onClick={() => setOpen(false)}>

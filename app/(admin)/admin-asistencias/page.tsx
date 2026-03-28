@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, X } from 'lucide-react';
+import { RefreshCw, Check, X, Search } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -38,9 +38,17 @@ export default function AdminAsistenciasPage() {
   const [filterCarrera,  setFilterCarrera]  = useState('');
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
 
-  const fetchAsistencias = async () => {
+  const fetchAsistencias = async (query = '') => {
     try {
-      const res = await fetch(`http://localhost:3001/api/asistencias/admin?fecha=${fecha}`);
+      const params = new URLSearchParams();
+      params.set('fecha', fecha);
+
+      const term = query.trim();
+      if (term) {
+        params.set('q', term);
+      }
+
+      const res = await fetch(`${API_URL}/api/asistencias/admin?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         
@@ -76,8 +84,12 @@ export default function AdminAsistenciasPage() {
   };
 
   useEffect(() => {
-    fetchAsistencias();
-  }, [fecha]);
+    const timer = setTimeout(() => {
+      fetchAsistencias(searchTerm);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [fecha, searchTerm]);
 
   useEffect(() => {
     let f = [...asistencias];
@@ -86,14 +98,8 @@ export default function AdminAsistenciasPage() {
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
     
-    if (searchTerm) {
-      f = f.filter(a => 
-        a.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
     setFilteredAsistencias(f);
-  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); 
+  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera]); 
 
   useEffect(() => {
     setFilteredAsistencias(asistencias);
@@ -177,21 +183,21 @@ export default function AdminAsistenciasPage() {
                 type="date"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
+                title="Selecciona una fecha"
               />
             </div>
           </header>
 
           {/* BOTONES */}
           <div className="filter-bar">
-            
-            <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
-              <Search size={18} color="#888" />
+
+            <div className="field">
+              <Search />
               <input
-                type="text"
-                placeholder="Buscar alumno..."
+                type="search"
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                style={{ border: 'none', outline: 'none', padding: '10px', background: 'transparent', width: '100%', fontSize: '14px' }}
               />
             </div>
 
@@ -224,7 +230,7 @@ export default function AdminAsistenciasPage() {
               ))}
             </select>
             
-            <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
+            <button className="btn btn--blue" type="button" onClick={() => fetchAsistencias(searchTerm)}>
               <RefreshCw size={18} /> Actualizar
             </button>
           </div>
@@ -291,9 +297,8 @@ export default function AdminAsistenciasPage() {
                     )}
                   </div>
                 </div>
-
-              </div>
-            ))}
+              ))
+            )}
           </section>
 
         </div>
