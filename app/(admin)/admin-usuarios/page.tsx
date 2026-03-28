@@ -238,16 +238,19 @@ export default function AdminUsuariosPage() {
                   </span>
 
                   <button className="btn-icon btn-icon--blue"
+                    title="Ver bitácora"
                     onClick={() => handleBitacora(usr.id, `${usr.nombre} ${usr.apellido}`)}>
                     <ClipboardList />
                   </button>
 
                   <button className="btn-icon btn-icon--cyan"
+                    title="Editar usuario"
                     onClick={() => handleEditar(usr)}>
                     <Pencil />
                   </button>
 
                   <button className="btn-icon btn-icon--red"
+                    title="Eliminar usuario"
                     onClick={() => handleEliminar(usr.id)}>
                     <Trash2 />
                   </button>
@@ -269,7 +272,7 @@ export default function AdminUsuariosPage() {
                 <h3>Editar usuario</h3>
                 <p>Actualiza la información del usuario</p>
               </div>
-              <button className="btn-close" onClick={() => {
+              <button className="btn-close" title="Cerrar" onClick={() => {
                 setOpenEditModal(false);
                 document.body.style.overflow = '';
               }}>
@@ -283,24 +286,24 @@ export default function AdminUsuariosPage() {
 
                 <div className="form-group">
                   <label>Nombre</label>
-                  <input className="form-select" name="nombre" value={formData.nombre} onChange={handleChange}/>
+                  <input className="form-select" name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleChange}/>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group half-width">
                     <label>Apellido Paterno</label>
-                    <input className="form-select" name="apellido_paterno" value={formData.apellido_paterno} onChange={handleChange}/>
+                    <input className="form-select" name="apellido_paterno" placeholder="Apellido Paterno" value={formData.apellido_paterno} onChange={handleChange}/>
                   </div>
 
                   <div className="form-group half-width">
                     <label>Apellido Materno</label>
-                    <input className="form-select" name="apellido_materno" value={formData.apellido_materno} onChange={handleChange}/>
+                    <input className="form-select" name="apellido_materno" placeholder="Apellido Materno" value={formData.apellido_materno} onChange={handleChange}/>
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label>Correo</label>
-                  <input className="form-select" name="correo" value={formData.correo} onChange={handleChange}/>
+                  <input className="form-select" name="correo" placeholder="Correo" value={formData.correo} onChange={handleChange}/>
                 </div>
 
               </div>

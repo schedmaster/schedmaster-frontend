@@ -209,10 +209,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             </button>
           </form>
 
-          <div className="divider"><span>¿Primera vez?</span></div>
+          {/* <div className="divider"><span>¿Primera vez?</span></div>
           <div className="auth-link">
             <Link href="/register">Crea tu cuenta aquí</Link>
-          </div>
+          </div> */}
 
         </div>
       </section>
