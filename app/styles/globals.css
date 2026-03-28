@@ -1599,6 +1599,11 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
 
 .activities-paragraph { margin-top: var(--s-2); }
 
+.btn--asistencias-action {
+  min-width: 132px;
+  justify-content: center;
+}
+
 /* ==========================================
    32. RESPONSIVE
    ========================================== */

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, Check, X, Search } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
+import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -25,6 +26,7 @@ interface Asistencia {
 }
 
 export default function AdminAsistenciasPage() {
+  const router = useRouter();
 
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [fecha, setFecha] = useState<string>(() =>
@@ -230,8 +232,16 @@ export default function AdminAsistenciasPage() {
               ))}
             </select>
             
-            <button className="btn btn--blue" type="button" onClick={() => fetchAsistencias(searchTerm)}>
+            <button className="btn btn--blue btn--asistencias-action" type="button" onClick={() => fetchAsistencias(searchTerm)}>
               <RefreshCw size={18} /> Actualizar
+            </button>
+
+            <button
+              type="button"
+              className="btn btn--outline btn--asistencias-action"
+              onClick={() => router.push('/admin-asistencias/historico')}
+            >
+              Histórico
             </button>
           </div>
 
