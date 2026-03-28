@@ -69,7 +69,6 @@ export default function AdminSidebar({
               <span>{darkMode ? 'Oscuro' : 'Claro'}</span>
             </div>
           </div>
-        </div>
 
           {isMobile && (
             <button className="sb-close" type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú">

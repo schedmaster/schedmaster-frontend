@@ -29,10 +29,34 @@ export default function AdminAnunciosPage() {
 
   const [preview, setPreview] = useState<string | null>(null);
 
+  const normalizeAnuncios = (payload: unknown): Anuncio[] => {
+    if (Array.isArray(payload)) return payload as Anuncio[];
+
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'data' in payload &&
+      Array.isArray((payload as { data: unknown }).data)
+    ) {
+      return (payload as { data: Anuncio[] }).data;
+    }
+
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'anuncios' in payload &&
+      Array.isArray((payload as { anuncios: unknown }).anuncios)
+    ) {
+      return (payload as { anuncios: Anuncio[] }).anuncios;
+    }
+
+    return [];
+  };
+
   useEffect(() => {
     fetch('http://localhost:3001/api/anuncios')
       .then(res => res.json())
-      .then(data => setAnuncios(data))
+      .then(data => setAnuncios(normalizeAnuncios(data)))
       .catch(err => console.error(err));
   }, []);
 
@@ -208,19 +232,19 @@ export default function AdminAnunciosPage() {
                           {a.fotografia && (
                             <img
                               src={`http://localhost:3001/imagenes/${a.fotografia}`}
-                              className="announcement-image"
-                              style={{ width: '80px' }}
+                              className="announcement-image announcement-image--table"
+                              alt={`Imagen del anuncio: ${a.titulo}`}
                             />
                           )}
                         </td>
 
                         <td>
                           <div className="row-actions">
-                            <button className="btn-icon btn-icon--cyan" onClick={() => openEdit(a)}>
+                            <button className="btn-icon btn-icon--cyan" title="Editar anuncio" onClick={() => openEdit(a)}>
                               <Pencil size={14} />
                             </button>
 
-                            <button className="btn-icon btn-icon--red" onClick={() => deleteAnuncio(a.id)}>
+                            <button className="btn-icon btn-icon--red" title="Eliminar anuncio" onClick={() => deleteAnuncio(a.id)}>
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -256,6 +280,7 @@ export default function AdminAnunciosPage() {
                 <label className="date-label">Título</label>
                 <input
                   className="form-select"
+                  placeholder="Ingresa el título del anuncio"
                   value={form.titulo}
                   onChange={(e) => setForm({ ...form, titulo: e.target.value })}
                 />
@@ -265,6 +290,7 @@ export default function AdminAnunciosPage() {
                 <label className="date-label">Descripción</label>
                 <textarea
                   className="form-textarea"
+                  placeholder="Ingresa la descripción del anuncio"
                   value={form.descripcion}
                   onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
                 />
@@ -274,6 +300,7 @@ export default function AdminAnunciosPage() {
                 <label className="date-label">Prioridad</label>
                 <select
                   className="form-select"
+                  aria-label="Selecciona la prioridad del anuncio"
                   value={form.prioridad}
                   onChange={(e) => setForm({ ...form, prioridad: e.target.value })}
                 >
@@ -289,6 +316,9 @@ export default function AdminAnunciosPage() {
                   type="file"
                   className="form-select"
                   accept="image/*"
+                  placeholder="Selecciona una imagen para el anuncio"
+                  title="Selecciona una imagen para el anuncio"
+                  aria-label="Selecciona una imagen para el anuncio"
                   onChange={(e) => {
                     const file = e.target.files?.[0] || null;
 
@@ -303,8 +333,8 @@ export default function AdminAnunciosPage() {
                 {preview && (
                   <img
                     src={preview}
-                    className="announcement-image"
-                    style={{ marginTop: '10px' }}
+                    className="announcement-image announcement-image--preview"
+                    alt="Vista previa de la imagen del anuncio"
                   />
                 )}
               </div>
