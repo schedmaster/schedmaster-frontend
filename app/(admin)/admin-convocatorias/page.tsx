@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, CalendarDays, Pencil, Power, PowerOff, X, Save } from 'lucide-react';
+import { Plus, CalendarDays, Pencil, Power, PowerOff, X, Save, Search } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 
 interface Convocatoria {
@@ -124,6 +124,7 @@ const ModalContent = ({
 export default function AdminConvocatoriasPage() {
 
   const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [modalCrear, setModalCrear] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
 
@@ -143,31 +144,53 @@ export default function AdminConvocatoriasPage() {
      CARGAR CONVOCATORIAS
   ==========================*/
 
-  useEffect(() => {
-    cargarConvocatorias();
-  }, []);
+  const mapConvocatorias = (payload: any): Convocatoria[] => {
+    const source = Array.isArray(payload) ? payload : payload?.data;
 
-  const cargarConvocatorias = async () => {
+    if (!Array.isArray(source)) return [];
+
+    return source.map((p: any) => ({
+      id: p.id_periodo,
+      periodo: p.nombre_periodo,
+      fechaInicio: p.fecha_inicio_inscripcion.split('T')[0],
+      fechaFin: p.fecha_fin_inscripcion.split('T')[0],
+      fechaIngreso: p.fecha_inicio_actividades.split('T')[0],
+      fechaFinPeriodo: p.fecha_fin_periodo.split('T')[0],
+      estado: p.estado === 'activo' ? 'activada' : 'desactivada'
+    }));
+  };
+
+  const cargarConvocatorias = async (query = '') => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`);
+      const term = query.trim();
+      const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`;
+      const endpoint = term
+        ? `${baseUrl}?q=${encodeURIComponent(term)}`
+        : baseUrl;
+
+      const res = await fetch(endpoint);
+
+      if (!res.ok) {
+        setConvocatorias([]);
+        return;
+      }
+
       const data = await res.json();
-
-      const formateadas = data.map((p: any) => ({
-        id: p.id_periodo,
-        periodo: p.nombre_periodo,
-        fechaInicio: p.fecha_inicio_inscripcion.split('T')[0],
-        fechaFin: p.fecha_fin_inscripcion.split('T')[0],
-        fechaIngreso: p.fecha_inicio_actividades.split('T')[0],
-        fechaFinPeriodo: p.fecha_fin_periodo.split('T')[0],
-        estado: p.estado === 'activo' ? 'activada' : 'desactivada'
-      }));
-
-      setConvocatorias(formateadas);
+      setConvocatorias(mapConvocatorias(data));
 
     } catch (error) {
       console.error("Error cargando convocatorias", error);
+      setConvocatorias([]);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      cargarConvocatorias(searchQuery);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   /* =========================
      MODALES
@@ -231,7 +254,7 @@ export default function AdminConvocatoriasPage() {
 
       closeCrear();
       closeEditar();
-      cargarConvocatorias();
+      cargarConvocatorias(searchQuery);
 
     } catch (error) {
       console.error(error);
@@ -258,6 +281,18 @@ export default function AdminConvocatoriasPage() {
               <Plus /> Nueva convocatoria
             </button>
           </header>
+
+          <section className="filter-bar">
+            <div className="field">
+              <Search />
+              <input
+                type="search"
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </section>
 
           <section className="table-area">
             <div className="table-scroll">
