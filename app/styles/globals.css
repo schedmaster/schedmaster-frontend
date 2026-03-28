@@ -81,6 +81,7 @@ html, body {
   font-family: var(--font);
   background: var(--color-bg);
   color: var(--color-text-primary);
+  overflow-x: hidden;
   transition: background .3s ease, color .3s ease;
 }
 
@@ -321,6 +322,20 @@ html.dark .btn-logout:hover { background: rgba(255,255,255,.14); }
 }
 .menu-toggle:active { transform: scale(.95); }
 .menu-toggle svg    { width: 24px; height: 24px; }
+.menu-toggle.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  border: none;
+  background: rgba(0,0,0,.42);
+  cursor: pointer;
+}
 
 /* ==========================================
    6. CARDS
@@ -1520,9 +1535,10 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
    32. RESPONSIVE
    ========================================== */
 
-@media (max-width: 980px) {
+@media (max-width: 1200px) {
   .app { grid-template-columns: 1fr; }
   .menu-toggle { display: flex; }
+  .sidebar-backdrop { display: block; }
   .sidebar {
     position: fixed; top: 0; left: 0;
     width: min(84vw, 320px); height: 100vh; height: 100dvh; z-index: 999;
@@ -1530,13 +1546,6 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
   }
   .sb-close { display: inline-flex; }
   .sidebar.active { transform: translateX(0); }
-  .sidebar::before {
-    content: ""; position: fixed;
-    top: 0; left: min(84vw, 320px); width: 100vw; height: 100vh;
-    background: rgba(0,0,0,.4); opacity: 0;
-    pointer-events: none; transition: opacity .3s ease;
-  }
-  .sidebar.active::before { opacity: 1; pointer-events: auto; }
   .main { padding: var(--s-3); padding-top: 80px; }
   .field, .select { min-width: 100%; }
   .section-header { flex-direction: column; }
