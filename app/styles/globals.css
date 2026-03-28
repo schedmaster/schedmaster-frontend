@@ -1586,4 +1586,3 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
 }
 .dark-toggle:hover { transform: scale(1.08); }
 .dark-toggle:active { transform: scale(0.95); }
-

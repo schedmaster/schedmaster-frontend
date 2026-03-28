@@ -11,8 +11,8 @@ import {
 import { useDarkMode } from '../hooks/useDarkMode';
 
 interface AdminSidebarProps {
-  userName?:     string;
-  userRole?:     string;
+  userName?: string;
+  userRole?: string;
   userInitials?: string;
 }
 
@@ -33,26 +33,12 @@ export default function AdminSidebar({
   userRole     = 'Administrador',
   userInitials = 'AU',
 }: AdminSidebarProps) {
+
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggle } = useDarkMode();
   const pathname = usePathname();
   const router   = useRouter();
-
-  useEffect(() => {
-    const query = window.matchMedia('(max-width: 980px)');
-
-    const syncSidebarMode = () => {
-      const mobile = query.matches;
-      setIsMobile(mobile);
-      if (!mobile) setOpen(false);
-    };
-
-    syncSidebarMode();
-    query.addEventListener('change', syncSidebarMode);
-
-    return () => query.removeEventListener('change', syncSidebarMode);
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -74,17 +60,16 @@ export default function AdminSidebar({
         onClick={e => { if (isMobile && e.target === e.currentTarget) setOpen(false); }}
       >
         <div className="sb-brand">
-          <div className="sb-brand-main">
-            <div className="sb-logo"><LayoutGrid /></div>
-            <div className="sb-brand-text">
-              <h1>SchedMaster</h1>
-              <p>Panel de Administración</p>
-              <div className="theme-switch" onClick={toggle}>
-                {darkMode ? <Moon size={16} /> : <Sun size={16} />}
-                <span>{darkMode ? 'Oscuro' : 'Claro'}</span>
-              </div>
+          <div className="sb-logo"><LayoutGrid /></div>
+          <div className="sb-brand-text">
+            <h1>SchedMaster</h1>
+            <p>Panel de Administración</p>
+            <div className="theme-switch" onClick={toggle}>
+              {darkMode ? <Moon size={16} /> : <Sun size={16} />}
+              <span>{darkMode ? 'Oscuro' : 'Claro'}</span>
             </div>
           </div>
+        </div>
 
           {isMobile && (
             <button className="sb-close" type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú">
@@ -109,6 +94,7 @@ export default function AdminSidebar({
               <span>{userRole}</span>
             </div>
           </div>
+
           <button className="btn-logout" type="button" onClick={handleLogout}>
             <LogOut /> Cerrar sesión
           </button>
