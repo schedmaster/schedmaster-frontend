@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Dumbbell, Apple, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import AlertModal from '../../components/AlertModal';
 
 export default function HomePage() {
   const [openModal, setOpenModal] = useState(false);
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [currentImg, setCurrentImg] = useState(0);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const router = useRouter();
 
@@ -20,7 +23,7 @@ export default function HomePage() {
     '/gimnasio4.jpg',
   ];
 
-  // 👉 AUTO SLIDE
+  // AUTO SLIDE
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImg((prev) => (prev + 1) % images.length);
@@ -49,13 +52,15 @@ export default function HomePage() {
       }
 
       if (!res.ok) {
-        alert(data.message || 'Error');
+        setAlertMessage(data.message || 'Error');
+        setAlertOpen(true);
         return;
       }
 
       setSent(true);
     } catch {
-      alert('Error de conexión');
+      setAlertMessage('Error de conexión');
+      setAlertOpen(true);
     }
   };
 
@@ -132,15 +137,15 @@ export default function HomePage() {
         <div className="card--glass">
           <div className="carousel">
 
-            <button className="carousel-btn left" onClick={prevImg}>
+            <button className="carousel-btn left" onClick={prevImg} title="Imagen anterior">
               <ChevronLeft size={22} />
             </button>
 
             <div className="carousel-wrapper">
-              <img src={images[currentImg]} className="carousel-img" />
+              <img src={images[currentImg]} className="carousel-img" alt="Instalaciones del gimnasio" />
             </div>
 
-            <button className="carousel-btn right" onClick={nextImg}>
+            <button className="carousel-btn right" onClick={nextImg} title="Siguiente imagen">
               <ChevronRight size={22} />
             </button>
 
@@ -189,7 +194,7 @@ export default function HomePage() {
       {openModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
           <div className="modal-box">
-            <button className="modal-close" onClick={closeModal}>
+            <button className="modal-close" onClick={closeModal} title="Cerrar modal">
               <X size={20} />
             </button>
 
@@ -222,6 +227,13 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
 
     </div>
   );

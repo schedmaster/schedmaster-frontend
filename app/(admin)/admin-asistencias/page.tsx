@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
+import AlertModal from '../../components/AlertModal';
+import { useRouter } from 'next/navigation';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
 const getAvatarClass = (id: number) => AVATAR_COLORS[id % AVATAR_COLORS.length];
@@ -23,6 +27,8 @@ interface Asistencia {
 }
 
 export default function AdminAsistenciasPage() {
+  const router = useRouter();
+
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
 
   const [fecha, setFecha] = useState<string>(() =>
@@ -35,10 +41,20 @@ export default function AdminAsistenciasPage() {
   const [filterEstado,   setFilterEstado]   = useState(''); 
   const [filterCarrera,  setFilterCarrera]  = useState('');
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
-  const fetchAsistencias = async () => {
+  const fetchAsistencias = async (query = '') => {
     try {
-      const res = await fetch(`http://localhost:3001/api/asistencias/admin?fecha=${fecha}`);
+      const params = new URLSearchParams();
+      params.set('fecha', fecha);
+
+      const term = query.trim();
+      if (term) {
+        params.set('q', term);
+      }
+
+      const res = await fetch(`${API_URL}/api/asistencias/admin?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         
@@ -123,7 +139,8 @@ export default function AdminAsistenciasPage() {
   const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
     
     if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
-      alert(`⚠️ ACCIÓN DENEGADA\nNo puedes pasar asistencia fuera de horario.\nEl horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
+      setModalMessage(`Acción denegada: no puedes pasar asistencia fuera de horario. El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
+      setModalOpen(true);
       return; 
     }
 
@@ -219,16 +236,17 @@ export default function AdminAsistenciasPage() {
               ))}
             </select>
             
-            <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
+            <button className="btn btn--blue btn--asistencias-action" type="button" onClick={() => fetchAsistencias(searchTerm)}>
               <RefreshCw size={18} /> Actualizar
             </button>
-            <button 
-  className="btn btn--outline"
-  type="button"
-  onClick={() => window.location.href='/admin-asistencias/historico'}
->
-  Histórico
-</button>
+
+            <button
+              type="button"
+              className="btn btn--outline btn--asistencias-action"
+              onClick={() => router.push('/admin-asistencias/historico')}
+            >
+              Histórico
+            </button>
           </div>
 
           {/* Stats */}
@@ -308,6 +326,13 @@ export default function AdminAsistenciasPage() {
 
         </div>
       </main>
+
+      <AlertModal
+        open={modalOpen}
+        title="Aviso"
+        message={modalMessage}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 }

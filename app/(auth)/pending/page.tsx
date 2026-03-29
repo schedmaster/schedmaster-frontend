@@ -12,6 +12,7 @@ import {
   Phone,
   Check
 } from 'lucide-react';
+import AlertModal from '../../components/AlertModal';
 
 export default function PendingAccountPage() {
 
@@ -20,6 +21,10 @@ export default function PendingAccountPage() {
   const [user, setUser] = useState<any>(null);
   const [propuesta, setPropuesta] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('Aviso');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [redirectAfterAlert, setRedirectAfterAlert] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -44,19 +49,26 @@ export default function PendingAccountPage() {
       );
 
       if (res.ok) {
-  alert("Propuesta aceptada correctamente. Por favor, inicia sesión nuevamente.");
-  localStorage.removeItem("user"); // limpia el usuario para forzar login
-  router.push("/login"); // redirige al login
-} else {
-
-        alert("No se pudo aceptar la propuesta");
+        localStorage.removeItem("user"); // limpia el usuario para forzar login
+        setAlertTitle('Propuesta aceptada');
+        setAlertMessage('Propuesta aceptada correctamente. Inicia sesión nuevamente para continuar.');
+        setRedirectAfterAlert(true);
+        setAlertOpen(true);
+      } else {
+        setAlertTitle('Error');
+        setAlertMessage('No se pudo aceptar la propuesta.');
+        setRedirectAfterAlert(false);
+        setAlertOpen(true);
 
       }
 
     } catch (err) {
 
       console.error(err);
-      alert("Error de conexión");
+      setAlertTitle('Error de conexión');
+      setAlertMessage('No fue posible conectar con el servidor.');
+      setRedirectAfterAlert(false);
+      setAlertOpen(true);
 
     }
 
@@ -296,6 +308,18 @@ export default function PendingAccountPage() {
         </section>
 
       </div>
+
+      <AlertModal
+        open={alertOpen}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => {
+          setAlertOpen(false);
+          if (redirectAfterAlert) {
+            router.push('/login');
+          }
+        }}
+      />
 
     </div>
   );

@@ -8,6 +8,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
+import AlertModal from '../../components/AlertModal';
 
 // ── Datos de demo ────────────────────────────────────────────────
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -233,6 +234,8 @@ export default function AdminEstadisticasPage() {
   const [exportScope,   setExportScope]   = useState('general');
   const [exporting,     setExporting]     = useState(false);
   const [exportDone,    setExportDone]    = useState(false);
+  const [alertOpen,     setAlertOpen]     = useState(false);
+  const [alertMessage,  setAlertMessage]  = useState('');
 
   const TABS = [
     { value: 'todos',     label: 'Todo el tiempo' },
@@ -266,7 +269,11 @@ export default function AdminEstadisticasPage() {
         downloadFile(JSON.stringify({ kpis: mockKPIs, funnel: funnelData, porRol, porDivision, detalle: detalleTabla }, null, 2),
           `estadisticas_${new Date().toISOString().slice(0,10)}.json`, 'application/json');
       } else {
-        alert('Exportación PDF: integra jsPDF en producción.'); setModalExport(false); setExportDone(false); return;
+        setAlertMessage('Exportación PDF aún no está integrada. Usa CSV o JSON por ahora.');
+        setAlertOpen(true);
+        setModalExport(false);
+        setExportDone(false);
+        return;
       }
       setTimeout(() => { setModalExport(false); setExportDone(false); }, 1200);
     }, 1500);
@@ -275,7 +282,7 @@ export default function AdminEstadisticasPage() {
   return (
     <>
       <div className="app">
-        <AdminSidebar onLogout={() => console.log('logout')} />
+        <AdminSidebar />
 
         <main className="main">
           <div className="main-inner">
@@ -522,6 +529,13 @@ export default function AdminEstadisticasPage() {
           </div>
         </div>
       )}
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
     </>
   );
 }
