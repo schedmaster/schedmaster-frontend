@@ -682,6 +682,102 @@ html.dark .page-header .title {
 .login-header h1  { font-size: 32px; font-weight: 800; color: var(--color-text-heading); margin-bottom: var(--s-2); letter-spacing: -1px; }
 .login-header p   { font-size: 16px; color: var(--color-text-muted); font-weight: 500; }
 
+.verify-2fa-page .hero-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.verify-2fa-page .verify-feature-list {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.verify-2fa-page .login-container {
+  max-width: 520px;
+}
+
+.verify-status-pill {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-700);
+  background: rgba(0, 164, 224, 0.12);
+}
+
+.verify-form {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 28px rgba(35, 77, 123, 0.08);
+}
+
+.verify-code-group {
+  margin-bottom: 18px;
+}
+
+.otp-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(44px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.otp-input {
+  height: 58px;
+  border: 1px solid var(--color-border-mid);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-heading);
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  font-family: var(--font);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 4px rgba(0, 164, 224, 0.18);
+  transform: translateY(-1px);
+}
+
+.verify-code-hint {
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.verify-actions {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.verify-resend-btn {
+  border: 1px solid var(--color-border-mid);
+  background: var(--color-surface-soft);
+}
+
+.verify-login-link {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ==========================================
    17. LAYOUT — HOME
    ========================================== */
@@ -1599,6 +1695,11 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
 
 .activities-paragraph { margin-top: var(--s-2); }
 
+.btn--asistencias-action {
+  min-width: 132px;
+  justify-content: center;
+}
+
 /* ==========================================
    32. RESPONSIVE
    ========================================== */
@@ -1649,6 +1750,15 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
   .login-section { padding: 32px 20px; }
   .register-page .container { padding: 24px 16px; }
   .card--glass   { padding: 32px 20px; }
+  .verify-form { padding: 16px; }
+  .otp-grid {
+    gap: 8px;
+    grid-template-columns: repeat(6, minmax(40px, 1fr));
+  }
+  .otp-input {
+    height: 52px;
+    font-size: 24px;
+  }
 }
 
 

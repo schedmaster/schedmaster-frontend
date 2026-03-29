@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, CalendarDays, Pencil, Power, PowerOff, X, Save, Search } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
+import AlertModal from '../../components/AlertModal';
 
 interface Convocatoria {
   id: number;
@@ -127,6 +128,8 @@ export default function AdminConvocatoriasPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [modalCrear, setModalCrear] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const emptyForm: FormState = {
     id: 0,
@@ -258,7 +261,8 @@ export default function AdminConvocatoriasPage() {
 
     } catch (error) {
       console.error(error);
-      alert("Error al guardar convocatoria");
+      setAlertMessage('Error al guardar convocatoria');
+      setAlertOpen(true);
     }
   };
 
@@ -374,6 +378,13 @@ export default function AdminConvocatoriasPage() {
           />
         </div>
       )}
+
+      <AlertModal
+        open={alertOpen}
+        title="Error"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
 
     </div>
   );
