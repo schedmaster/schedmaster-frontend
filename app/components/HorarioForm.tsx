@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AlertModal from './AlertModal';
 
 const HorarioForm = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ const HorarioForm = () => {
     capacidad_maxima: '',
     dias: [] as number[]
   });
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,13 +38,16 @@ const HorarioForm = () => {
       });
 
       if (response.ok) {
-        alert('¡Horario creado con éxito en la base de datos! 🚀');
+        setAlertMessage('Horario creado con éxito en la base de datos.');
+        setAlertOpen(true);
       } else {
-        alert('Hubo un error al guardar el horario.');
+        setAlertMessage('Hubo un error al guardar el horario.');
+        setAlertOpen(true);
       }
     } catch (error) {
       console.error('Error de conexión:', error);
-      alert('No se pudo conectar con el servidor.');
+      setAlertMessage('No se pudo conectar con el servidor.');
+      setAlertOpen(true);
     }
   };
 
@@ -57,11 +63,11 @@ const HorarioForm = () => {
         <div className="form-row">
           <div className="form-group half-width">
             <label>Hora Inicio</label>
-            <input type="time" name="hora_inicio" onChange={handleChange} required step="1" />
+            <input type="time" name="hora_inicio" onChange={handleChange} required step="1" title="Hora de inicio" />
           </div>
           <div className="form-group half-width">
             <label>Hora Fin</label>
-            <input type="time" name="hora_fin" onChange={handleChange} required step="1" />
+            <input type="time" name="hora_fin" onChange={handleChange} required step="1" title="Hora de fin" />
           </div>
         </div>
 
@@ -92,6 +98,13 @@ const HorarioForm = () => {
         </button>
 
       </form>
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
     </div>
   );
 };

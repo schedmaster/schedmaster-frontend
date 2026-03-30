@@ -39,6 +39,7 @@ export default function ConfirmModal({
           type="button"
           className="modal-close"
           onClick={onCancel}
+          title="Cerrar"
         >
           <X size={20}/>
         </button>
@@ -53,14 +54,7 @@ export default function ConfirmModal({
 
         {/* BOTONES */}
 
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginTop: "20px",
-            justifyContent: "flex-end"
-          }}
-        >
+        <div className="modal-buttons">
 
           <button
             className="btn btn--outline"

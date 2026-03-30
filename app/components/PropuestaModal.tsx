@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, Send, Clock } from 'lucide-react';
+import AlertModal from './AlertModal';
 
 interface Props {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
   const [horarioId, setHorarioId] = useState('');
   const [diasSeleccionados, setDiasSeleccionados] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   // 1. Cargar horarios (Ruta directa)
   useEffect(() => {
@@ -64,7 +67,8 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
   // 3. Enviar propuesta (Ruta directa)
   const enviarPropuesta = async () => {
     if (!horarioId || diasSeleccionados.length === 0) {
-      alert("Selecciona horario y días");
+      setAlertMessage('Selecciona horario y días.');
+      setAlertOpen(true);
       return;
     }
 
@@ -83,16 +87,19 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
       );
 
       if (res.ok) {
-        alert("Propuesta enviada al correo");
+        setAlertMessage('Propuesta enviada al correo.');
+        setAlertOpen(true);
         onClose();
         setHorarioId('');
         setDiasSeleccionados([]);
         onPropuestaEnviada(); 
       } else {
-        alert("Error enviando propuesta");
+        setAlertMessage('Error enviando propuesta.');
+        setAlertOpen(true);
       }
     } catch (e) {
-      alert("Error de conexión");
+      setAlertMessage('Error de conexión.');
+      setAlertOpen(true);
     }
 
     setLoading(false);
@@ -113,7 +120,7 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
               Enviar propuesta a {correo}
             </p>
           </div>
-          <button className="btn-close" onClick={onClose}>
+          <button className="btn-close" onClick={onClose} title="Cerrar">
             <X />
           </button>
         </div>
@@ -123,6 +130,7 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
             <label>Horario</label>
             <select
               className="select"
+              aria-label="Selecciona horario"
               value={horarioId}
               onChange={(e) => {
                 setHorarioId(e.target.value);
@@ -168,6 +176,13 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
           </button>
         </div>
       </div>
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
     </div>
   );
 }

@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Filter, Search, Calendar } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
+import AlertModal from '../../components/AlertModal';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -10,6 +12,10 @@ export default function AdminHorariosPage() {
   const [periodos, setPeriodos] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [horarioAEditar, setHorarioAEditar] = useState<number | null>(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     id_periodo: "",
@@ -66,11 +72,16 @@ export default function AdminHorariosPage() {
   // ==========================================
   // FUNCIÓN PARA ELIMINAR BLINDADA
   // ==========================================
-  const handleEliminar = async (id_horario: number) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este horario?")) return;
+  const confirmarEliminarHorario = (id_horario: number) => {
+    setPendingDeleteId(id_horario);
+    setConfirmOpen(true);
+  };
+
+  const ejecutarEliminarHorario = async () => {
+    if (!pendingDeleteId) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/api/horarios/eliminar/${id_horario}`, {
+      const res = await fetch(`http://localhost:3001/api/horarios/eliminar/${pendingDeleteId}`, {
         method: 'DELETE',
       });
 
@@ -79,11 +90,16 @@ export default function AdminHorariosPage() {
       } else {
         const errorData = await res.json().catch(() => null);
         console.error("Error del backend al eliminar:", errorData);
-        alert("Hubo un error al eliminar. Revisa la consola (F12) para más detalles.");
+        setAlertMessage('Hubo un error al eliminar el horario. Intenta nuevamente.');
+        setAlertOpen(true);
       }
     } catch (error) {
       console.error("Error de red al eliminar:", error);
-      alert("No se pudo conectar con el servidor para eliminar.");
+      setAlertMessage('No se pudo conectar con el servidor para eliminar.');
+      setAlertOpen(true);
+    } finally {
+      setConfirmOpen(false);
+      setPendingDeleteId(null);
     }
   };
 
@@ -163,10 +179,13 @@ export default function AdminHorariosPage() {
       } else {
         const errorDetail = await res.json().catch(() => null);
         console.error("El backend rechazó los datos:", errorDetail);
-        alert(`Error al guardar. Revisa la consola (F12) para ver el detalle.`);
+        setAlertMessage('Error al guardar el horario. Revisa los datos e intenta de nuevo.');
+        setAlertOpen(true);
       }
     } catch (error) {
       console.error("Error en la petición POST/PUT:", error);
+      setAlertMessage('No se pudo conectar con el servidor para guardar el horario.');
+      setAlertOpen(true);
     }
   };
 
@@ -239,7 +258,7 @@ export default function AdminHorariosPage() {
                           
                           <button 
                             className="btn-icon btn-icon--red"
-                            onClick={() => handleEliminar(h.id_horario)}
+                            onClick={() => confirmarEliminarHorario(h.id_horario)}
                           >
                             <Trash2 />
                           </button>
@@ -320,6 +339,26 @@ export default function AdminHorariosPage() {
 
         </div>
       </main>
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Eliminar horario"
+        message="¿Estás seguro de que quieres eliminar este horario? Esta acción no se puede deshacer."
+        confirmText="Sí, eliminar"
+        cancelText="Cancelar"
+        onConfirm={ejecutarEliminarHorario}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingDeleteId(null);
+        }}
+      />
     </div>
   );
 }

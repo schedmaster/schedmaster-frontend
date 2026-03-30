@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CircleCheck, Lock } from 'lucide-react';
+import AlertModal from '../../components/AlertModal';
 
 export default function RegisterPage() {
 
@@ -31,6 +32,8 @@ export default function RegisterPage() {
   const [carreras,setCarreras] = useState<any[]>([]);
   const [progress,setProgress] = useState(0);
   const [success,setSuccess] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const hasMinLength = form.password.length >= 8;
   const hasUppercase = /[A-Z]/.test(form.password);
@@ -177,14 +180,17 @@ export default function RegisterPage() {
 
       if(!res.ok){
         const errorData=await res.json();
-        return alert(`Error al registrar: ${errorData.message}`);
+        setAlertMessage(`Error al registrar: ${errorData.message}`);
+        setAlertOpen(true);
+        return;
       }
 
       setSuccess(true);
       setTimeout(()=>router.push('/login'),2000);
 
     }catch{
-      alert('Error de conexión al registrar');
+      setAlertMessage('Error de conexión al registrar');
+      setAlertOpen(true);
     }
   };
 
@@ -349,6 +355,13 @@ export default function RegisterPage() {
           </div>
         )}
       </div>
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
     </div>
   );
 }
