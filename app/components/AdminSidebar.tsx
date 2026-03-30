@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { href: '/admin-inscripciones', icon: UserPlus,      label: 'Inscripciones' },
   { href: '/admin-asistencias',   icon: CalendarCheck, label: 'Asistencias'   },
   { href: '/admin-anuncios',      icon: Megaphone,     label: 'Anuncios'      },
-  { href: '/admin-estadisticas',  icon: BarChart3,     label: 'Estadísticas'  },
+  { href: '/admin-estadisticas',  icon: BarChart3,     label: 'Reportes'      }, // 👈 ¡Aquí está el cambio!
   { href: '/admin-configuracion', icon: Settings,      label: 'Configuración' },
 ];
 
