@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, X, Search } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
 import { useRouter } from 'next/navigation';
@@ -30,6 +30,7 @@ export default function AdminAsistenciasPage() {
   const router = useRouter();
 
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
+
   const [fecha, setFecha] = useState<string>(() =>
     new Date().toISOString().split('T')[0]
   );
@@ -89,12 +90,8 @@ export default function AdminAsistenciasPage() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchAsistencias(searchTerm);
-    }, 250);
-
-    return () => clearTimeout(timer);
-  }, [fecha, searchTerm]);
+    fetchAsistencias();
+  }, [fecha]);
 
   useEffect(() => {
     let f = [...asistencias];
@@ -103,16 +100,15 @@ export default function AdminAsistenciasPage() {
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
     
+    if (searchTerm) {
+      f = f.filter(a => 
+        a.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
     setFilteredAsistencias(f);
-  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera]); 
+  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); 
 
-  useEffect(() => {
-    setFilteredAsistencias(asistencias);
-  }, [asistencias]);
-
-  /* ==========================
-     STATS
-  ========================== */
   const totalReservas  = asistencias.length;
   const presentes      = asistencias.filter(a => a.estado === 'presente').length;
   const ausentes       = asistencias.filter(a => a.estado === 'ausente').length;
@@ -172,38 +168,42 @@ export default function AdminAsistenciasPage() {
 
   return (
     <div className="app">
-      <AdminSidebar />
+      <AdminSidebar/>
 
       <main className="main">
         <div className="main-inner">
 
-          {/* HEADER */}
+          {/* Header */}
           <header className="section-header">
             <div>
               <h2>Control de Asistencias</h2>
-              <p>Registra y monitorea la asistencia</p>
+              <p>Registra y monitorea la asistencia de los usuarios</p>
             </div>
-
             <div className="date-container">
+              <label className="date-label" htmlFor="fechaAsistencia">
+  Seleccionar fecha
+</label>
               <input
+                id="fechaAsistencia"
                 type="date"
+                className="date-input"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
-                title="Selecciona una fecha"
               />
             </div>
           </header>
 
-          {/* BOTONES */}
+          {/* Filtros */}
           <div className="filter-bar">
-
-            <div className="field">
-              <Search />
+            
+            <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
+              <Search size={18} color="#888" />
               <input
-                type="search"
-                placeholder="Buscar..."
+                type="text"
+                placeholder="Buscar alumno..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
+                style={{ border: 'none', outline: 'none', padding: '10px', background: 'transparent', width: '100%', fontSize: '14px' }}
               />
             </div>
 
@@ -249,30 +249,39 @@ export default function AdminAsistenciasPage() {
             </button>
           </div>
 
-          {/* STATS */}
+          {/* Stats */}
           <div className="stat-grid">
             <div className="stat-card">
-              <span>{totalReservas}</span>
-              <small>TOTAL</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{totalReservas}</span>
+                <span className="stat-card-label">TOTAL RESERVAS</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--blue" />
             </div>
-
             <div className="stat-card">
-              <span>{presentes}</span>
-              <small>PRESENTES</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{presentes}</span>
+                <span className="stat-card-label">PRESENTES</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--green" />
             </div>
-
             <div className="stat-card">
-              <span>{ausentes}</span>
-              <small>AUSENTES</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{ausentes}</span>
+                <span className="stat-card-label">AUSENTES</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--red" />
             </div>
-
             <div className="stat-card">
-              <span>{tasaAsistencia}%</span>
-              <small>ASISTENCIA</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{tasaAsistencia}%</span>
+                <span className="stat-card-label">TASA ASISTENCIA</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--yellow" />
             </div>
           </div>
 
-          {/* LISTA */}
+          {/* Lista */}
           <section className="row-list">
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
