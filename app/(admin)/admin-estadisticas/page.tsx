@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Download, FileText, Database, Check, X } from 'lucide-react';
+import { RefreshCw, Download, FileText, Check, X } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface DatoReporte {
   id: number;
@@ -13,6 +15,7 @@ interface DatoReporte {
   servicio: string;
   asistencia: string;
   estado: string;
+  periodo: string; // 👈 Agregamos el periodo que ahora manda el backend
 }
 
 export default function AdminEstadisticasPage() {
@@ -25,10 +28,8 @@ export default function AdminEstadisticasPage() {
   const [alertOpen,     setAlertOpen]     = useState(false);
   const [alertMessage,  setAlertMessage]  = useState('');
 
-  // 1. Empezamos con la tabla vacía (adiós datos de mentiras)
-  const [datosTabla, setDatosTabla] = useState<DatoReporte[]>([]); 
+  const [datosTabla, setDatosTabla] = useState<DatoReporte[]>([]);
 
-  // 2. FUNCIÓN PARA TRAER LOS DATOS REALES DEL BACKEND
   const cargarReporte = async () => {
     try {
       const res = await fetch('http://localhost:3001/api/asistencias/reporte');
@@ -41,7 +42,6 @@ export default function AdminEstadisticasPage() {
     }
   };
 
-  // 3. SE EJECUTA SOLITO AL ABRIR LA PÁGINA
   useEffect(() => {
     cargarReporte();
   }, []);
@@ -53,40 +53,54 @@ export default function AdminEstadisticasPage() {
     { value: 'primavera', label: 'Primavera 2025' },
   ];
 
-  // Calculamos los totales leyendo la base de datos real
-  const totalInscritos = datosTabla.length;
-  const convActivas    = 1; // Este lo dejamos fijo por ahora, o lo puedes calcular después
+  // 👈 NUEVO: Lógica de Filtrado Dinámico
+  const datosFiltrados = periodoFiltro === 'todos' 
+    ? datosTabla 
+    : datosTabla.filter(d => d.periodo.toLowerCase().includes(periodoFiltro.toLowerCase()));
 
-  const downloadFile = (content: string, filename: string, mime: string) => {
-    const blob = new Blob([content], { type: mime });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-  };
+  const totalInscritos = datosFiltrados.length;
+  const convActivas    = 1; 
 
   const handleExport = () => {
     setExporting(true);
+    
+    // Elegimos qué datos exportar según lo que pidió el usuario
+    const datosExportar = exportScope === 'completo' ? datosTabla : datosFiltrados;
+
     setTimeout(() => {
       setExporting(false); setExportDone(true);
+      
       if (exportFormat === 'csv') {
         const rows = [
-          ['Matrícula','Nombre','Carrera','Servicio','Asistencia %','Estado'],
-          ...datosTabla.map(r => [r.matricula, r.nombre, r.carrera, r.servicio, r.asistencia, r.estado]),
+          ['Matrícula','Nombre','Carrera','Servicio','Periodo','Asistencia %','Estado'],
+          ...datosExportar.map(r => [r.matricula, r.nombre, r.carrera, r.servicio, r.periodo, r.asistencia, r.estado]),
         ];
-        downloadFile(rows.map(r => r.join(',')).join('\n'), `reporte_asistencia_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv');
-      } else if (exportFormat === 'json') {
-        downloadFile(JSON.stringify(datosTabla, null, 2),
-          `reporte_asistencia_${new Date().toISOString().slice(0,10)}.json`, 'application/json');
-      } else {
-        setAlertMessage('Exportación PDF aún no está integrada. Usa CSV o JSON por ahora.');
-        setAlertOpen(true);
-        setModalExport(false);
-        setExportDone(false);
-        return;
+        
+        // 👈 MAGIA DE EXCEL: Le agregamos '\uFEFF' al inicio para que reconozca acentos y la Ñ
+        const csvContent = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = `reporte_asistencia_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+        URL.revokeObjectURL(url);
+        
+      } else if (exportFormat === 'pdf') {
+        // 👈 MAGIA DEL PDF
+        const doc = new jsPDF();
+        doc.text("Reporte de Asistencias - SchedMaster", 14, 15);
+        
+        autoTable(doc, {
+          startY: 20,
+          head: [['Matrícula', 'Nombre', 'Carrera', 'Servicio', 'Asistencia', 'Estado']],
+          body: datosExportar.map(r => [r.matricula, r.nombre, r.carrera, r.servicio, r.asistencia, r.estado]),
+          headStyles: { fillColor: [0, 164, 224] }, // Azulito SchedMaster
+        });
+        
+        doc.save(`reporte_asistencia_${new Date().toISOString().slice(0,10)}.pdf`);
       }
+
       setTimeout(() => { setModalExport(false); setExportDone(false); }, 1200);
-    }, 1500);
+    }, 1000);
   };
 
   return (
@@ -103,10 +117,10 @@ export default function AdminEstadisticasPage() {
                 <p>Visión completa del ciclo: interesados → notificados → inscritos → asistencia.</p>
               </div>
 
-              <div className="stats-header-actions" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
                 
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div className="chip chip--blue" style={{ fontSize: '14px', padding: '8px 15px', background: '#e0f2fe', color: '#0369a1', borderRadius: '20px', border: '1px solid #bfdbfe' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                  <div className="chip chip--blue" style={{ fontSize: '14px', padding: '8px 15px', background: '#e0f2fe', color: '#0369a1', borderRadius: '20px' }}>
                     <span style={{ marginRight: '5px' }}>👥</span> Inscritos totales: <strong>{totalInscritos}</strong>
                   </div>
                   <div className="chip chip--outline" style={{ fontSize: '14px', padding: '8px 15px', border: '1px solid #ddd', borderRadius: '20px' }}>
@@ -115,7 +129,6 @@ export default function AdminEstadisticasPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  {/* El botón de actualizar ahora llama a la base de datos de nuevo */}
                   <button className="btn btn--outline" type="button" onClick={cargarReporte}>
                     <RefreshCw size={18} style={{ marginRight: '5px' }} /> Actualizar
                   </button>
@@ -165,14 +178,14 @@ export default function AdminEstadisticasPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {datosTabla.length === 0 ? (
+                    {datosFiltrados.length === 0 ? (
                       <tr>
                         <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>
-                          Cargando reportes o no hay inscripciones aprobadas...
+                          Cargando reportes o no hay datos para el periodo seleccionado...
                         </td>
                       </tr>
                     ) : (
-                      datosTabla.map((fila) => (
+                      datosFiltrados.map((fila) => (
                         <tr key={fila.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px' }}>
                           <td style={{ padding: '15px', color: '#475569', fontWeight: '500' }}>{fila.matricula}</td>
                           <td style={{ padding: '15px', fontWeight: 'bold', color: '#1e293b' }}>{fila.nombre}</td>
@@ -208,7 +221,7 @@ export default function AdminEstadisticasPage() {
                 </table>
               </div>
               <div style={{ padding: '15px', color: '#94a3b8', fontSize: '13px', textAlign: 'right' }}>
-                Mostrando {datosTabla.length} registros
+                Mostrando {datosFiltrados.length} registros
               </div>
             </section>
 
@@ -227,9 +240,9 @@ export default function AdminEstadisticasPage() {
               <div className="form-group">
                 <label className="input-label">Formato de exportación</label>
                 <div className="export-options">
+                  {/* 👈 LE DIMOS CUELLO AL JSON COMO PIDIÓ ARLET */}
                   {[
-                    { value:'csv',  cls:'csv',  icon:<FileText size={20} />, label:'CSV / Excel', desc:'Compatible con Excel y Google Sheets' },
-                    { value:'json', cls:'json', icon:<Database size={20} />, label:'JSON',        desc:'Datos estructurados para integraciones' },
+                    { value:'csv',  cls:'csv',  icon:<FileText size={20} />, label:'Excel (CSV)', desc:'Compatible con Excel y hojas de cálculo' },
                     { value:'pdf',  cls:'pdf',  icon:<FileText size={20} />, label:'PDF',         desc:'Reporte visual listo para presentar' },
                   ].map(opt => (
                     <div key={opt.value} className={`export-option ${exportFormat === opt.value ? 'selected' : ''}`}
@@ -247,8 +260,8 @@ export default function AdminEstadisticasPage() {
               <div className="form-group">
                 <label htmlFor="export-scope" className="input-label">Alcance del reporte</label>
                 <select id="export-scope" className="form-select" value={exportScope} onChange={e => setExportScope(e.target.value)}>
-                  <option value="general">Tabla actual (filtrada)</option>
-                  <option value="completo">Base de datos completa</option>
+                  <option value="general">Tabla actual (usando el filtro de periodo)</option>
+                  <option value="completo">Base de datos completa (Todo el tiempo)</option>
                 </select>
               </div>
             </div>
