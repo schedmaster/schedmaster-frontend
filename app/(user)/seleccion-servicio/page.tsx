@@ -17,10 +17,11 @@ export default function HomePage() {
   const router = useRouter();
 
   const images = [
-    '/gimnasio1.png',
-    '/gimnasio2.png',
-    '/gimnasio3.jpg',
-    '/gimnasio4.jpg',
+    '/gimnasio1.jpeg',
+    '/gimnasio2.jpeg',
+    '/gimnasio3.jpeg',
+    '/gimnasio4.jpeg',
+    '/gimnasio5.jpeg',
   ];
 
   // AUTO SLIDE
