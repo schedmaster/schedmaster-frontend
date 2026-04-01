@@ -113,7 +113,7 @@ export default function HistoricoAsistenciasPage() {
   }
 
   return (
-    <div className="app">
+    <div className="app app--admin-attendance-history">
       <AdminSidebar />
 
       <main className="main">
@@ -140,6 +140,7 @@ export default function HistoricoAsistenciasPage() {
             <input
               type="file"
               id="archivoHistorico"
+              hidden
               className="hidden-input"
               onChange={(e) => {
                 const file = e.target.files?.[0] || null

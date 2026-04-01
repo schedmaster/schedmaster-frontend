@@ -215,7 +215,7 @@ export default function AdminUsuariosPage() {
   };
 
   return (
-    <div className="app">
+    <div className="app app--admin-users">
       <AdminSidebar />
 
       <main className="main">
@@ -250,15 +250,28 @@ export default function AdminUsuariosPage() {
                   <span className={`chip chip--${usr.rol}`}>{ROL_LABELS[usr.rol]}</span>
                   <span className={`chip chip--${usr.estado}`}>{usr.estado}</span>
                   {ROLES_CON_BITACORA.includes(usr.rol) && (
-                    <button className="btn-icon btn-icon--blue" onClick={() => handleBitacora(usr.id, `${usr.nombre} ${usr.apellido}`)}>
+                    <button
+                      className="btn-icon btn-icon--blue"
+                      onClick={() => handleBitacora(usr.id, `${usr.nombre} ${usr.apellido}`)}
+                      aria-label={`Ver bitacora de ${usr.nombre} ${usr.apellido}`}
+                      title={`Ver bitacora de ${usr.nombre} ${usr.apellido}`}
+                    >
                       <ClipboardList />
                     </button>
                   )}
-                  <button className="btn-icon btn-icon--cyan" onClick={() => handleEditar(usr)}><Pencil /></button>
+                  <button
+                    className="btn-icon btn-icon--cyan"
+                    onClick={() => handleEditar(usr)}
+                    aria-label={`Editar usuario ${usr.nombre} ${usr.apellido}`}
+                    title={`Editar usuario ${usr.nombre} ${usr.apellido}`}
+                  >
+                    <Pencil />
+                  </button>
                   <button
                     className={`btn-icon ${usr.estado === 'activo' ? 'btn-icon--red' : 'btn-icon--green'}`}
                     onClick={() => handleToggle(usr)}
                     title={usr.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                    aria-label={`${usr.estado === 'activo' ? 'Desactivar' : 'Activar'} usuario ${usr.nombre} ${usr.apellido}`}
                   >
                     {usr.estado === 'activo' ? <ToggleRight /> : <ToggleLeft />}
                   </button>
@@ -274,31 +287,38 @@ export default function AdminUsuariosPage() {
           <div className="modal-box modal-box--wide">
             <div className="modal-header">
               <div><h3>Editar usuario</h3><p>Actualiza la información del usuario</p></div>
-              <button className="btn-close" onClick={() => { setOpenEditModal(false); closeModal(); }}><X /></button>
+              <button
+                className="btn-close"
+                onClick={() => { setOpenEditModal(false); closeModal(); }}
+                aria-label="Cerrar modal de editar usuario"
+                title="Cerrar"
+              >
+                <X />
+              </button>
             </div>
             <form onSubmit={handleSubmitEdit}>
               <div className="modal-body">
                 <div className="form-group">
-                  <label>Nombre</label>
-                  <input className="form-select" name="nombre" value={formEdit.nombre} onChange={handleChangeEdit} />
+                  <label htmlFor="edit-nombre">Nombre</label>
+                  <input id="edit-nombre" className="form-select" name="nombre" value={formEdit.nombre} onChange={handleChangeEdit} />
                 </div>
                 <div className="form-row">
                   <div className="form-group half-width">
-                    <label>Apellido Paterno</label>
-                    <input className="form-select" name="apellido_paterno" value={formEdit.apellido_paterno} onChange={handleChangeEdit} />
+                    <label htmlFor="edit-apellido-paterno">Apellido Paterno</label>
+                    <input id="edit-apellido-paterno" className="form-select" name="apellido_paterno" value={formEdit.apellido_paterno} onChange={handleChangeEdit} />
                   </div>
                   <div className="form-group half-width">
-                    <label>Apellido Materno</label>
-                    <input className="form-select" name="apellido_materno" value={formEdit.apellido_materno} onChange={handleChangeEdit} />
+                    <label htmlFor="edit-apellido-materno">Apellido Materno</label>
+                    <input id="edit-apellido-materno" className="form-select" name="apellido_materno" value={formEdit.apellido_materno} onChange={handleChangeEdit} />
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Correo</label>
-                  <input className="form-select" name="correo" value={formEdit.correo} onChange={handleChangeEdit} />
+                  <label htmlFor="edit-correo">Correo</label>
+                  <input id="edit-correo" className="form-select" name="correo" value={formEdit.correo} onChange={handleChangeEdit} />
                 </div>
                 <div className="form-group">
-                  <label>Rol</label>
-                  <select className="form-select" name="id_rol" value={formEdit.id_rol} onChange={handleChangeEdit}>
+                  <label htmlFor="edit-rol">Rol</label>
+                  <select id="edit-rol" className="form-select" name="id_rol" value={formEdit.id_rol} onChange={handleChangeEdit}>
                     <option value={1}>Alumno</option>
                     <option value={2}>Docente</option>
                     <option value={3}>Entrenador</option>
@@ -320,35 +340,42 @@ export default function AdminUsuariosPage() {
           <div className="modal-box modal-box--wide">
             <div className="modal-header">
               <div><h3>Nuevo usuario</h3><p>Completa los datos del nuevo usuario</p></div>
-              <button className="btn-close" onClick={() => { setOpenNuevoModal(false); closeModal(); }}><X /></button>
+              <button
+                className="btn-close"
+                onClick={() => { setOpenNuevoModal(false); closeModal(); }}
+                aria-label="Cerrar modal de nuevo usuario"
+                title="Cerrar"
+              >
+                <X />
+              </button>
             </div>
             <form onSubmit={handleSubmitNuevo}>
               <div className="modal-body">
                 <div className="form-group">
-                  <label>Nombre</label>
-                  <input className="form-select" name="nombre" value={formNuevo.nombre} onChange={handleChangeNuevo} required />
+                  <label htmlFor="new-nombre">Nombre</label>
+                  <input id="new-nombre" className="form-select" name="nombre" value={formNuevo.nombre} onChange={handleChangeNuevo} required />
                 </div>
                 <div className="form-row">
                   <div className="form-group half-width">
-                    <label>Apellido Paterno</label>
-                    <input className="form-select" name="apellido_paterno" value={formNuevo.apellido_paterno} onChange={handleChangeNuevo} required />
+                    <label htmlFor="new-apellido-paterno">Apellido Paterno</label>
+                    <input id="new-apellido-paterno" className="form-select" name="apellido_paterno" value={formNuevo.apellido_paterno} onChange={handleChangeNuevo} required />
                   </div>
                   <div className="form-group half-width">
-                    <label>Apellido Materno</label>
-                    <input className="form-select" name="apellido_materno" value={formNuevo.apellido_materno} onChange={handleChangeNuevo} />
+                    <label htmlFor="new-apellido-materno">Apellido Materno</label>
+                    <input id="new-apellido-materno" className="form-select" name="apellido_materno" value={formNuevo.apellido_materno} onChange={handleChangeNuevo} />
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Correo</label>
-                  <input className="form-select" type="email" name="correo" value={formNuevo.correo} onChange={handleChangeNuevo} required />
+                  <label htmlFor="new-correo">Correo</label>
+                  <input id="new-correo" className="form-select" type="email" name="correo" value={formNuevo.correo} onChange={handleChangeNuevo} required />
                 </div>
                 <div className="form-group">
-                  <label>Contraseña</label>
-                  <input className="form-select" type="password" name="contrasena" value={formNuevo.contrasena} onChange={handleChangeNuevo} required minLength={6} />
+                  <label htmlFor="new-contrasena">Contraseña</label>
+                  <input id="new-contrasena" className="form-select" type="password" name="contrasena" value={formNuevo.contrasena} onChange={handleChangeNuevo} required minLength={6} />
                 </div>
                 <div className="form-group">
-                  <label>Rol</label>
-                  <select className="form-select" name="id_rol" value={formNuevo.id_rol} onChange={handleChangeNuevo}>
+                  <label htmlFor="new-rol">Rol</label>
+                  <select id="new-rol" className="form-select" name="id_rol" value={formNuevo.id_rol} onChange={handleChangeNuevo}>
                     <option value={3}>Entrenador</option>
                     <option value={4}>Admin General</option>
                   </select>

@@ -1234,6 +1234,31 @@ html.dark .sidebar {
 }
 .row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
+.app--admin-users .main,
+.app--admin-users .main-inner,
+.app--admin-users .section-header,
+.app--admin-users .section-header > div,
+.app--admin-users .filter-bar,
+.app--admin-users .filter-bar .field,
+.app--admin-users .row-card,
+.app--admin-users .row-info,
+.app--admin-users .row-actions {
+  min-width: 0;
+}
+
+.app--admin-attendance .main,
+.app--admin-attendance .main-inner,
+.app--admin-attendance .section-header,
+.app--admin-attendance .section-header > div,
+.app--admin-attendance .filter-bar,
+.app--admin-attendance .field,
+.app--admin-attendance .select,
+.app--admin-attendance .row-card,
+.app--admin-attendance .row-info,
+.app--admin-attendance .row-actions {
+  min-width: 0;
+}
+
 /* ==========================================
    25. EMPTY STATE
    ========================================== */
@@ -1719,6 +1744,44 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
   .field, .select { min-width: 100%; }
   .section-header { flex-direction: column; }
   .btn--yellow, .btn--blue { width: 100%; justify-content: center; }
+
+  .app--admin-users .main {
+    overflow: visible;
+  }
+
+  .app--admin-users .section-header {
+    align-items: stretch;
+  }
+
+  .app--admin-users .filter-bar,
+  .app--admin-users .filter-bar .field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .app--admin-attendance .main {
+    overflow: visible;
+  }
+
+  .app--admin-attendance .section-header {
+    align-items: stretch;
+  }
+
+  .app--admin-attendance .date-container {
+    width: 100%;
+  }
+
+  .app--admin-attendance .date-input {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .app--admin-attendance .filter-bar .field,
+  .app--admin-attendance .filter-bar .select,
+  .app--admin-attendance .filter-bar .btn--asistencias-action {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-height: 800px) {
@@ -1759,6 +1822,301 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
     height: 52px;
     font-size: 24px;
   }
+
+  .app--admin-users .row-card {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .app--admin-users .row-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    padding-left: 64px;
+    gap: 8px;
+  }
+
+  .app--admin-users .chip {
+    max-width: 100%;
+  }
+
+  .app--admin-attendance .row-card {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .app--admin-attendance .row-sub {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.35;
+  }
+
+  .app--admin-attendance .row-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    padding-left: 64px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .app--admin-users .row-card {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 10px;
+  }
+
+  .app--admin-users .row-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .app--admin-users .row-info {
+    align-self: center;
+  }
+
+  .app--admin-users .row-actions {
+    grid-column: 1 / -1;
+    padding-left: 0;
+  }
+
+  .app--admin-users .btn-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .app--admin-users .chip {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .app--admin-attendance .row-card {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 10px;
+  }
+
+  .app--admin-attendance .row-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .app--admin-attendance .row-info {
+    align-self: center;
+  }
+
+  .app--admin-attendance .row-actions {
+    grid-column: 1 / -1;
+    padding-left: 0;
+  }
+
+  .app--admin-attendance .btn-mini {
+    width: calc(50% - 4px);
+    justify-content: center;
+  }
+}
+
+.app--admin-stats .main,
+.app--admin-stats .main-inner,
+.app--admin-stats .section-header {
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .app--admin-stats .main {
+    overflow: visible;
+  }
+
+  .app--admin-stats .section-header {
+    gap: 15px !important;
+  }
+
+  .app--admin-stats .stats-header-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+    justify-content: flex-start !important;
+  }
+
+  .app--admin-stats .stats-header-actions > div {
+    width: 100%;
+    display: flex !important;
+    flex-wrap: wrap !important;
+  }
+
+  .app--admin-stats .table-area {
+    margin-left: -var(--s-3);
+    margin-right: -var(--s-3);
+    padding: 0 var(--s-3);
+  }
+
+  .app--admin-stats .table-scroll {
+    overflow-x: auto;
+  }
+
+  .app--admin-stats table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app--admin-stats .stats-header-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .app--admin-stats .stats-header-actions > div:first-child {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    order: 1;
+  }
+
+  .app--admin-stats .stats-header-actions > div:first-child > div {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 0;
+  }
+
+  .app--admin-stats .stats-header-actions > div:first-child > div.chip {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    min-height: 44px;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .app--admin-stats .stats-header-actions > div:last-child {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    order: 2;
+  }
+
+  .app--admin-stats .stats-header-actions > div:last-child > button {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 0;
+  }
+
+  .app--admin-stats .tab-group {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .app--admin-stats .tab-group button {
+    flex: 0 1 calc(50% - 3px);
+    font-size: 12px;
+    padding: 6px 8px !important;
+  }
+
+  .app--admin-stats .period-label {
+    width: 100%;
+    margin-bottom: 8px !important;
+    display: block !important;
+  }
+
+  .app--admin-stats .table-area {
+    margin-top: 15px !important;
+  }
+
+  .app--admin-stats table thead th,
+  .app--admin-stats table tbody td {
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+  }
+
+  .app--admin-stats table {
+    min-width: 650px;
+  }
+
+  .app--admin-stats table thead th:first-child,
+  .app--admin-stats table tbody td:first-child {
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 520px) {
+  .app--admin-stats .stats-header-actions > div:first-child {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .app--admin-stats .stats-header-actions > div:first-child > div {
+    flex: 1 1 calc(50% - 3px) !important;
+    min-width: 0;
+  }
+
+  .app--admin-stats .stats-header-actions > div:first-child > div.chip {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    min-height: 42px;
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .app--admin-stats .stats-header-actions > div:first-child > div.chip span {
+    margin-right: 2px !important;
+  }
+
+  .app--admin-stats .stats-header-actions > div:last-child {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .app--admin-stats .stats-header-actions > div:last-child > button {
+    flex: 1 1 calc(50% - 3px) !important;
+    font-size: 11px;
+    padding: 6px 8px !important;
+    min-width: 0;
+  }
+
+  .app--admin-stats .tab-group button {
+    flex: 0 1 calc(50% - 3px);
+    padding: 5px 6px !important;
+  }
+
+  .app--admin-stats table thead th,
+  .app--admin-stats table tbody td {
+    padding: 6px 4px !important;
+    font-size: 10px !important;
+  }
+
+  .app--admin-stats table {
+    min-width: 100%;
+  }
+
+  .app--admin-stats table thead th:nth-child(5),
+  .app--admin-stats table tbody td:nth-child(5),
+  .app--admin-stats table thead th:nth-child(6),
+  .app--admin-stats table tbody td:nth-child(6) {
+    min-width: 70px;
+  }
 }
 
 
@@ -1773,3 +2131,184 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
 }
 .dark-toggle:hover { transform: scale(1.08); }
 .dark-toggle:active { transform: scale(0.95); }
+
+/* Admin Inscripciones: Propuesta Modal responsividad */
+@media (max-width: 768px) {
+  .app--admin-inscriptions .modal-overlay {
+    padding: 8px !important;
+  }
+
+  .app--admin-inscriptions .modal-box,
+  .app--admin-inscriptions .modal-box--wide {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: 85vh !important;
+    padding: 0 !important;
+    border-radius: 16px;
+  }
+
+  .app--admin-inscriptions .modal-header {
+    padding: 18px;
+    flex-wrap: wrap;
+  }
+
+  .app--admin-inscriptions .modal-header h3 {
+    font-size: 19px;
+    font-weight: 900;
+    width: 100%;
+  }
+
+  .app--admin-inscriptions .modal-header p {
+    font-size: 13px;
+    margin-top: 8px;
+    width: 100%;
+  }
+
+  .app--admin-inscriptions .btn-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+
+  .app--admin-inscriptions .modal-body {
+    padding: 18px;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  .app--admin-inscriptions .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .app--admin-inscriptions .form-group label {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .app--admin-inscriptions .select {
+    font-size: 14px;
+    padding: 12px;
+    height: 46px;
+    width: 100%;
+  }
+
+  .app--admin-inscriptions .dias-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 18px;
+  }
+
+  .app--admin-inscriptions .dia-btn {
+    padding: 9px 15px;
+    font-size: 14px;
+    flex: 0 1 auto;
+  }
+
+  .app--admin-inscriptions .log-compose-actions {
+    padding: 16px 18px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: stretch;
+    gap: 10px;
+  }
+
+  .app--admin-inscriptions .btn--blue {
+    flex: 1;
+    font-size: 15px;
+    padding: 14px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .app--admin-inscriptions .modal-overlay {
+    padding: 6px !important;
+  }
+
+  .app--admin-inscriptions .modal-box,
+  .app--admin-inscriptions .modal-box--wide {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    max-height: 90vh !important;
+  }
+
+  .app--admin-inscriptions .modal-header {
+    padding: 16px;
+  }
+
+  .app--admin-inscriptions .modal-header h3 {
+    font-size: 18px;
+  }
+
+  .app--admin-inscriptions .modal-header p {
+    font-size: 12px;
+    margin-top: 6px;
+  }
+
+  .app--admin-inscriptions .modal-body {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .app--admin-inscriptions .form-group label {
+    font-size: 13px;
+  }
+
+  .app--admin-inscriptions .select {
+    font-size: 13px;
+    padding: 11px;
+    height: 44px;
+  }
+
+  .app--admin-inscriptions .dias-container {
+    gap: 9px;
+    margin: 12px 0 16px;
+  }
+
+  .app--admin-inscriptions .dia-btn {
+    padding: 8px 13px;
+    font-size: 13px;
+  }
+
+  .app--admin-inscriptions .log-compose-actions {
+    padding: 14px 16px;
+  }
+
+  .app--admin-inscriptions .btn--blue {
+    font-size: 14px;
+    padding: 12px;
+  }
+}
+
+/* Histórico de asistencias: espaciados según guía */
+.app--admin-attendance-history .section-header > div p {
+  margin-top: 16px;
+}
+
+.app--admin-attendance-history .controls-container {
+  margin-top: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.app--admin-attendance-history .filter-bar {
+  margin-top: 64px;
+}
+
+@media (max-width: 768px) {
+  .app--admin-attendance-history .section-header > div p {
+    margin-top: 8px;
+  }
+
+  .app--admin-attendance-history .controls-container {
+    margin-top: 16px;
+    gap: 12px;
+  }
+
+  .app--admin-attendance-history .filter-bar {
+    margin-top: 32px;
+  }
+}

@@ -178,7 +178,7 @@ export default function AdminInscripcionesPage() {
 
   return (
 
-    <div className="app">
+    <div className="app app--admin-inscriptions">
 
       <AdminSidebar />
 

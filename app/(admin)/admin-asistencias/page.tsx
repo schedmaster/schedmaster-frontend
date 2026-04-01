@@ -167,7 +167,7 @@ export default function AdminAsistenciasPage() {
   };
 
   return (
-    <div className="app">
+    <div className="app app--admin-attendance">
       <AdminSidebar/>
 
       <main className="main">
@@ -196,14 +196,13 @@ export default function AdminAsistenciasPage() {
           {/* Filtros */}
           <div className="filter-bar">
             
-            <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
+            <div className="field">
               <Search size={18} color="#888" />
               <input
                 type="text"
                 placeholder="Buscar alumno..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                style={{ border: 'none', outline: 'none', padding: '10px', background: 'transparent', width: '100%', fontSize: '14px' }}
               />
             </div>
 
