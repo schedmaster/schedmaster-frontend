@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CircleCheck } from 'lucide-react';
+import TerminosModal from "@/app/components/TerminosModal";
 
 export default function RegisterPage() {
 
@@ -23,6 +24,8 @@ export default function RegisterPage() {
     terms: false
   });
 
+  const [showTerminos, setShowTerminos] = useState(false);
+
   const [errors,setErrors] = useState<any>({});
   const [horarios,setHorarios] = useState<any[]>([]);
   const [diasHorario,setDiasHorario] = useState<any[]>([]);
@@ -32,7 +35,6 @@ export default function RegisterPage() {
   const [progress,setProgress] = useState(0);
   const [success,setSuccess] = useState(false);
 
-  // 1. Cargar todos los horarios (Esto ya trae los días incluidos gracias a nuestro backend)
   useEffect(()=>{
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios`)
       .then(r=>r.json())
@@ -40,7 +42,6 @@ export default function RegisterPage() {
       .catch(()=>setHorarios([]));
   },[]);
 
-  // 2. 🔴 SOLUCIÓN: Extraer los días directamente de la lista que ya tenemos en memoria
   useEffect(() => {
     if (!form.horarioId) {
       setDiasHorario([]);
@@ -48,28 +49,23 @@ export default function RegisterPage() {
       return;
     }
 
-    // Buscamos el horario exacto que el alumno seleccionó en el dropdown
     const horarioElegido = horarios.find(h => h.id_horario.toString() === form.horarioId.toString());
 
     if (horarioElegido && horarioElegido.dias_ids) {
-      // Separamos el texto de los días ("Lunes, Miércoles") en un arreglo
       const nombresDias = horarioElegido.dias_semana.split(', ');
       
-      // Construimos el arreglo de objetos para que tus botones se puedan dibujar
       const diasArmados = horarioElegido.dias_ids.map((id: number, index: number) => ({
         id_dia: id,
         nombre: nombresDias[index]
       }));
       
       setDiasHorario(diasArmados);
-      // Limpiamos los días seleccionados por si el alumno cambió de horario a mitad del registro
       setForm(prev => ({ ...prev, diasSeleccionados: [] })); 
     } else {
       setDiasHorario([]);
     }
   }, [form.horarioId, horarios]);
 
-  // Cargar divisiones
   useEffect(()=>{
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/catalogo/divisiones`)
       .then(r=>r.json())
@@ -77,7 +73,6 @@ export default function RegisterPage() {
       .catch(()=>setDivisiones([]));
   },[]);
 
-  // Cargar carreras según división
   useEffect(()=>{
     if(!form.division){
       setCarreras([]);
@@ -89,7 +84,6 @@ export default function RegisterPage() {
       .catch(()=>setCarreras([]));
   },[form.division]);
 
-  // Barra de progreso
   useEffect(()=>{
     const fields=['nombre','apellido_paterno','apellido_materno','email','password','confirmPassword','horarioId'];
     let filled=fields.filter(f=>(form as any)[f]).length;
@@ -97,7 +91,6 @@ export default function RegisterPage() {
     setProgress((filled/(fields.length+1))*100);
   },[form]);
 
-  // Manejo de inputs
   const handleChange=(e:any)=>{
     const {name,value,type,checked}=e.target;
     setForm(prev=>({
@@ -114,7 +107,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Toggle selección de días
   const toggleDia=(id:number)=>{
     setForm(prev=>({
       ...prev,
@@ -124,13 +116,15 @@ export default function RegisterPage() {
     }));
   };
 
-  // Validación
   useEffect(()=>{
     const newErrors:any={};
     if(!form.nombre) newErrors.nombre="campo obligatorio";
     if(!form.apellido_paterno) newErrors.apellido_paterno="campo obligatorio";
     if(!form.apellido_materno) newErrors.apellido_materno="campo obligatorio";
     if(!form.email) newErrors.email="campo obligatorio";
+    else if(!form.email.endsWith("@uteq.edu.mx")) {
+  newErrors.email = "Debe ser un correo institucional (@uteq.edu.mx)";
+}
     if(form.tipo==="estudiante"){
       if(!form.division) newErrors.division="campo obligatorio";
       if(!form.carrera) newErrors.carrera="campo obligatorio";
@@ -145,9 +139,12 @@ export default function RegisterPage() {
 
   const formValid=Object.keys(errors).length===0;
 
-  // Submit
   const handleSubmit=async(e:any)=>{
     e.preventDefault();
+    if (!form.email.endsWith("@uteq.edu.mx")) {
+  alert("Solo se permiten correos institucionales (@uteq.edu.mx)");
+  return;
+}
     if(!formValid) return;
 
     const datosParaBackend={
@@ -204,7 +201,6 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit}>
 
-              {/* Tipo usuario */}
               <div className="form-group">
                 <label>Tipo de usuario</label>
                 <select name="tipo" value={form.tipo} className="auth-select" onChange={handleChange}>
@@ -213,33 +209,37 @@ export default function RegisterPage() {
                 </select>
               </div>
 
-              {/* Nombre completo */}
               <div className="form-row">
                 <div className="form-group">
                   <label>Nombre</label>
                   <input name="nombre" value={form.nombre} className="auth-input" onChange={handleChange}/>
-                  {errors.nombre && <small className="error-text">{errors.nombre}</small>}
                 </div>
                 <div className="form-group">
                   <label>Apellido paterno</label>
                   <input name="apellido_paterno" value={form.apellido_paterno} className="auth-input" onChange={handleChange}/>
-                  {errors.apellido_paterno && <small className="error-text">{errors.apellido_paterno}</small>}
                 </div>
                 <div className="form-group">
                   <label>Apellido materno</label>
                   <input name="apellido_materno" value={form.apellido_materno} className="auth-input" onChange={handleChange}/>
-                  {errors.apellido_materno && <small className="error-text">{errors.apellido_materno}</small>}
                 </div>
               </div>
 
-              {/* Correo */}
-              <div className="form-group">
-                <label>Correo institucional</label>
-                <input name="email" type="email" value={form.email} className="auth-input" onChange={handleChange}/>
-                {errors.email && <small className="error-text">{errors.email}</small>}
-              </div>
+<div className="form-group">
+  <label>Correo institucional</label>
 
-              {/* División y carrera */}
+  <input
+    name="email"
+    type="email"
+    value={form.email}
+    className={`auth-input ${errors.email ? "input-error" : ""}`}
+    onChange={handleChange}
+  />
+
+  {errors.email && (
+    <p className="error-text">{errors.email}</p>
+  )}
+</div>
+
               {form.tipo==="estudiante" && (
                 <>
                   <div className="form-group">
@@ -248,7 +248,6 @@ export default function RegisterPage() {
                       <option value="">Selecciona división</option>
                       {divisiones.map(d=>(<option key={d.id_division} value={d.id_division}>{d.nombre_division}</option>))}
                     </select>
-                    {errors.division && <small className="error-text">{errors.division}</small>}
                   </div>
 
                   <div className="form-group">
@@ -257,22 +256,18 @@ export default function RegisterPage() {
                       <option value="">Selecciona carrera</option>
                       {carreras.map(c=>(<option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>))}
                     </select>
-                    {errors.carrera && <small className="error-text">{errors.carrera}</small>}
                   </div>
                 </>
               )}
 
-              {/* Horario */}
               <div className="form-group">
                 <label>Horario</label>
                 <select name="horarioId" value={form.horarioId} className="auth-select" onChange={handleChange}>
                   <option value="">Selecciona horario</option>
                   {horarios.map(h=>(<option key={h.id_horario} value={h.id_horario}>{h.hora_inicio} - {h.hora_fin}</option>))}
                 </select>
-                {errors.horarioId && <small className="error-text">{errors.horarioId}</small>}
               </div>
 
-              {/* Días */}
               {form.horarioId && (
                 <div className="dias-container">
                   {diasHorario.map(d=>(
@@ -285,39 +280,53 @@ export default function RegisterPage() {
                       {d.nombre}
                     </button>
                   ))}
-                  {errors.dias && <small className="error-text">{errors.dias}</small>}
                 </div>
               )}
 
-              {/* Password */}
               <div className="form-group">
                 <label>Contraseña</label>
                 <input name="password" type="password" className="auth-input" onChange={handleChange}/>
-                {errors.password && <small className="error-text">{errors.password}</small>}
               </div>
 
               <div className="form-group">
                 <label>Confirmar contraseña</label>
                 <input name="confirmPassword" type="password" className="auth-input" onChange={handleChange}/>
-                {errors.confirmPassword && <small className="error-text">{errors.confirmPassword}</small>}
               </div>
 
+              {/* Modal*/}
               <div className="checkbox-wrapper">
-                <input id="terms" type="checkbox" name="terms" checked={form.terms} onChange={handleChange}/>
-                <label htmlFor="terms">Acepto los <a href="#">términos y condiciones</a></label>
-              </div>
-              {errors.terms && <small className="error-text">{errors.terms}</small>}
+                <input 
+                  id="terms" 
+                  type="checkbox" 
+                  name="terms" 
+                  checked={form.terms} 
+                  onChange={handleChange}
+                />
 
-              <button type="submit" disabled={!formValid} className="btn btn--blue btn--full btn--lg">Crear mi cuenta</button>
+<label htmlFor="terms">
+  Acepto los{" "}
+  <span
+    onClick={() => setShowTerminos(true)}
+    style={{ color: "#00A4E0", cursor: "pointer", fontWeight: "700" }}
+  >
+    términos y condiciones
+  </span>
+</label>
+              </div>
+
+              <button type="submit" disabled={!formValid} className="btn btn--blue btn--full btn--lg">
+                Crear mi cuenta
+              </button>
             </form>
           </div>
-        ):(
-          <div className="card--glass card--center">
-            <div className="success-icon"><CircleCheck size={40}/></div>
-            <h2 className="success-title">¡Cuenta creada!</h2>
-            <p className="success-text">Redirigiendo al inicio de sesión…</p>
-          </div>
-        )}
+        ):(<div>Cuenta creada</div>)}
+
+        {/*  MODAL */}
+<TerminosModal 
+  open={showTerminos} 
+  onClose={() => setShowTerminos(false)} 
+/>
+
       </div>
     </div>
   );

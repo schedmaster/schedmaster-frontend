@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, X } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
+import AlertModal from '../../components/AlertModal';
+import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -25,8 +27,10 @@ interface Asistencia {
 }
 
 export default function AdminAsistenciasPage() {
+  const router = useRouter();
 
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
+
   const [fecha, setFecha] = useState<string>(() =>
     new Date().toISOString().split('T')[0]
   );
@@ -37,10 +41,20 @@ export default function AdminAsistenciasPage() {
   const [filterEstado,   setFilterEstado]   = useState(''); 
   const [filterCarrera,  setFilterCarrera]  = useState('');
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
-  const fetchAsistencias = async () => {
+  const fetchAsistencias = async (query = '') => {
     try {
-      const res = await fetch(`http://localhost:3001/api/asistencias/admin?fecha=${fecha}`);
+      const params = new URLSearchParams();
+      params.set('fecha', fecha);
+
+      const term = query.trim();
+      if (term) {
+        params.set('q', term);
+      }
+
+      const res = await fetch(`${API_URL}/api/asistencias/admin?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         
@@ -95,13 +109,6 @@ export default function AdminAsistenciasPage() {
     setFilteredAsistencias(f);
   }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); 
 
-  useEffect(() => {
-    setFilteredAsistencias(asistencias);
-  }, [asistencias]);
-
-  /* ==========================
-     STATS
-  ========================== */
   const totalReservas  = asistencias.length;
   const presentes      = asistencias.filter(a => a.estado === 'presente').length;
   const ausentes       = asistencias.filter(a => a.estado === 'ausente').length;
@@ -132,7 +139,8 @@ export default function AdminAsistenciasPage() {
   const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
     
     if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
-      alert(`⚠️ ACCIÓN DENEGADA\nNo puedes pasar asistencia fuera de horario.\nEl horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
+      setModalMessage(`Acción denegada: no puedes pasar asistencia fuera de horario. El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
+      setModalOpen(true);
       return; 
     }
 
@@ -160,28 +168,32 @@ export default function AdminAsistenciasPage() {
 
   return (
     <div className="app">
-      <AdminSidebar />
+      <AdminSidebar/>
 
       <main className="main">
         <div className="main-inner">
 
-          {/* HEADER */}
+          {/* Header */}
           <header className="section-header">
             <div>
               <h2>Control de Asistencias</h2>
-              <p>Registra y monitorea la asistencia</p>
+              <p>Registra y monitorea la asistencia de los usuarios</p>
             </div>
-
             <div className="date-container">
+              <label className="date-label" htmlFor="fechaAsistencia">
+  Seleccionar fecha
+</label>
               <input
+                id="fechaAsistencia"
                 type="date"
+                className="date-input"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
               />
             </div>
           </header>
 
-          {/* BOTONES */}
+          {/* Filtros */}
           <div className="filter-bar">
             
             <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
@@ -224,35 +236,52 @@ export default function AdminAsistenciasPage() {
               ))}
             </select>
             
-            <button className="btn btn--blue" type="button" onClick={fetchAsistencias}>
+            <button className="btn btn--blue btn--asistencias-action" type="button" onClick={() => fetchAsistencias(searchTerm)}>
               <RefreshCw size={18} /> Actualizar
+            </button>
+
+            <button
+              type="button"
+              className="btn btn--outline btn--asistencias-action"
+              onClick={() => router.push('/admin-asistencias/historico')}
+            >
+              Histórico
             </button>
           </div>
 
-          {/* STATS */}
+          {/* Stats */}
           <div className="stat-grid">
             <div className="stat-card">
-              <span>{totalReservas}</span>
-              <small>TOTAL</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{totalReservas}</span>
+                <span className="stat-card-label">TOTAL RESERVAS</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--blue" />
             </div>
-
             <div className="stat-card">
-              <span>{presentes}</span>
-              <small>PRESENTES</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{presentes}</span>
+                <span className="stat-card-label">PRESENTES</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--green" />
             </div>
-
             <div className="stat-card">
-              <span>{ausentes}</span>
-              <small>AUSENTES</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{ausentes}</span>
+                <span className="stat-card-label">AUSENTES</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--red" />
             </div>
-
             <div className="stat-card">
-              <span>{tasaAsistencia}%</span>
-              <small>ASISTENCIA</small>
+              <div className="stat-card-info">
+                <span className="stat-card-value">{tasaAsistencia}%</span>
+                <span className="stat-card-label">TASA ASISTENCIA</span>
+              </div>
+              <div className="stat-card-circle stat-card-circle--yellow" />
             </div>
           </div>
 
-          {/* LISTA */}
+          {/* Lista */}
           <section className="row-list">
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
@@ -291,13 +320,19 @@ export default function AdminAsistenciasPage() {
                     )}
                   </div>
                 </div>
-
-              </div>
-            ))}
+              ))
+            )}
           </section>
 
         </div>
       </main>
+
+      <AlertModal
+        open={modalOpen}
+        title="Aviso"
+        message={modalMessage}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 }
