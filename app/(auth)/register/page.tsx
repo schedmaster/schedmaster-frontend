@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CircleCheck } from 'lucide-react';
 import TerminosModal from "@/app/components/TerminosModal";
@@ -8,6 +8,7 @@ import TerminosModal from "@/app/components/TerminosModal";
 export default function RegisterPage() {
 
   const router = useRouter();
+  const progressFillRef = useRef<HTMLDivElement | null>(null);
 
   const [form,setForm] = useState({
     nombre: '',
@@ -31,9 +32,18 @@ export default function RegisterPage() {
   const [diasHorario,setDiasHorario] = useState<any[]>([]);
   const [divisiones,setDivisiones] = useState<any[]>([]);
   const [carreras,setCarreras] = useState<any[]>([]);
-  const [strength,setStrength] = useState(0);
   const [progress,setProgress] = useState(0);
   const [success,setSuccess] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const hasMinLength = form.password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(form.password);
+  const hasNumberOrSymbol = /[0-9]|[^A-Za-z0-9]/.test(form.password);
+  const passwordStrength = [hasMinLength, hasUppercase, hasNumberOrSymbol].filter(Boolean).length;
+  const passwordMeterLevel = form.password
+    ? Math.min(4, Math.floor((passwordStrength / 3) * 4))
+    : 0;
 
   useEffect(()=>{
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios`)
@@ -97,14 +107,6 @@ export default function RegisterPage() {
       ...prev,
       [name]:type==='checkbox'?checked:value
     }));
-
-    if(name==='password'){
-      let s=0;
-      if(value.length>=8) s++;
-      if(/[A-Z]/.test(value)) s++;
-      if(/[0-9]/.test(value)) s++;
-      setStrength(s);
-    }
   };
 
   const toggleDia=(id:number)=>{
@@ -169,14 +171,17 @@ export default function RegisterPage() {
 
       if(!res.ok){
         const errorData=await res.json();
-        return alert(`Error al registrar: ${errorData.message}`);
+        setAlertMessage(`Error al registrar: ${errorData.message}`);
+        setAlertOpen(true);
+        return;
       }
 
       setSuccess(true);
       setTimeout(()=>router.push('/login'),2000);
 
     }catch{
-      alert('Error de conexión al registrar');
+      setAlertMessage('Error de conexión al registrar');
+      setAlertOpen(true);
     }
   };
 
@@ -196,14 +201,14 @@ export default function RegisterPage() {
             </div>
 
             <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
+              <div ref={progressFillRef} className="progress-fill" />
             </div>
 
             <form onSubmit={handleSubmit}>
 
               <div className="form-group">
-                <label>Tipo de usuario</label>
-                <select name="tipo" value={form.tipo} className="auth-select" onChange={handleChange}>
+                <label htmlFor="tipo">Tipo de usuario</label>
+                <select id="tipo" title="Tipo de usuario" name="tipo" value={form.tipo} className="auth-select" onChange={handleChange}>
                   <option value="estudiante">Estudiante</option>
                   <option value="docente">Docente</option>
                 </select>
@@ -243,16 +248,16 @@ export default function RegisterPage() {
               {form.tipo==="estudiante" && (
                 <>
                   <div className="form-group">
-                    <label>División</label>
-                    <select name="division" value={form.division} className="auth-select" onChange={handleChange}>
+                    <label htmlFor="division">División</label>
+                    <select id="division" title="División" name="division" value={form.division} className="auth-select" onChange={handleChange}>
                       <option value="">Selecciona división</option>
                       {divisiones.map(d=>(<option key={d.id_division} value={d.id_division}>{d.nombre_division}</option>))}
                     </select>
                   </div>
 
                   <div className="form-group">
-                    <label>Carrera</label>
-                    <select name="carrera" value={form.carrera} className="auth-select" onChange={handleChange}>
+                    <label htmlFor="carrera">Carrera</label>
+                    <select id="carrera" title="Carrera" name="carrera" value={form.carrera} className="auth-select" onChange={handleChange}>
                       <option value="">Selecciona carrera</option>
                       {carreras.map(c=>(<option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>))}
                     </select>
@@ -261,8 +266,8 @@ export default function RegisterPage() {
               )}
 
               <div className="form-group">
-                <label>Horario</label>
-                <select name="horarioId" value={form.horarioId} className="auth-select" onChange={handleChange}>
+                <label htmlFor="horarioId">Horario</label>
+                <select id="horarioId" title="Horario" name="horarioId" value={form.horarioId} className="auth-select" onChange={handleChange}>
                   <option value="">Selecciona horario</option>
                   {horarios.map(h=>(<option key={h.id_horario} value={h.id_horario}>{h.hora_inicio} - {h.hora_fin}</option>))}
                 </select>
@@ -328,6 +333,13 @@ export default function RegisterPage() {
 />
 
       </div>
+
+      <AlertModal
+        open={alertOpen}
+        title="Aviso"
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
+      />
     </div>
   );
 }

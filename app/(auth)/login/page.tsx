@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CircleCheck, ListOrdered, Bell, Sun, Moon } from 'lucide-react';
 import AlertModal from '../../components/AlertModal';
 import { useDarkMode } from '../../hooks/useDarkMode';
 
 export default function LoginPage() {
   const { darkMode, toggle } = useDarkMode();
+  const router = useRouter();
 
   const [correo,   setCorreo]   = useState('');
   const [password, setPassword] = useState('');
@@ -24,8 +26,6 @@ const handleSubmit = async (e: React.FormEvent) => {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
   try {
-    console.log("API URL:", API_URL);
-
     const keyRes = await fetch(`${API_URL}/api/auth/public-key`);
     if (!keyRes.ok) throw new Error('No se pudo obtener la clave pública');
 
@@ -92,9 +92,23 @@ const handleSubmit = async (e: React.FormEvent) => {
       return;
     }
 
+    if (data.requiresTwoFactor && data.twoFactorToken) {
+      sessionStorage.setItem(
+        'twoFactorLogin',
+        JSON.stringify({
+          twoFactorToken: data.twoFactorToken,
+          correo: correo.toLowerCase().trim(),
+          expiresAt: Date.now() + (Number(data.expiresInSeconds) || 0) * 1000
+        })
+      );
+
+      router.push('/verify-2fa');
+      return;
+    }
+
     if (data.status === 'pending') {
       localStorage.setItem('user', JSON.stringify(data.usuario));
-      window.location.href = '/pending';
+      router.push('/pending');
       return;
     }
 
@@ -102,12 +116,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       localStorage.setItem('user', JSON.stringify(data.usuario));
 
       if (data.usuario.id_rol === 1 || data.usuario.id_rol === 2) {
-        window.location.href = '/anuncios';
+        router.push('/anuncios');
         return;
       }
 
       if (data.usuario.id_rol === 3 || data.usuario.id_rol === 4) {
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
         return;
       }
 
@@ -209,10 +223,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             </button>
           </form>
 
-          <div className="divider"><span>¿Primera vez?</span></div>
+          {/* <div className="divider"><span>¿Primera vez?</span></div>
           <div className="auth-link">
             <Link href="/register">Crea tu cuenta aquí</Link>
-          </div>
+          </div> */}
 
         </div>
       </section>

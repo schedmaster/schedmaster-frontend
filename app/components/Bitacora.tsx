@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Send, ClipboardList } from 'lucide-react';
 
 export interface Comentario {
@@ -37,6 +37,16 @@ export default function Bitacora({
   const [nuevoTexto,  setNuevoTexto]  = useState('');
   const [sortOrder,   setSortOrder]   = useState<'reciente' | 'lejano'>('reciente');
 
+  // ✅ FIX: sincronizar cuando el page cargue los comentarios desde la BD
+  useEffect(() => {
+    setComentarios(comentariosIniciales);
+  }, [comentariosIniciales]);
+
+  // ✅ FIX: limpiar texto al cerrar/cambiar usuario
+  useEffect(() => {
+    if (!isOpen) setNuevoTexto('');
+  }, [isOpen]);
+
   const comentariosOrdenados = useMemo(() =>
     [...comentarios].sort((a, b) => {
       const diff = new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
@@ -60,14 +70,11 @@ export default function Bitacora({
   if (!isOpen) return null;
 
   return (
-    /* modal-overlay reemplaza modal-admin active */
     <div className="modal-overlay" role="dialog" aria-modal="true"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
 
-      {/* modal-box--wide + log-modal reemplaza modal-admin-content log-modal */}
       <div className="modal-box modal-box--wide log-modal">
 
-        {/* modal-header reemplaza modal-admin-header */}
         <div className="modal-header">
           <div>
             <div className="log-title-row">

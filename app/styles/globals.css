@@ -81,6 +81,7 @@ html, body {
   font-family: var(--font);
   background: var(--color-bg);
   color: var(--color-text-primary);
+  overflow-x: hidden;
   transition: background .3s ease, color .3s ease;
 }
 
@@ -321,6 +322,20 @@ html.dark .btn-logout:hover { background: rgba(255,255,255,.14); }
 }
 .menu-toggle:active { transform: scale(.95); }
 .menu-toggle svg    { width: 24px; height: 24px; }
+.menu-toggle.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  border: none;
+  background: rgba(0,0,0,.42);
+  cursor: pointer;
+}
 
 /* ==========================================
    6. CARDS
@@ -449,6 +464,74 @@ html.dark .btn-logout:hover { background: rgba(255,255,255,.14); }
 .hint::before { content: "○"; }
 .hint.ok { color: var(--blue-500); font-weight: 600; }
 .hint.ok::before { content: "✔"; }
+
+.password-validator {
+  margin-top: 12px;
+}
+
+.password-validator-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.password-validator-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(15,23,42,.10);
+  transition: background .2s ease;
+}
+
+.password-validator-bar.is-active {
+  background: var(--blue-500);
+}
+
+.password-validator-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border-left: 3px solid #00A4E0;
+  background: rgba(0,164,224,.10);
+  display: grid;
+  gap: 4px;
+}
+
+.password-validator-item {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-validator-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.password-validator-item.is-met {
+  color: var(--blue-500);
+  font-weight: 700;
+}
+
+.password-validator-item.is-met .password-validator-dot::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 
 /* ==========================================
    13. SUCCESS STATE
@@ -598,6 +681,102 @@ html.dark .page-header .title {
 .login-header     { margin-bottom: 24px; }
 .login-header h1  { font-size: 32px; font-weight: 800; color: var(--color-text-heading); margin-bottom: var(--s-2); letter-spacing: -1px; }
 .login-header p   { font-size: 16px; color: var(--color-text-muted); font-weight: 500; }
+
+.verify-2fa-page .hero-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.verify-2fa-page .verify-feature-list {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.verify-2fa-page .login-container {
+  max-width: 520px;
+}
+
+.verify-status-pill {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-700);
+  background: rgba(0, 164, 224, 0.12);
+}
+
+.verify-form {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 28px rgba(35, 77, 123, 0.08);
+}
+
+.verify-code-group {
+  margin-bottom: 18px;
+}
+
+.otp-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(44px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.otp-input {
+  height: 58px;
+  border: 1px solid var(--color-border-mid);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-heading);
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  font-family: var(--font);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 4px rgba(0, 164, 224, 0.18);
+  transform: translateY(-1px);
+}
+
+.verify-code-hint {
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.verify-actions {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.verify-resend-btn {
+  border: 1px solid var(--color-border-mid);
+  background: var(--color-surface-soft);
+}
+
+.verify-login-link {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 /* ==========================================
    17. LAYOUT — HOME
@@ -823,7 +1002,13 @@ html.dark .page-header .title {
   color: #fff;
   padding: var(--s-4) var(--s-3);
   display: flex; flex-direction: column; gap: var(--s-3);
-  position: sticky; top: 0; height: 100vh;
+  position: sticky; top: 0; height: 100vh; height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   transition: background .3s ease;
 }
 html.dark .sidebar {
@@ -832,9 +1017,13 @@ html.dark .sidebar {
 }
 
 .sb-brand {
-  display: flex; align-items: center; gap: var(--s-2);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2);
   padding-bottom: var(--s-3);
   border-bottom: 1px solid rgba(255,255,255,.14);
+}
+.sb-brand-main {
+  display: flex; align-items: center; gap: var(--s-2);
+  min-width: 0;
 }
 .sb-logo {
   width: 44px; height: 44px; border-radius: 14px;
@@ -842,6 +1031,19 @@ html.dark .sidebar {
   display: grid; place-items: center; flex: 0 0 auto;
   box-shadow: 0 12px 20px rgba(0,0,0,.12);
 }
+.sb-close {
+  display: none;
+  width: 36px; height: 36px;
+  border: 1px solid rgba(255,255,255,.24);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  border-radius: 10px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+.sb-close:hover { background: rgba(255,255,255,.16); }
 .sb-logo svg { width: 22px; height: 22px; color: #234D7B; }
 .sb-brand-text h1 { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.1; }
 .sb-brand-text p  { margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,.75); font-weight: 600; }
@@ -861,7 +1063,9 @@ html.dark .sidebar {
 .theme-switch:hover { background: rgba(255,255,255,.14); color: #fff; }
 .theme-switch svg  { width: 14px; height: 14px; }
 
-.nav { display: flex; flex-direction: column; gap: 8px; padding-top: var(--s-2); }
+.nav {
+  display: flex; flex-direction: column; gap: 8px; padding-top: var(--s-2);
+}
 .nav a {
   text-decoration: none; color: rgba(255,255,255,.80);
   font-weight: 700; font-size: 13px;
@@ -880,6 +1084,13 @@ html.dark .sidebar {
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 16px; padding: var(--s-2);
   display: grid; gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 .sb-user { display: flex; align-items: center; gap: 12px; }
 .avatar {
@@ -1484,26 +1695,26 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
 
 .activities-paragraph { margin-top: var(--s-2); }
 
+.btn--asistencias-action {
+  min-width: 132px;
+  justify-content: center;
+}
+
 /* ==========================================
    32. RESPONSIVE
    ========================================== */
 
-@media (max-width: 980px) {
+@media (max-width: 1200px) {
   .app { grid-template-columns: 1fr; }
   .menu-toggle { display: flex; }
+  .sidebar-backdrop { display: block; }
   .sidebar {
     position: fixed; top: 0; left: 0;
-    width: 280px; height: 100vh; z-index: 999;
+    width: min(84vw, 320px); height: 100vh; height: 100dvh; z-index: 999;
     transform: translateX(-100%); transition: transform .3s ease;
   }
+  .sb-close { display: inline-flex; }
   .sidebar.active { transform: translateX(0); }
-  .sidebar::before {
-    content: ""; position: fixed;
-    top: 0; left: 280px; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,.4); opacity: 0;
-    pointer-events: none; transition: opacity .3s ease;
-  }
-  .sidebar.active::before { opacity: 1; pointer-events: auto; }
   .main { padding: var(--s-3); padding-top: 80px; }
   .field, .select { min-width: 100%; }
   .section-header { flex-direction: column; }
@@ -1539,6 +1750,15 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
   .login-section { padding: 32px 20px; }
   .register-page .container { padding: 24px 16px; }
   .card--glass   { padding: 32px 20px; }
+  .verify-form { padding: 16px; }
+  .otp-grid {
+    gap: 8px;
+    grid-template-columns: repeat(6, minmax(40px, 1fr));
+  }
+  .otp-input {
+    height: 52px;
+    font-size: 24px;
+  }
 }
 
 

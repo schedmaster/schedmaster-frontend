@@ -32,6 +32,8 @@ export default function AlertModal({
         <button
           className="modal-close"
           onClick={onClose}
+          aria-label="Close modal"
+          title="Close modal"
         >
           <X size={20}/>
         </button>
@@ -42,13 +44,7 @@ export default function AlertModal({
           {message}
         </p>
 
-        <div
-          style={{
-            marginTop:"20px",
-            display:"flex",
-            justifyContent:"flex-end"
-          }}
-        >
+        <div className="modal-actions">
 
           <button
             className="btn btn--blue"
