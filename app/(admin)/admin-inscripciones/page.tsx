@@ -1,13 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Users, RefreshCw, Check, X, Clock, Mail, GraduationCap, Briefcase
-} from 'lucide-react';
-
+import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
-import ConfirmModal from '../../components/ConfirmModal';
-import PropuestaModal from '../../components/PropuestaModal';
 import AlertModal from '../../components/AlertModal';
 import CapacidadModal from '../../components/CapacidadModal';
 
@@ -212,16 +207,16 @@ export default function AdminInscripcionesPage() {
   // ─────────────────────────────────────────────
   return (
     <div className="app">
-
-      <AdminSidebar />
+      <AdminSidebar/>
 
       <main className="main">
         <div className="main-inner">
 
+          {/* Header */}
           <header className="section-header">
             <div>
-              <h2>Validación de Inscripciones</h2>
-              <p>Revisa y aprueba las solicitudes de acceso al gimnasio.</p>
+              <h2>Control de Asistencias</h2>
+              <p>Registra y monitorea la asistencia de los usuarios</p>
             </div>
 
             <div className="row-actions">
@@ -334,38 +329,12 @@ export default function AdminInscripcionesPage() {
         </div>
       </main>
 
-      <ConfirmModal
-        open={confirmOpen}
-        title="Confirmar acción"
-        message="¿Deseas continuar?"
-        confirmText="Confirmar"
-        cancelText="Cancelar"
-        onConfirm={confirmarCambio}
-        onCancel={() => setConfirmOpen(false)}
-      />
-
-      <PropuestaModal
-        isOpen={modalPropuestaOpen}
-        correo={correoPropuesta}
-        onClose={() => setModalPropuestaOpen(false)}
-        onPropuestaEnviada={handlePropuestaEnviada}
-      />
-
       <AlertModal
-        open={alertOpen}
-        title={alertTitle}
-        message={alertMessage}
-        onClose={() => setAlertOpen(false)}
+        open={modalOpen}
+        title="Aviso"
+        message={modalMessage}
+        onClose={() => setModalOpen(false)}
       />
-
-      {/* Solo se abre cuando hay 409 (lleno) o disponibles <= 5 (aviso) */}
-      <CapacidadModal
-        open={capacidadOpen}
-        disponibles={lugaresDisponibles}
-        onConfirm={() => setCapacidadOpen(false)}
-        onCancel={() => setCapacidadOpen(false)}
-      />
-
     </div>
   );
 }
