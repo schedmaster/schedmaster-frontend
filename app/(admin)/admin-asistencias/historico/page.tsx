@@ -6,9 +6,6 @@ import { useRouter } from 'next/navigation'
 import AdminSidebar from '../../../components/AdminSidebar'
 import AlertModal from "../../../components/AlertModal"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-
-
 interface ArchivoHistorico {
   id_historico: number
   nombre_archivo: string
@@ -41,15 +38,7 @@ export default function HistoricoAsistenciasPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      cargarHistorico(searchQuery)
-    }, 250)
-
-    return () => clearTimeout(timer)
-  }, [searchQuery])
-
-  useEffect(() => {
-    cargarHistorico('')
+    cargarHistorico()
   }, [])
 
   const formatDate = (date: string) => {
@@ -91,7 +80,7 @@ export default function HistoricoAsistenciasPage() {
                 <tbody>
                   {archivos.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="muted empty-state">
+                      <td colSpan={4} className="muted" style={{ textAlign: 'center', padding: '20px' }}>
                         No hay archivos registrados
                       </td>
                     </tr>
@@ -106,7 +95,7 @@ export default function HistoricoAsistenciasPage() {
                             className="btn-icon btn-icon--cyan"
                             title="Ver documento"
                             onClick={() => {
-                              window.open(`${API_URL}/${a.ruta_archivo}`, "_blank")
+                              window.open(`http://localhost:3001/${a.ruta_archivo}`, "_blank")
                             }}
                           >
                             <Eye size={14} />
