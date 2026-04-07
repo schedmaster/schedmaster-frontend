@@ -15,7 +15,7 @@ interface DatoReporte {
   servicio: string;
   asistencia: string;
   estado: string;
-  periodo: string; // 👈 Agregamos el periodo que ahora manda el backend
+  periodo: string;
 }
 
 export default function AdminEstadisticasPage() {
@@ -53,7 +53,6 @@ export default function AdminEstadisticasPage() {
     { value: 'primavera', label: 'Primavera 2025' },
   ];
 
-  // 👈 NUEVO: Lógica de Filtrado Dinámico
   const datosFiltrados = periodoFiltro === 'todos' 
     ? datosTabla 
     : datosTabla.filter(d => d.periodo.toLowerCase().includes(periodoFiltro.toLowerCase()));
@@ -64,7 +63,6 @@ export default function AdminEstadisticasPage() {
   const handleExport = () => {
     setExporting(true);
     
-    // Elegimos qué datos exportar según lo que pidió el usuario
     const datosExportar = exportScope === 'completo' ? datosTabla : datosFiltrados;
 
     setTimeout(() => {
@@ -76,7 +74,6 @@ export default function AdminEstadisticasPage() {
           ...datosExportar.map(r => [r.matricula, r.nombre, r.carrera, r.servicio, r.periodo, r.asistencia, r.estado]),
         ];
         
-        // 👈 MAGIA DE EXCEL: Le agregamos '\uFEFF' al inicio para que reconozca acentos y la Ñ
         const csvContent = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url  = URL.createObjectURL(blob);
@@ -85,7 +82,6 @@ export default function AdminEstadisticasPage() {
         URL.revokeObjectURL(url);
         
       } else if (exportFormat === 'pdf') {
-        // 👈 MAGIA DEL PDF
         const doc = new jsPDF();
         doc.text("Reporte de Asistencias - SchedMaster", 14, 15);
         
@@ -93,7 +89,7 @@ export default function AdminEstadisticasPage() {
           startY: 20,
           head: [['Matrícula', 'Nombre', 'Carrera', 'Servicio', 'Asistencia', 'Estado']],
           body: datosExportar.map(r => [r.matricula, r.nombre, r.carrera, r.servicio, r.asistencia, r.estado]),
-          headStyles: { fillColor: [0, 164, 224] }, // Azulito SchedMaster
+          headStyles: { fillColor: [0, 164, 224] },
         });
         
         doc.save(`reporte_asistencia_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -119,10 +115,11 @@ export default function AdminEstadisticasPage() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <div className="chip chip--blue" style={{ fontSize: '14px', padding: '8px 15px', background: '#e0f2fe', color: '#0369a1', borderRadius: '20px' }}>
+                  {/* Usamos las clases "pill" del CSS que se adaptan al modo oscuro solitas */}
+                  <div className="pill">
                     <span style={{ marginRight: '5px' }}>👥</span> Inscritos mostrados: <strong>{totalInscritos}</strong>
                   </div>
-                  <div className="chip chip--outline" style={{ fontSize: '14px', padding: '8px 15px', border: '1px solid #ddd', borderRadius: '20px' }}>
+                  <div className="pill">
                     <span style={{ marginRight: '5px' }}>📈</span> Convocatorias activas: <strong>{convActivas}</strong>
                   </div>
                 </div>
@@ -131,30 +128,22 @@ export default function AdminEstadisticasPage() {
                   <button className="btn btn--outline" type="button" onClick={cargarReporte}>
                     <RefreshCw size={18} style={{ marginRight: '5px' }} /> Actualizar
                   </button>
-                  <button className="btn btn--blue" type="button" onClick={() => setModalExport(true)} style={{ backgroundColor: '#00a4e0', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
+                  <button className="btn btn--blue" type="button" onClick={() => setModalExport(true)}>
                     <Download size={18} style={{ marginRight: '5px' }} /> Exportar reporte
                   </button>
                 </div>
               </div>
 
-              <div className="tabs-bar" style={{ marginTop: '10px', borderBottom: 'none' }}>
-                <span className="period-label" style={{ fontWeight: 'bold', fontSize: '12px', color: '#666', marginRight: '15px', textTransform: 'uppercase' }}>Periodo:</span>
-                <div className="tab-group" style={{ display: 'flex', gap: '10px' }}>
+              {/* Limpiamos las pestañas para que usen solo CSS */}
+              <div className="tabs-bar" style={{ marginTop: '10px' }}>
+                <span className="period-label">Periodo:</span>
+                <div className="tab-group">
                   {TABS.map(t => (
                     <button 
                       key={t.value} 
                       className={`tab ${periodoFiltro === t.value ? 'active' : ''}`}
                       type="button" 
                       onClick={() => setPeriodoFiltro(t.value)}
-                      style={{ 
-                        padding: '6px 12px', 
-                        borderRadius: '20px', 
-                        border: periodoFiltro === t.value ? 'none' : '1px solid #ddd',
-                        background: periodoFiltro === t.value ? '#e0f2fe' : 'transparent',
-                        color: periodoFiltro === t.value ? '#0369a1' : '#666',
-                        cursor: 'pointer',
-                        fontWeight: periodoFiltro === t.value ? 'bold' : 'normal'
-                      }}
                     >
                       {t.label}
                     </button>
@@ -163,53 +152,44 @@ export default function AdminEstadisticasPage() {
               </div>
             </header>
 
-            <section className="table-area" style={{ marginTop: '30px' }}>
+            {/* AQUÍ OCURRIÓ LA MAGIA: Borramos todos los 'style' y dejamos trabajar a la clase table-area */}
+            <section className="table-area" style={{ marginTop: '20px' }}>
               <div className="table-scroll">
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                  <thead style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left', fontSize: '12px', color: '#64748b', textTransform: 'uppercase' }}>
+                <table>
+                  <thead>
                     <tr>
-                      <th style={{ padding: '15px' }}>Matrícula</th>
-                      <th style={{ padding: '15px' }}>Nombre del alumno</th>
-                      <th style={{ padding: '15px' }}>Carrera</th>
-                      <th style={{ padding: '15px' }}>Servicio</th>
-                      <th style={{ padding: '15px' }}>Asistencia Prom.</th>
-                      <th style={{ padding: '15px' }}>Estado</th>
+                      <th>Matrícula</th>
+                      <th>Nombre del alumno</th>
+                      <th>Carrera</th>
+                      <th>Servicio</th>
+                      <th>Asistencia Prom.</th>
+                      <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
                     {datosFiltrados.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>
-                          Cargando reportes o no hay datos para el periodo seleccionado...
+                        <td colSpan={6} style={{ textAlign: 'center' }}>
+                           <div className="empty-state" style={{ padding: '40px', border: 'none', boxShadow: 'none' }}>
+                             <p>Cargando reportes o no hay datos para el periodo seleccionado...</p>
+                           </div>
                         </td>
                       </tr>
                     ) : (
                       datosFiltrados.map((fila) => (
-                        <tr key={fila.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px' }}>
-                          <td style={{ padding: '15px', color: '#475569', fontWeight: '500' }}>{fila.matricula}</td>
-                          <td style={{ padding: '15px', fontWeight: 'bold', color: '#1e293b' }}>{fila.nombre}</td>
-                          <td style={{ padding: '15px', color: '#64748b' }}>{fila.carrera}</td>
-                          <td style={{ padding: '15px', color: '#64748b' }}>{fila.servicio}</td>
-                          <td style={{ padding: '15px' }}>
-                            <span style={{ 
-                              color: parseInt(fila.asistencia) >= 80 ? '#15803d' : parseInt(fila.asistencia) > 0 ? '#b91c1c' : '#64748b', 
-                              fontWeight: 'bold',
-                              background: parseInt(fila.asistencia) >= 80 ? '#dcfce7' : parseInt(fila.asistencia) > 0 ? '#fee2e2' : '#f1f5f9',
-                              padding: '4px 8px',
-                              borderRadius: '4px'
-                            }}>
+                        <tr key={fila.id}>
+                          <td>{fila.matricula}</td>
+                          <td style={{ fontWeight: 'bold' }}>{fila.nombre}</td>
+                          <td>{fila.carrera}</td>
+                          <td>{fila.servicio}</td>
+                          <td>
+                            {/* Convertimos tus colores inline a las clases 'chip' dinámicas */}
+                            <span className={`chip ${parseInt(fila.asistencia) >= 80 ? 'chip--presente' : parseInt(fila.asistencia) > 0 ? 'chip--ausente' : 'chip--pendiente'}`}>
                               {fila.asistencia}
                             </span>
                           </td>
-                          <td style={{ padding: '15px' }}>
-                            <span style={{
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              padding: '4px 8px',
-                              borderRadius: '12px',
-                              backgroundColor: fila.estado === 'Activo' ? '#dcfce7' : '#f1f5f9',
-                              color: fila.estado === 'Activo' ? '#166534' : '#475569'
-                            }}>
+                          <td>
+                            <span className={`chip ${fila.estado.toLowerCase() === 'activo' ? 'chip--activo' : 'chip--inactivo'}`}>
                               {fila.estado.toUpperCase()}
                             </span>
                           </td>
@@ -219,7 +199,7 @@ export default function AdminEstadisticasPage() {
                   </tbody>
                 </table>
               </div>
-              <div style={{ padding: '15px', color: '#94a3b8', fontSize: '13px', textAlign: 'right' }}>
+              <div className="table-hint" style={{ textAlign: 'right' }}>
                 Mostrando {datosFiltrados.length} registros
               </div>
             </section>
@@ -239,7 +219,6 @@ export default function AdminEstadisticasPage() {
               <div className="form-group">
                 <label className="input-label">Formato de exportación</label>
                 <div className="export-options">
-                  {/* 👈 LE DIMOS CUELLO AL JSON COMO PIDIÓ ARLET */}
                   {[
                     { value:'csv',  cls:'csv',  icon:<FileText size={20} />, label:'Excel (CSV)', desc:'Compatible con Excel y hojas de cálculo' },
                     { value:'pdf',  cls:'pdf',  icon:<FileText size={20} />, label:'PDF',         desc:'Reporte visual listo para presentar' },
