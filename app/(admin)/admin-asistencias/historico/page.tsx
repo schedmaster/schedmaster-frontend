@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Upload, CheckCircle, Eye, Search } from 'lucide-react'
+import { ArrowLeft, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import AdminSidebar from '../../../components/AdminSidebar'
 import AlertModal from "../../../components/AlertModal"
@@ -21,27 +21,16 @@ export default function HistoricoAsistenciasPage() {
   const router = useRouter()
 
   const [archivos, setArchivos] = useState<ArchivoHistorico[]>([])
-  const [archivo, setArchivo] = useState<File | null>(null)
-  const [fecha, setFecha] = useState("")
-  const [searchQuery, setSearchQuery] = useState('')
 
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState("")
 
-  /* ==========================
-     CARGAR HISTORICO
-  ========================== */
-  const cargarHistorico = async (query = '') => {
+  const cargarHistorico = async () => {
     try {
-      const term = query.trim()
-      const endpoint = term
-        ? `${API_URL}/api/asistencias/historico?q=${encodeURIComponent(term)}`
-        : `${API_URL}/api/asistencias/historico`
+      const res = await fetch('http://localhost:3001/api/asistencias/historico')
 
-      const res = await fetch(endpoint)
-      
       if (!res.ok) throw new Error("Error en la respuesta del servidor")
-      
+
       const data = await res.json()
       setArchivos(data)
     } catch (error) {
@@ -63,52 +52,8 @@ export default function HistoricoAsistenciasPage() {
     cargarHistorico('')
   }, [])
 
-  /* ==========================
-     SUBIR ARCHIVO
-  ========================== */
-  const handleSubir = async () => {
-    if (!archivo || !fecha) {
-      setAlertMessage("Selecciona archivo y fecha")
-      setAlertOpen(true)
-      return
-    }
-
-    const formData = new FormData()
-    formData.append("archivo", archivo)
-    formData.append("fecha", fecha)
-    formData.append("id_usuario", "1") // Aquí asume el ID 1 del Admin
-
-    try {
-      const res = await fetch(`${API_URL}/api/asistencias/upload-and-hash`, {
-        method: "POST",
-        body: formData
-      })
-
-      const data = await res.json()
-      
-      if (res.ok) {
-        setAlertMessage("Archivo subido con éxito")
-      } else {
-        setAlertMessage(data.message || "Error al subir")
-      }
-      
-      setAlertOpen(true)
-      setArchivo(null)
-      setFecha("")
-      cargarHistorico(searchQuery)
-    } catch (error) {
-      console.error(error)
-      setAlertMessage("Error subiendo archivo")
-      setAlertOpen(true)
-    }
-  }
-
-  /* ==========================
-     FORMATEAR FECHA
-  ========================== */
   const formatDate = (date: string) => {
     if (!date) return "-"
-    // Aseguramos que la fecha no se desfase por la zona horaria al mostrarla
     return new Date(date).toISOString().split('T')[0]
   }
 
@@ -121,7 +66,7 @@ export default function HistoricoAsistenciasPage() {
           <header className="section-header">
             <div>
               <h2>Histórico de Asistencias</h2>
-              <p>Sube y consulta listas físicas digitalizadas</p>
+              <p>Consulta listas físicas digitalizadas</p>
             </div>
             <button
               className="btn btn--outline"
@@ -130,65 +75,6 @@ export default function HistoricoAsistenciasPage() {
               <ArrowLeft size={16} /> Regresar
             </button>
           </header>
-
-          {/* CONTROLES */}
-          <div className="controls-container">
-            <label htmlFor="archivoHistorico" className="btn btn--blue btn-label">
-              <Upload size={18} /> Seleccionar archivo
-            </label>
-
-            <input
-              type="file"
-              id="archivoHistorico"
-              className="hidden-input"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null
-                setArchivo(file)
-              }}
-            />
-
-            <input
-              type="date"
-              className="form-select"
-              placeholder="Selecciona una fecha"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-            />
-
-            <button
-              className="btn btn--yellow"
-              onClick={handleSubir}
-              disabled={!archivo || !fecha}
-            >
-              Subir lista
-            </button>
-          </div>
-
-          {/* ARCHIVO SELECCIONADO */}
-          {archivo && (
-            <div className="row-card">
-              <div className="row-info">
-                <span className="row-name row-name-flex">
-                  <CheckCircle size={16} color="green" /> Archivo seleccionado
-                </span>
-                <span className="row-sub muted">
-                  {archivo.name}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <section className="filter-bar">
-            <div className="field">
-              <Search />
-              <input
-                type="search"
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </section>
 
           {/* TABLA */}
           <section className="table-area">

@@ -5,8 +5,8 @@ import { User as UserIcon, Calendar, Clock, Home, LogOut, Sun, Moon } from 'luci
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDarkMode } from '../../hooks/useDarkMode';
+import AvisoPrivacidadModal from "@/app/components/AvisoPrivacidadModal"; 
 
-// INTERFAZ (SOLUCIONA EL ERROR)
 interface User {
   nombre: string;
   apellido_paterno: string;
@@ -42,8 +42,8 @@ export default function PerfilPage() {
   const router = useRouter();
   const { darkMode, toggle } = useDarkMode();
 
-  // YA TIPADO
   const [user, setUser] = useState<User | null>(null);
+  const [showAviso, setShowAviso] = useState(false); //  STATE
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -65,7 +65,6 @@ export default function PerfilPage() {
     return <p style={{ textAlign: 'center', marginTop: '50px' }}>Cargando perfil...</p>;
   }
 
-  // DATOS REALES
   const inscripcion = user.ultimaInscripcion;
   const horario = inscripcion?.horario;
 
@@ -168,16 +167,34 @@ export default function PerfilPage() {
           marginTop: '40px',
           paddingBottom: '60px',
         }}>
-          <button className="dark-toggle" onClick={toggle} aria-label="Cambiar tema">
+
+          {/* MODO OSCURO */}
+          <button className="dark-toggle" onClick={toggle}>
             {darkMode ? <Moon size={18} /> : <Sun size={18} />}
           </button>
 
+          {/*  NUEVO BOTÓN AVISO */}
+          <button 
+            className="btn btn--outline"
+            onClick={() => setShowAviso(true)}
+          >
+            Aviso de privacidad
+          </button>
+
+          {/* LOGOUT */}
           <button className="btn btn--outline" onClick={handleLogout}>
             <LogOut size={16} /> Cerrar sesión
           </button>
         </div>
 
       </section>
+
+      {/*  MODAL */}
+      <AvisoPrivacidadModal 
+        open={showAviso} 
+        onClose={() => setShowAviso(false)} 
+      />
+
     </div>
   );
 }

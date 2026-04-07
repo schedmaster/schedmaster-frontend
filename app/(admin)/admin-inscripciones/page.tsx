@@ -1,18 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Users, RefreshCw, Check, X, Clock, Mail, GraduationCap, Briefcase
-} from 'lucide-react';
-
+import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
-import ConfirmModal from '../../components/ConfirmModal';
-import PropuestaModal from '../../components/PropuestaModal';
 import AlertModal from '../../components/AlertModal';
+import CapacidadModal from '../../components/CapacidadModal';
 
 const ROL_CONFIG: Record<number, { icon: any; nombre: string; color: string }> = {
   1: { icon: GraduationCap, nombre: 'Estudiante', color: 'var(--blue-light)' },
-  2: { icon: Briefcase, nombre: 'Docente', color: 'var(--purple-light)' },
+  2: { icon: Briefcase,     nombre: 'Docente',     color: 'var(--purple-light)' },
 };
 
 interface Inscripcion {
@@ -30,84 +26,96 @@ interface Inscripcion {
   };
 
   horario?: {
+    id_horario: number;       // ← necesario para verificar capacidad
     hora_inicio: string;
     hora_fin: string;
   };
 
   diasSeleccionados?: {
-    dia: { nombre: string }
+    dia: {
+      id_dia: number;         // ← necesario para verificar capacidad
+      nombre: string;
+    }
   }[];
 }
 
 export default function AdminInscripcionesPage() {
 
-  const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [inscripciones, setInscripciones]   = useState<Inscripcion[]>([]);
+  const [loading, setLoading]               = useState(false);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  // — Confirm modal
+  const [confirmOpen, setConfirmOpen]       = useState(false);
   const [accionPendiente, setAccionPendiente] =
     useState<{ id: number; estado: string } | null>(null);
 
+  // — Propuesta modal
   const [modalPropuestaOpen, setModalPropuestaOpen] = useState(false);
-  const [correoPropuesta, setCorreoPropuesta] = useState('');
-  const [inscripcionActual, setInscripcionActual] = useState<number | null>(null);
+  const [correoPropuesta, setCorreoPropuesta]       = useState('');
+  const [inscripcionActual, setInscripcionActual]   = useState<number | null>(null);
   const [propuestasEnviadas, setPropuestasEnviadas] = useState<number[]>([]);
 
-  // ALERT STATE
-  const [alertOpen, setAlertOpen] = useState(false);
+  // — Alert modal (éxito / error genérico)
+  const [alertOpen, setAlertOpen]     = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [alertTitle, setAlertTitle] = useState('Mensaje');
+  const [alertTitle, setAlertTitle]   = useState('Mensaje');
 
+  // — Capacidad modal (sin lugares / cupo casi lleno)
+  const [capacidadOpen, setCapacidadOpen]           = useState(false);
+  const [lugaresDisponibles, setLugaresDisponibles] = useState(0);
+
+  // ─────────────────────────────────────────────
+  // FETCH
+  // ─────────────────────────────────────────────
   const fetchInscripciones = async () => {
-
     setLoading(true);
-
     try {
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/pendientes`
       );
-
       if (res.ok) {
-
-        const data = await res.json();
-        setInscripciones(data);
-
+        setInscripciones(await res.json());
       } else {
-
-        setAlertTitle('Error');
-        setAlertMessage('No se pudieron cargar las inscripciones');
-        setAlertOpen(true);
-
+        mostrarError('No se pudieron cargar las inscripciones');
       }
-
-    } catch (err) {
-
-      setAlertTitle('Error');
-      setAlertMessage('Error de conexión con el servidor');
-      setAlertOpen(true);
-
+    } catch {
+      mostrarError('Error de conexión con el servidor');
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-  useEffect(() => {
-    fetchInscripciones();
-  }, []);
+  useEffect(() => { fetchInscripciones(); }, []);
 
+  // ─────────────────────────────────────────────
+  // HELPERS UI
+  // ─────────────────────────────────────────────
+  const mostrarError = (msg: string) => {
+    setAlertTitle('Error');
+    setAlertMessage(msg);
+    setAlertOpen(true);
+  };
+
+  const mostrarExito = (msg: string) => {
+    setAlertTitle('Éxito');
+    setAlertMessage(msg);
+    setAlertOpen(true);
+  };
+
+  const mostrarCapacidad = (disponibles: number) => {
+    setLugaresDisponibles(disponibles);
+    setCapacidadOpen(true);
+  };
+
+  // ─────────────────────────────────────────────
+  // ACEPTAR / RECHAZAR
+  // ─────────────────────────────────────────────
   const handleStatusChange = (id: number, nuevoEstado: string) => {
-
     setAccionPendiente({ id, estado: nuevoEstado });
     setConfirmOpen(true);
-
   };
 
   const confirmarCambio = async () => {
-
     if (!accionPendiente) return;
 
     const { id, estado } = accionPendiente;
@@ -118,7 +126,6 @@ export default function AdminInscripcionesPage() {
         : '/api/inscripciones/rechazar';
 
     try {
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
         {
@@ -128,43 +135,62 @@ export default function AdminInscripcionesPage() {
         }
       );
 
-      if (res.ok) {
+      const data = await res.json();
 
-        setInscripciones(prev =>
-          prev.filter(i => (i.id_inscripcion || i.id) !== id)
-        );
+      if (res.status === 409) {
+        // Horario lleno — mostrar modal bloqueante
+        mostrarCapacidad(0);
+        return;
+      }
 
-        setAlertTitle('Éxito');
-        setAlertMessage(
+      if (!res.ok) {
+        mostrarError('No se pudo procesar la solicitud');
+        return;
+      }
+
+      // Quitar de la lista
+      setInscripciones(prev =>
+        prev.filter(i => (i.id_inscripcion || i.id) !== id)
+      );
+
+      if (estado === 'aprobado' && typeof data.disponibles === 'number' && data.disponibles <= 5) {
+        // Aprobado con poco cupo restante — aviso post-acción
+        mostrarCapacidad(data.disponibles);
+      } else {
+        mostrarExito(
           estado === 'aprobado'
             ? 'Inscripción aprobada correctamente'
             : 'Inscripción rechazada correctamente'
         );
-        setAlertOpen(true);
-
-      } else {
-
-        setAlertTitle('Error');
-        setAlertMessage('No se pudo procesar la solicitud');
-        setAlertOpen(true);
-
       }
 
     } catch {
-
-      setAlertTitle('Error');
-      setAlertMessage('Error de conexión con el servidor');
-      setAlertOpen(true);
-
+      mostrarError('Error de conexión con el servidor');
     } finally {
-
       setConfirmOpen(false);
       setAccionPendiente(null);
-
     }
-
   };
 
+  // ─────────────────────────────────────────────
+  // PROPUESTA — callback cuando se envió
+  // ─────────────────────────────────────────────
+  const handlePropuestaEnviada = (disponibles?: number) => {
+    if (inscripcionActual) {
+      setPropuestasEnviadas(prev => [...prev, inscripcionActual]);
+    }
+
+    if (typeof disponibles === 'number' && disponibles <= 5) {
+      // Poco cupo restante luego de proponer
+      mostrarCapacidad(disponibles);
+    } else {
+      mostrarExito('Propuesta enviada correctamente');
+    }
+  };
+
+  // ─────────────────────────────────────────────
+  // FORMAT
+  // ─────────────────────────────────────────────
   const formatDias = (dias: any[] | undefined) =>
     dias?.length
       ? dias.map(d => d?.dia?.nombre?.substring(0, 3)).join(', ')
@@ -176,44 +202,38 @@ export default function AdminInscripcionesPage() {
   const inscripcionesFiltradas =
     inscripciones.filter(i => [1, 2].includes(i.usuario?.id_rol || 0));
 
+  // ─────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────
   return (
-
     <div className="app">
-
-      <AdminSidebar />
+      <AdminSidebar/>
 
       <main className="main">
-
         <div className="main-inner">
 
+          {/* Header */}
           <header className="section-header">
-
             <div>
-              <h2>Validación de Inscripciones</h2>
-              <p>Revisa y aprueba las solicitudes de acceso al gimnasio.</p>
+              <h2>Control de Asistencias</h2>
+              <p>Registra y monitorea la asistencia de los usuarios</p>
             </div>
 
             <div className="row-actions">
-
               <div className="chip chip--pendiente">
                 <Clock size={14}/> {inscripcionesFiltradas.length} Solicitudes
               </div>
-
               <button
                 className={`btn btn--blue ${loading ? 'loading' : ''}`}
                 onClick={fetchInscripciones}
               >
                 <RefreshCw size={16}/> {loading ? 'Cargando...' : 'Actualizar'}
               </button>
-
             </div>
-
           </header>
 
           <section className="table-area">
-
             <div className="table-scroll">
-
               <table className="modern-table">
 
                 <thead>
@@ -229,51 +249,35 @@ export default function AdminInscripcionesPage() {
                 </thead>
 
                 <tbody>
-
                   {inscripcionesFiltradas.length > 0 ? (
-
                     inscripcionesFiltradas.map((insc) => {
-
                       const id = insc.id_inscripcion || insc.id || 0;
 
                       return (
-
                         <tr key={id}>
 
                           <td>
                             {insc.usuario?.nombre} {insc.usuario?.apellido_paterno}
                           </td>
 
-                          <td>
-                            <Mail size={12}/> {insc.usuario?.correo}
-                          </td>
+                          <td><Mail size={12}/> {insc.usuario?.correo}</td>
 
-                          <td>
-                            {ROL_CONFIG[insc.usuario?.id_rol || 0]?.nombre}
-                          </td>
+                          <td>{ROL_CONFIG[insc.usuario?.id_rol || 0]?.nombre}</td>
 
                           <td>
                             {formatHora(insc.horario?.hora_inicio)} - {formatHora(insc.horario?.hora_fin)}
                           </td>
 
-                          <td>
-                            {formatDias(insc.diasSeleccionados)}
-                          </td>
+                          <td>{formatDias(insc.diasSeleccionados)}</td>
+
+                          <td>{(insc.prioridad || 'baja').toUpperCase()}</td>
 
                           <td>
-                            {(insc.prioridad || 'baja').toUpperCase()}
-                          </td>
-
-                          <td>
-
                             {propuestasEnviadas.includes(id) ? (
-
                               <button className="btn-mini btn-mini--gray" disabled>
                                 En espera de respuesta
                               </button>
-
                             ) : (
-
                               <div className="action-buttons">
 
                                 <button
@@ -302,79 +306,35 @@ export default function AdminInscripcionesPage() {
                                 </button>
 
                               </div>
-
                             )}
-
                           </td>
 
                         </tr>
-
                       );
-
                     })
-
                   ) : (
-
                     <tr>
                       <td colSpan={7} className="empty-state">
                         <Users size={48}/>
                         No hay inscripciones pendientes
                       </td>
                     </tr>
-
                   )}
-
                 </tbody>
 
               </table>
-
             </div>
-
           </section>
 
         </div>
-
       </main>
 
-      {/* CONFIRM */}
-      <ConfirmModal
-        open={confirmOpen}
-        title="Confirmar acción"
-        message="¿Deseas continuar?"
-        confirmText="Confirmar"
-        cancelText="Cancelar"
-        onConfirm={confirmarCambio}
-        onCancel={() => setConfirmOpen(false)}
-      />
-
-      {/* PROPUESTA */}
-      <PropuestaModal
-        isOpen={modalPropuestaOpen}
-        correo={correoPropuesta}
-        onClose={() => setModalPropuestaOpen(false)}
-        onPropuestaEnviada={() => {
-
-          if (inscripcionActual) {
-            setPropuestasEnviadas(prev => [...prev, inscripcionActual]);
-          }
-
-          setAlertTitle('Éxito');
-          setAlertMessage('Propuesta enviada correctamente');
-          setAlertOpen(true);
-
-        }}
-      />
-
-      {/* ALERT */}
       <AlertModal
-        open={alertOpen}
-        title={alertTitle}
-        message={alertMessage}
-        onClose={() => setAlertOpen(false)}
+        open={modalOpen}
+        title="Aviso"
+        message={modalMessage}
+        onClose={() => setModalOpen(false)}
       />
-
     </div>
-
   );
-
 }
