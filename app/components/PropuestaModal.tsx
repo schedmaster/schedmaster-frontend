@@ -4,14 +4,17 @@ import { useEffect, useState } from 'react';
 import { X, Send, Clock } from 'lucide-react';
 import AlertModal from './AlertModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 interface Props {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  correo: string;
-  onPropuestaEnviada: (disponibles?: number) => void; // ← ahora recibe disponibles
+  idInscripcion: number;
+  correoDestino: string;
+  onSuccess: (disponibles?: number) => void;
 }
 
-export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnviada }: Props) {
+export default function PropuestaModal({ open, onClose, idInscripcion, correoDestino, onSuccess }: Props) {
 
   const [horarios, setHorarios]                   = useState<any[]>([]);
   const [diasHorario, setDiasHorario]             = useState<any[]>([]);
@@ -23,17 +26,17 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
 
   // Cargar horarios
   useEffect(() => {
-    if (!isOpen) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios`)
+    if (!open) return;
+    fetch(`${API_URL}/horarios`)
       .then(r => r.json())
       .then(d => setHorarios(Array.isArray(d) ? d : d?.data || []))
       .catch(() => setHorarios([]));
-  }, [isOpen]);
+  }, [open]);
 
   // Cargar días del horario seleccionado
   useEffect(() => {
     if (!horarioId) { setDiasHorario([]); return; }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/horarios/${horarioId}/dias`)
+    fetch(`${API_URL}/horarios/${horarioId}/dias`)
       .then(async r => {
         if (!r.ok) throw new Error('Error obteniendo días');
         return r.json();
@@ -64,11 +67,16 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/propuestas/propuesta-inscripcion`,
+        `${API_URL}/propuestas/propuesta-inscripcion`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ correo, horarioId, dias: diasSeleccionados })
+          body: JSON.stringify({ 
+            correo: correoDestino, 
+            id_inscripcion: idInscripcion, 
+            horarioId, 
+            dias: diasSeleccionados 
+          })
         }
       );
 
@@ -87,10 +95,10 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
         return;
       }
 
-      // Éxito — cerrar y notificar con disponibles para que la página decida
+      // Éxito — cerrar y notificar con disponibles
       onClose();
       resetForm();
-      onPropuestaEnviada(data.disponibles);
+      onSuccess(data.disponibles);
 
     } catch {
       setAlertMessage('Error de conexión.');
@@ -100,7 +108,7 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
     }
   };
 
-  if (!isOpen) return null;
+  if (!open) return null;
 
   return (
     <div
@@ -115,7 +123,7 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
               <Clock size={20}/>
               <h3>Proponer horario</h3>
             </div>
-            <p className="muted">Enviar propuesta a {correo}</p>
+            <p className="muted">Enviar propuesta a {correoDestino}</p>
           </div>
           <button className="btn-close" onClick={onClose} title="Cerrar">
             <X/>

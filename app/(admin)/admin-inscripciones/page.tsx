@@ -1,14 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Search } from 'lucide-react'; 
+import { 
+  RefreshCw, 
+  Search, 
+  Check, 
+  X, 
+  Clock, 
+  Users, 
+  Mail, 
+  GraduationCap, 
+  Briefcase 
+} from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
 import CapacidadModal from '../../components/CapacidadModal';
+import ConfirmModal from '../../components/ConfirmModal';
+import PropuestaModal from '../../components/PropuestaModal';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 const ROL_CONFIG: Record<number, { icon: any; nombre: string; color: string }> = {
   1: { icon: GraduationCap, nombre: 'Estudiante', color: 'var(--blue-light)' },
-  2: { icon: Briefcase,     nombre: 'Docente',     color: 'var(--purple-light)' },
+  2: { icon: Briefcase,     nombre: 'Docente',    color: 'var(--purple-light)' },
 };
 
 interface Inscripcion {
@@ -26,55 +40,42 @@ interface Inscripcion {
   };
 
   horario?: {
-    id_horario: number;       // ← necesario para verificar capacidad
+    id_horario: number;
     hora_inicio: string;
     hora_fin: string;
   };
 
   diasSeleccionados?: {
     dia: {
-      id_dia: number;         // ← necesario para verificar capacidad
+      id_dia: number;
       nombre: string;
     }
   }[];
 }
 
 export default function AdminInscripcionesPage() {
-
   const [inscripciones, setInscripciones]   = useState<Inscripcion[]>([]);
   const [loading, setLoading]               = useState(false);
-
-  // — Confirm modal
   const [confirmOpen, setConfirmOpen]       = useState(false);
-  const [accionPendiente, setAccionPendiente] =
-    useState<{ id: number; estado: string } | null>(null);
-
-  // — Propuesta modal
+  const [accionPendiente, setAccionPendiente] = useState<{ id: number; estado: string } | null>(null);
   const [modalPropuestaOpen, setModalPropuestaOpen] = useState(false);
   const [correoPropuesta, setCorreoPropuesta]       = useState('');
   const [inscripcionActual, setInscripcionActual]   = useState<number | null>(null);
   const [propuestasEnviadas, setPropuestasEnviadas] = useState<number[]>([]);
-
-  // — Alert modal (éxito / error genérico)
   const [alertOpen, setAlertOpen]     = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertTitle, setAlertTitle]   = useState('Mensaje');
-
-  // — Capacidad modal (sin lugares / cupo casi lleno)
   const [capacidadOpen, setCapacidadOpen]           = useState(false);
   const [lugaresDisponibles, setLugaresDisponibles] = useState(0);
 
-  // ─────────────────────────────────────────────
-  // FETCH
-  // ─────────────────────────────────────────────
   const fetchInscripciones = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/pendientes`
-      );
+      const res = await fetch(`${API_URL}/inscripciones/pendientes`);
       if (res.ok) {
-        setInscripciones(await res.json());
+        const data = await res.json();
+        // Blindaje 1: Asegurarnos de que siempre guardemos un arreglo
+        setInscripciones(Array.isArray(data) ? data : (data?.data || []));
       } else {
         mostrarError('No se pudieron cargar las inscripciones');
       }
@@ -87,9 +88,6 @@ export default function AdminInscripcionesPage() {
 
   useEffect(() => { fetchInscripciones(); }, []);
 
-  // ─────────────────────────────────────────────
-  // HELPERS UI
-  // ─────────────────────────────────────────────
   const mostrarError = (msg: string) => {
     setAlertTitle('Error');
     setAlertMessage(msg);
@@ -107,9 +105,6 @@ export default function AdminInscripcionesPage() {
     setCapacidadOpen(true);
   };
 
-  // ─────────────────────────────────────────────
-  // ACEPTAR / RECHAZAR
-  // ─────────────────────────────────────────────
   const handleStatusChange = (id: number, nuevoEstado: string) => {
     setAccionPendiente({ id, estado: nuevoEstado });
     setConfirmOpen(true);
@@ -119,26 +114,18 @@ export default function AdminInscripcionesPage() {
     if (!accionPendiente) return;
 
     const { id, estado } = accionPendiente;
-
-    const endpoint =
-      estado === 'aprobado'
-        ? '/api/inscripciones/aceptar'
-        : '/api/inscripciones/rechazar';
+    const endpoint = estado === 'aprobado' ? '/inscripciones/aceptar' : '/inscripciones/rechazar';
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_inscripcion: id }),
-        }
-      );
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_inscripcion: id }),
+      });
 
       const data = await res.json();
 
       if (res.status === 409) {
-        // Horario lleno — mostrar modal bloqueante
         mostrarCapacidad(0);
         return;
       }
@@ -148,13 +135,11 @@ export default function AdminInscripcionesPage() {
         return;
       }
 
-      // Quitar de la lista
       setInscripciones(prev =>
         prev.filter(i => (i.id_inscripcion || i.id) !== id)
       );
 
       if (estado === 'aprobado' && typeof data.disponibles === 'number' && data.disponibles <= 5) {
-        // Aprobado con poco cupo restante — aviso post-acción
         mostrarCapacidad(data.disponibles);
       } else {
         mostrarExito(
@@ -172,25 +157,18 @@ export default function AdminInscripcionesPage() {
     }
   };
 
-  // ─────────────────────────────────────────────
-  // PROPUESTA — callback cuando se envió
-  // ─────────────────────────────────────────────
   const handlePropuestaEnviada = (disponibles?: number) => {
     if (inscripcionActual) {
       setPropuestasEnviadas(prev => [...prev, inscripcionActual]);
     }
 
     if (typeof disponibles === 'number' && disponibles <= 5) {
-      // Poco cupo restante luego de proponer
       mostrarCapacidad(disponibles);
     } else {
       mostrarExito('Propuesta enviada correctamente');
     }
   };
 
-  // ─────────────────────────────────────────────
-  // FORMAT
-  // ─────────────────────────────────────────────
   const formatDias = (dias: any[] | undefined) =>
     dias?.length
       ? dias.map(d => d?.dia?.nombre?.substring(0, 3)).join(', ')
@@ -199,12 +177,10 @@ export default function AdminInscripcionesPage() {
   const formatHora = (hora: string | undefined) =>
     hora ? hora.substring(0, 5) : '--:--';
 
-  const inscripcionesFiltradas =
-    inscripciones.filter(i => [1, 2].includes(i.usuario?.id_rol || 0));
+  // Blindaje 2: Escudo en el filter por si la variable llega mal
+  const inscripcionesFiltradas = (Array.isArray(inscripciones) ? inscripciones : [])
+    .filter(i => [1, 2].includes(i.usuario?.id_rol || 0));
 
-  // ─────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────
   return (
     <div className="app">
       <AdminSidebar/>
@@ -212,11 +188,10 @@ export default function AdminInscripcionesPage() {
       <main className="main">
         <div className="main-inner">
 
-          {/* Header */}
           <header className="section-header">
             <div>
-              <h2>Control de Asistencias</h2>
-              <p>Registra y monitorea la asistencia de los usuarios</p>
+              <h2>Control de Inscripciones</h2>
+              <p>Gestiona las solicitudes de acceso al servicio</p>
             </div>
 
             <div className="row-actions">
@@ -235,7 +210,6 @@ export default function AdminInscripcionesPage() {
           <section className="table-area">
             <div className="table-scroll">
               <table className="modern-table">
-
                 <thead>
                   <tr>
                     <th>Usuario</th>
@@ -247,31 +221,22 @@ export default function AdminInscripcionesPage() {
                     <th className="text-center">Acciones</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {inscripcionesFiltradas.length > 0 ? (
                     inscripcionesFiltradas.map((insc) => {
                       const id = insc.id_inscripcion || insc.id || 0;
-
                       return (
                         <tr key={id}>
-
                           <td>
                             {insc.usuario?.nombre} {insc.usuario?.apellido_paterno}
                           </td>
-
                           <td><Mail size={12}/> {insc.usuario?.correo}</td>
-
                           <td>{ROL_CONFIG[insc.usuario?.id_rol || 0]?.nombre}</td>
-
                           <td>
                             {formatHora(insc.horario?.hora_inicio)} - {formatHora(insc.horario?.hora_fin)}
                           </td>
-
                           <td>{formatDias(insc.diasSeleccionados)}</td>
-
                           <td>{(insc.prioridad || 'baja').toUpperCase()}</td>
-
                           <td>
                             {propuestasEnviadas.includes(id) ? (
                               <button className="btn-mini btn-mini--gray" disabled>
@@ -279,21 +244,18 @@ export default function AdminInscripcionesPage() {
                               </button>
                             ) : (
                               <div className="action-buttons">
-
                                 <button
                                   className="btn-mini btn-mini--green"
                                   onClick={() => handleStatusChange(id, 'aprobado')}
                                 >
                                   <Check size={12}/> Aceptar
                                 </button>
-
                                 <button
                                   className="btn-mini btn-mini--red"
                                   onClick={() => handleStatusChange(id, 'rechazado')}
                                 >
                                   <X size={12}/> Rechazar
                                 </button>
-
                                 <button
                                   className="btn-mini btn-mini--blue"
                                   onClick={() => {
@@ -304,11 +266,9 @@ export default function AdminInscripcionesPage() {
                                 >
                                   Propuesta
                                 </button>
-
                               </div>
                             )}
                           </td>
-
                         </tr>
                       );
                     })
@@ -316,24 +276,46 @@ export default function AdminInscripcionesPage() {
                     <tr>
                       <td colSpan={7} className="empty-state">
                         <Users size={48}/>
-                        No hay inscripciones pendientes
+                        <p>No hay inscripciones pendientes</p>
                       </td>
                     </tr>
                   )}
                 </tbody>
-
               </table>
             </div>
           </section>
-
         </div>
       </main>
 
+      <ConfirmModal
+        open={confirmOpen}
+        title="Confirmar acción"
+        message={`¿Estás seguro de que deseas ${accionPendiente?.estado === 'aprobado' ? 'aceptar' : 'rechazar'} esta inscripción?`}
+        onConfirm={confirmarCambio}
+        onCancel={() => setConfirmOpen(false)}
+      />
+
+      {modalPropuestaOpen && (
+        <PropuestaModal
+          open={modalPropuestaOpen}
+          onClose={() => setModalPropuestaOpen(false)}
+          idInscripcion={inscripcionActual || 0}
+          correoDestino={correoPropuesta}
+          onSuccess={handlePropuestaEnviada}
+        />
+      )}
+
+      <CapacidadModal
+        open={capacidadOpen}
+        disponibles={lugaresDisponibles}
+        onClose={() => setCapacidadOpen(false)}
+      />
+
       <AlertModal
-        open={modalOpen}
-        title="Aviso"
-        message={modalMessage}
-        onClose={() => setModalOpen(false)}
+        open={alertOpen}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertOpen(false)}
       />
     </div>
   );

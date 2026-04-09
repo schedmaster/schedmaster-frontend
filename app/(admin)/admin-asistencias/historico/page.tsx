@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import AdminSidebar from '../../../components/AdminSidebar'
 import AlertModal from "../../../components/AlertModal"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const BASE_URL = API_URL.replace('/api', '')
 
 interface ArchivoHistorico {
   id_historico: number
@@ -27,7 +27,7 @@ export default function HistoricoAsistenciasPage() {
 
   const cargarHistorico = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/asistencias/historico')
+      const res = await fetch(`${API_URL}/asistencias/historico`)
 
       if (!res.ok) throw new Error("Error en la respuesta del servidor")
 
@@ -41,15 +41,7 @@ export default function HistoricoAsistenciasPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      cargarHistorico(searchQuery)
-    }, 250)
-
-    return () => clearTimeout(timer)
-  }, [searchQuery])
-
-  useEffect(() => {
-    cargarHistorico('')
+    cargarHistorico()
   }, [])
 
   const formatDate = (date: string) => {
@@ -76,7 +68,6 @@ export default function HistoricoAsistenciasPage() {
             </button>
           </header>
 
-          {/* TABLA */}
           <section className="table-area">
             <div className="table-scroll">
               <table>
@@ -106,7 +97,7 @@ export default function HistoricoAsistenciasPage() {
                             className="btn-icon btn-icon--cyan"
                             title="Ver documento"
                             onClick={() => {
-                              window.open(`${API_URL}/${a.ruta_archivo}`, "_blank")
+                              window.open(`${BASE_URL}/${a.ruta_archivo}`, "_blank")
                             }}
                           >
                             <Eye size={14} />

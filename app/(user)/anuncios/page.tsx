@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { Dumbbell, Apple, Sparkles, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const BASE_URL = API_URL.replace('/api', '');
+
 interface Anuncio {
   id: number;
   titulo: string;
@@ -14,11 +17,10 @@ interface Anuncio {
 }
 
 export default function HomeUserPage() {
-
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/anuncios')
+    fetch(`${API_URL}/anuncios`)
       .then(res => res.json())
       .then(data => setAnuncios(data))
       .catch(err => console.error(err));
@@ -77,7 +79,6 @@ export default function HomeUserPage() {
         <h2>Tablón del gimnasio</h2>
 
         <div className="tips-grid announcements-grid">
-
           {anuncios.length === 0 ? (
             <p style={{ opacity: 0.6 }}>No hay anuncios disponibles</p>
           ) : (
@@ -101,15 +102,14 @@ export default function HomeUserPage() {
 
                 {a.fotografia && (
                   <img
-  src={`http://localhost:3001/imagenes/${a.fotografia}`}
-  alt="anuncio"
-  className="announcement-image"
-/>
+                    src={`${BASE_URL}/imagenes/${a.fotografia}`}
+                    alt="anuncio"
+                    className="announcement-image"
+                  />
                 )}
               </div>
             ))
           )}
-
         </div>
       </section>
     </div>

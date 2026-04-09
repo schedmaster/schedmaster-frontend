@@ -6,7 +6,7 @@ import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
 import { useRouter } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
 const getAvatarClass = (id: number) => AVATAR_COLORS[id % AVATAR_COLORS.length];
@@ -54,7 +54,7 @@ export default function AdminAsistenciasPage() {
         params.set('q', term);
       }
 
-      const res = await fetch(`${API_URL}/api/asistencias/admin?${params.toString()}`);
+      const res = await fetch(`${API_URL}/asistencias/admin?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         
@@ -118,12 +118,10 @@ export default function AdminAsistenciasPage() {
   const isWithinSchedule = (inicio: string, fin: string) => {
     if (!inicio || !fin || inicio === '00:00') return true; 
 
-    // Aquí usamos la fecha del calendario de la página, para saber si estamos editando el pasado o el presente
     const now = new Date();
     
-    // Solo validamos las horas si el admin está intentando registrar una asistencia DEL DÍA DE HOY
     const isToday = fecha === now.toISOString().split('T')[0];
-    if (!isToday) return true; // Si está registrando algo de ayer, lo dejamos pasar.
+    if (!isToday) return true;
 
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
@@ -145,7 +143,7 @@ export default function AdminAsistenciasPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:3001/api/asistencias/registrar', {
+      const res = await fetch(`${API_URL}/asistencias/registrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -154,7 +152,7 @@ export default function AdminAsistenciasPage() {
           id_horario: asist.id_horario,
           asistio: asistio,
           id_registrado_por: 1, 
-          fecha_registro: fecha // 👈 CORRECCIÓN: Le mandamos el día exacto seleccionado en el calendario
+          fecha_registro: fecha
         })
       });
 
@@ -173,7 +171,6 @@ export default function AdminAsistenciasPage() {
       <main className="main">
         <div className="main-inner">
 
-          {/* Header */}
           <header className="section-header">
             <div>
               <h2>Control de Asistencias</h2>
@@ -181,8 +178,8 @@ export default function AdminAsistenciasPage() {
             </div>
             <div className="date-container">
               <label className="date-label" htmlFor="fechaAsistencia">
-  Seleccionar fecha
-</label>
+                Seleccionar fecha
+              </label>
               <input
                 id="fechaAsistencia"
                 type="date"
@@ -193,7 +190,6 @@ export default function AdminAsistenciasPage() {
             </div>
           </header>
 
-          {/* Filtros */}
           <div className="filter-bar">
             
             <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '0 10px', width: '250px' }}>
@@ -207,7 +203,6 @@ export default function AdminAsistenciasPage() {
               />
             </div>
 
-            {/* 👈 CORRECCIÓN: Selectores Dinámicos */}
             <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
               <option value="">Todos los horarios</option>
               {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
@@ -249,7 +244,6 @@ export default function AdminAsistenciasPage() {
             </button>
           </div>
 
-          {/* Stats */}
           <div className="stat-grid">
             <div className="stat-card">
               <div className="stat-card-info">
@@ -281,7 +275,6 @@ export default function AdminAsistenciasPage() {
             </div>
           </div>
 
-          {/* Lista */}
           <section className="row-list">
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
