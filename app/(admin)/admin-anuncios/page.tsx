@@ -14,6 +14,9 @@ interface Anuncio {
   activo: boolean;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const BASE_URL = API_URL.replace('/api', '');
+
 export default function AdminAnunciosPage() {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [search, setSearch] = useState('');
@@ -54,7 +57,7 @@ export default function AdminAnunciosPage() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/anuncios')
+    fetch(`${API_URL}/anuncios`)
       .then(res => res.json())
       .then(data => setAnuncios(normalizeAnuncios(data)))
       .catch(err => console.error(err));
@@ -88,7 +91,7 @@ export default function AdminAnunciosPage() {
 
     setPreview(
       a.fotografia
-        ? `http://localhost:3001/imagenes/${a.fotografia}`
+        ? `${BASE_URL}/imagenes/${a.fotografia}`
         : null
     );
 
@@ -97,7 +100,7 @@ export default function AdminAnunciosPage() {
 
   const deleteAnuncio = async (id: number) => {
     try {
-      await fetch(`http://localhost:3001/api/anuncios/${id}`, {
+      await fetch(`${API_URL}/anuncios/${id}`, {
         method: 'DELETE',
       });
 
@@ -120,8 +123,8 @@ export default function AdminAnunciosPage() {
       }
 
       const url = editing
-        ? `http://localhost:3001/api/anuncios/${editing.id}`
-        : 'http://localhost:3001/api/anuncios';
+        ? `${API_URL}/anuncios/${editing.id}`
+        : `${API_URL}/anuncios`;
 
       const method = editing ? 'PUT' : 'POST';
 
@@ -231,7 +234,7 @@ export default function AdminAnunciosPage() {
                         <td>
                           {a.fotografia && (
                             <img
-                              src={`http://localhost:3001/imagenes/${a.fotografia}`}
+                              src={`${BASE_URL}/imagenes/${a.fotografia}`}
                               className="announcement-image announcement-image--table"
                               alt={`Imagen del anuncio: ${a.titulo}`}
                             />
@@ -261,7 +264,6 @@ export default function AdminAnunciosPage() {
         </div>
       </main>
 
-      {/* MODAL */}
       {modalOpen && (
         <div className="modal-overlay">
           <div className="modal-box modal-box--wide">

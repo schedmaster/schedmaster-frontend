@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ShieldCheck, Mail, RotateCw } from 'lucide-react';
 import AlertModal from '../../components/AlertModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 type PendingTwoFactor = {
   twoFactorToken: string;
   correo?: string;
@@ -14,7 +16,6 @@ type PendingTwoFactor = {
 
 export default function VerifyTwoFactorPage() {
   const router = useRouter();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const OTP_LENGTH = 6;
 
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
@@ -185,7 +186,7 @@ export default function VerifyTwoFactorPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/verify-2fa`, {
+      const res = await fetch(`${API_URL}/auth/verify-2fa`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -223,7 +224,7 @@ export default function VerifyTwoFactorPage() {
 
     setResendLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/resend-2fa`, {
+      const res = await fetch(`${API_URL}/auth/resend-2fa`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ twoFactorToken: pending.twoFactorToken })

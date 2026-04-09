@@ -5,8 +5,8 @@ import { User as UserIcon, Calendar, Clock, Home, LogOut, Sun, Moon } from 'luci
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDarkMode } from '../../hooks/useDarkMode';
+import AvisoPrivacidadModal from "@/app/components/AvisoPrivacidadModal"; 
 
-// INTERFAZ (SOLUCIONA EL ERROR)
 interface User {
   nombre: string;
   apellido_paterno: string;
@@ -42,10 +42,12 @@ export default function PerfilPage() {
   const router = useRouter();
   const { darkMode, toggle } = useDarkMode();
 
-  // YA TIPADO
   const [user, setUser] = useState<User | null>(null);
+  const [showAviso, setShowAviso] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const storedUser = localStorage.getItem('user');
 
     if (!storedUser) {
@@ -54,7 +56,7 @@ export default function PerfilPage() {
       const parsedUser: User = JSON.parse(storedUser);
       setUser(parsedUser);
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -65,7 +67,6 @@ export default function PerfilPage() {
     return <p style={{ textAlign: 'center', marginTop: '50px' }}>Cargando perfil...</p>;
   }
 
-  // DATOS REALES
   const inscripcion = user.ultimaInscripcion;
   const horario = inscripcion?.horario;
 
@@ -93,7 +94,6 @@ export default function PerfilPage() {
       <section className="services-section">
         <div className="services-grid">
 
-          {/* INFORMACIÓN PERSONAL */}
           <div className="card">
             <div className="card-header">
               <UserIcon size={20} />
@@ -123,7 +123,6 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* PERIODO */}
           <div className="card">
             <div className="card-header">
               <Calendar size={20} />
@@ -139,7 +138,6 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* HORARIO */}
           <div className="card">
             <div className="card-header">
               <Clock size={20} />
@@ -159,7 +157,6 @@ export default function PerfilPage() {
 
         </div>
 
-        {/* BOTONES */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -168,8 +165,20 @@ export default function PerfilPage() {
           marginTop: '40px',
           paddingBottom: '60px',
         }}>
+
           <button className="dark-toggle" onClick={toggle} aria-label="Cambiar tema">
-            {darkMode ? <Moon size={18} /> : <Sun size={18} />}
+            {mounted ? (
+              darkMode ? <Moon size={18} /> : <Sun size={18} />
+            ) : (
+              <span style={{ width: 18, height: 18, display: 'inline-block' }} />
+            )}
+          </button>
+
+          <button 
+            className="btn btn--outline"
+            onClick={() => setShowAviso(true)}
+          >
+            Aviso de privacidad
           </button>
 
           <button className="btn btn--outline" onClick={handleLogout}>
@@ -178,6 +187,12 @@ export default function PerfilPage() {
         </div>
 
       </section>
+
+      <AvisoPrivacidadModal 
+        open={showAviso} 
+        onClose={() => setShowAviso(false)} 
+      />
+
     </div>
   );
 }

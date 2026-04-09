@@ -3,6 +3,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 /* ==========================================
    1. VARIABLES — Light mode (default)
    ========================================== */
@@ -26,20 +27,20 @@
   --font: 'Montserrat', system-ui, Arial, sans-serif;
 
   /* Tokens semánticos — light */
-  --color-bg:           #F7FAFC;
-  --color-surface:      #FFFFFF;
-  --color-surface-alt:  #F8FAFC;
-  --color-border:       rgba(15,23,42,.08);
-  --color-border-mid:   rgba(15,23,42,.12);
-  --color-text-primary: #1f2937;
-  --color-text-muted:   #71706F;
-  --color-text-heading: #234D7B;
-  --color-input-bg:     #fafafa;
-  --color-input-border: #e8e8e8;
-  --color-table-head:   #f8fafc;
-  --color-table-hover:  #f8fafc;
-  --color-shadow:       rgba(0,0,0,.08);
-  --color-card-shadow:  0 10px 26px rgba(0,0,0,.08);
+  --color-bg:            #F7FAFC;
+  --color-surface:       #FFFFFF;
+  --color-surface-alt:   #F8FAFC;
+  --color-border:        rgba(15,23,42,.08);
+  --color-border-mid:    rgba(15,23,42,.12);
+  --color-text-primary:  #1f2937;
+  --color-text-muted:    #71706F;
+  --color-text-heading:  #234D7B;
+  --color-input-bg:      #fafafa;
+  --color-input-border:  #e8e8e8;
+  --color-table-head:    #f8fafc;
+  --color-table-hover:   #f8fafc;
+  --color-shadow:        rgba(0,0,0,.08);
+  --color-card-shadow:   0 10px 26px rgba(0,0,0,.08);
 }
 
 /* ==========================================
@@ -47,20 +48,20 @@
    ========================================== */
 
 html.dark {
-  --color-bg:           #0a1628;
-  --color-surface:      #000d24;
-  --color-surface-alt:  #001337;
-  --color-border:       rgba(255,255,255,.07);
-  --color-border-mid:   rgba(255,255,255,.12);
-  --color-text-primary: #cdd9ed;
-  --color-text-muted:   #7a92b4;
-  --color-text-heading: #a8c4e8;
-  --color-input-bg:     #0d1c38;
-  --color-input-border: rgba(255,255,255,.10);
-  --color-table-head:   #0d1c38;
-  --color-table-hover:  #132338;
-  --color-shadow:       rgba(0,0,0,.30);
-  --color-card-shadow:  0 10px 26px rgba(0,0,0,.30);
+  --color-bg:            #0a1628;
+  --color-surface:       #000d24;
+  --color-surface-alt:   #001337;
+  --color-border:        rgba(255,255,255,.07);
+  --color-border-mid:    rgba(255,255,255,.12);
+  --color-text-primary:  #cdd9ed;
+  --color-text-muted:    #7a92b4;
+  --color-text-heading:  #a8c4e8;
+  --color-input-bg:      #0d1c38;
+  --color-input-border:  rgba(255,255,255,.10);
+  --color-table-head:    #0d1c38;
+  --color-table-hover:   #132338;
+  --color-shadow:        rgba(0,0,0,.30);
+  --color-card-shadow:   0 10px 26px rgba(0,0,0,.30);
 
   /* Ajustes puntuales de paleta en dark */
   --blue-900:  #a8c4e8;
@@ -1195,6 +1196,47 @@ html.dark .sidebar {
 .stat-card-circle--yellow { background: var(--yellow); }
 
 /* ==========================================
+   23b. DASHBOARD PANELS (Soporte Modo Oscuro)
+   ========================================== */
+
+.dashboard-panel {
+  background-color: var(--color-surface);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: var(--color-card-shadow);
+  border: 1px solid var(--color-border);
+  margin-bottom: 25px;
+  color: var(--color-text-primary);
+  transition: background .3s ease, border .3s ease, box-shadow .3s ease, color .3s ease;
+}
+
+.dashboard-panel h3, .dashboard-panel h4 {
+  color: var(--color-text-heading);
+  margin: 0;
+}
+
+.dashboard-panel p {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.kpi-row {
+  border-bottom: 1px solid var(--color-border-mid);
+}
+
+.kpi-row:last-child {
+  border-bottom: none;
+}
+
+.kpi-label {
+  color: var(--color-text-muted);
+}
+
+.kpi-value {
+  color: var(--color-text-heading);
+}
+
+/* ==========================================
    24. ROW LIST
    ========================================== */
 
@@ -2118,7 +2160,6 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
     min-width: 70px;
   }
 }
-
 
 .dark-toggle {
   position: fixed; bottom: 24px; right: 24px; z-index: 100;

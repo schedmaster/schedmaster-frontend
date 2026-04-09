@@ -4,67 +4,58 @@ import { useEffect, useState } from 'react';
 import { X, Send, Clock } from 'lucide-react';
 import AlertModal from './AlertModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 interface Props {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  correo: string;
-  onPropuestaEnviada: () => void;
+  idInscripcion: number;
+  correoDestino: string;
+  onSuccess: (disponibles?: number) => void;
 }
 
-export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnviada }: Props) {
+export default function PropuestaModal({ open, onClose, idInscripcion, correoDestino, onSuccess }: Props) {
 
-  const [horarios, setHorarios] = useState<any[]>([]);
-  const [diasHorario, setDiasHorario] = useState<any[]>([]);
-  const [horarioId, setHorarioId] = useState('');
+  const [horarios, setHorarios]                   = useState<any[]>([]);
+  const [diasHorario, setDiasHorario]             = useState<any[]>([]);
+  const [horarioId, setHorarioId]                 = useState('');
   const [diasSeleccionados, setDiasSeleccionados] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
+  const [loading, setLoading]                     = useState(false);
+  const [alertOpen, setAlertOpen]                 = useState(false);
+  const [alertMessage, setAlertMessage]           = useState('');
 
-  // 1. Cargar horarios (Ruta directa)
+  // Cargar horarios
   useEffect(() => {
-    if (!isOpen) return;
-
-    fetch(`http://localhost:3001/api/horarios`)
+    if (!open) return;
+    fetch(`${API_URL}/horarios`)
       .then(r => r.json())
       .then(d => setHorarios(Array.isArray(d) ? d : d?.data || []))
       .catch(() => setHorarios([]));
-  }, [isOpen]);
+  }, [open]);
 
-  // 2. Cargar días (Ruta directa)
+  // Cargar días del horario seleccionado
   useEffect(() => {
-    if (!horarioId) {
-      setDiasHorario([]);
-      return;
-    }
-
-    fetch(`http://localhost:3001/api/horarios/${horarioId}/dias`)
-      .then(async (r) => {
-        // Si el backend responde con error HTML, lo atrapamos aquí
-        if (!r.ok && r.headers.get("content-type")?.includes("text/html")) {
-            throw new Error("El backend respondió con una página HTML (Posible ruta no encontrada 404)");
-        }
+    if (!horarioId) { setDiasHorario([]); return; }
+    fetch(`${API_URL}/horarios/${horarioId}/dias`)
+      .then(async r => {
+        if (!r.ok) throw new Error('Error obteniendo días');
         return r.json();
       })
-      .then(data => {
-        const diasListos = Array.isArray(data) ? data : (data?.data || []);
-        setDiasHorario(diasListos);
-      })
-      .catch((error) => {
-        console.error("Error obteniendo días:", error);
-        setDiasHorario([]);
-      });
+      .then(data => setDiasHorario(Array.isArray(data) ? data : data?.data || []))
+      .catch(() => setDiasHorario([]));
   }, [horarioId]);
 
   const toggleDia = (id: number) => {
     setDiasSeleccionados(prev =>
-      prev.includes(id)
-        ? prev.filter(d => d !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
     );
   };
 
-  // 3. Enviar propuesta (Ruta directa)
+  const resetForm = () => {
+    setHorarioId('');
+    setDiasSeleccionados([]);
+  };
+
   const enviarPropuesta = async () => {
     if (!horarioId || diasSeleccionados.length === 0) {
       setAlertMessage('Selecciona horario y días.');
@@ -75,64 +66,79 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
     setLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:3001/api/propuestas/propuesta-inscripcion`, {
+      const res = await fetch(
+        `${API_URL}/propuestas/propuesta-inscripcion`,
+        {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            correo,
-            horarioId,
-            dias: diasSeleccionados
+          body: JSON.stringify({ 
+            correo: correoDestino, 
+            id_inscripcion: idInscripcion, 
+            horarioId, 
+            dias: diasSeleccionados 
           })
         }
       );
 
-      if (res.ok) {
-        setAlertMessage('Propuesta enviada al correo.');
+      const data = await res.json();
+
+      if (res.status === 409) {
+        // Horario lleno — mostrar aviso dentro del modal y no cerrar
+        setAlertMessage('Los lugares en este horario han sido cubiertos. Selecciona otro horario o día.');
         setAlertOpen(true);
-        onClose();
-        setHorarioId('');
-        setDiasSeleccionados([]);
-        onPropuestaEnviada(); 
-      } else {
-        setAlertMessage('Error enviando propuesta.');
-        setAlertOpen(true);
+        return;
       }
-    } catch (e) {
+
+      if (!res.ok) {
+        setAlertMessage(data?.message || 'Error enviando propuesta.');
+        setAlertOpen(true);
+        return;
+      }
+
+      // Éxito — cerrar y notificar con disponibles
+      onClose();
+      resetForm();
+      onSuccess(data.disponibles);
+
+    } catch {
       setAlertMessage('Error de conexión.');
       setAlertOpen(true);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  if (!isOpen) return null;
+  if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="modal-overlay"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="modal-box modal-box--wide">
+
         <div className="modal-header">
           <div>
             <div className="log-title-row">
-              <Clock size={20} />
+              <Clock size={20}/>
               <h3>Proponer horario</h3>
             </div>
-            <p className="muted">
-              Enviar propuesta a {correo}
-            </p>
+            <p className="muted">Enviar propuesta a {correoDestino}</p>
           </div>
           <button className="btn-close" onClick={onClose} title="Cerrar">
-            <X />
+            <X/>
           </button>
         </div>
 
         <div className="modal-body">
+
           <div className="form-group">
             <label>Horario</label>
             <select
               className="select"
               aria-label="Selecciona horario"
               value={horarioId}
-              onChange={(e) => {
+              onChange={e => {
                 setHorarioId(e.target.value);
                 setDiasSeleccionados([]);
               }}
@@ -150,19 +156,24 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
             <div className="form-group">
               <label>Días disponibles</label>
               <div className="dias-container">
-                {diasHorario.map(d => (
-                  <button
-                    key={d.id_dia || d.dia?.id_dia} 
-                    type="button"
-                    className={`dia-btn ${diasSeleccionados.includes(d.id_dia || d.dia?.id_dia) ? 'active' : ''}`}
-                    onClick={() => toggleDia(d.id_dia || d.dia?.id_dia)}
-                  >
-                    {d.nombre || d.dia?.nombre}
-                  </button>
-                ))}
+                {diasHorario.map(d => {
+                  const id   = d.id_dia  ?? d.dia?.id_dia;
+                  const nombre = d.nombre ?? d.dia?.nombre;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`dia-btn ${diasSeleccionados.includes(id) ? 'active' : ''}`}
+                      onClick={() => toggleDia(id)}
+                    >
+                      {nombre}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
+
         </div>
 
         <div className="log-compose-actions">
@@ -171,10 +182,11 @@ export default function PropuestaModal({ isOpen, onClose, correo, onPropuestaEnv
             onClick={enviarPropuesta}
             disabled={loading}
           >
-            <Send size={16} />
-            {loading ? "Enviando..." : "Enviar propuesta"}
+            <Send size={16}/>
+            {loading ? 'Enviando...' : 'Enviar propuesta'}
           </button>
         </div>
+
       </div>
 
       <AlertModal
