@@ -43,9 +43,11 @@ export default function PerfilPage() {
   const { darkMode, toggle } = useDarkMode();
 
   const [user, setUser] = useState<User | null>(null);
-  const [showAviso, setShowAviso] = useState(false); //  STATE
+  const [showAviso, setShowAviso] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const storedUser = localStorage.getItem('user');
 
     if (!storedUser) {
@@ -54,7 +56,7 @@ export default function PerfilPage() {
       const parsedUser: User = JSON.parse(storedUser);
       setUser(parsedUser);
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -92,7 +94,6 @@ export default function PerfilPage() {
       <section className="services-section">
         <div className="services-grid">
 
-          {/* INFORMACIÓN PERSONAL */}
           <div className="card">
             <div className="card-header">
               <UserIcon size={20} />
@@ -122,7 +123,6 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* PERIODO */}
           <div className="card">
             <div className="card-header">
               <Calendar size={20} />
@@ -138,7 +138,6 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* HORARIO */}
           <div className="card">
             <div className="card-header">
               <Clock size={20} />
@@ -158,7 +157,6 @@ export default function PerfilPage() {
 
         </div>
 
-        {/* BOTONES */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -168,12 +166,14 @@ export default function PerfilPage() {
           paddingBottom: '60px',
         }}>
 
-          {/* MODO OSCURO */}
-          <button className="dark-toggle" onClick={toggle}>
-            {darkMode ? <Moon size={18} /> : <Sun size={18} />}
+          <button className="dark-toggle" onClick={toggle} aria-label="Cambiar tema">
+            {mounted ? (
+              darkMode ? <Moon size={18} /> : <Sun size={18} />
+            ) : (
+              <span style={{ width: 18, height: 18, display: 'inline-block' }} />
+            )}
           </button>
 
-          {/*  NUEVO BOTÓN AVISO */}
           <button 
             className="btn btn--outline"
             onClick={() => setShowAviso(true)}
@@ -181,7 +181,6 @@ export default function PerfilPage() {
             Aviso de privacidad
           </button>
 
-          {/* LOGOUT */}
           <button className="btn btn--outline" onClick={handleLogout}>
             <LogOut size={16} /> Cerrar sesión
           </button>
@@ -189,7 +188,6 @@ export default function PerfilPage() {
 
       </section>
 
-      {/*  MODAL */}
       <AvisoPrivacidadModal 
         open={showAviso} 
         onClose={() => setShowAviso(false)} 
