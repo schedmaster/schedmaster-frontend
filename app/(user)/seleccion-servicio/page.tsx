@@ -15,6 +15,7 @@ export default function HomePage() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [loadingConvocatoria, setLoadingConvocatoria] = useState(false);
 
   const { darkMode, toggle } = useDarkMode();
   const router = useRouter();
@@ -40,41 +41,57 @@ export default function HomePage() {
   const nextImg = () => setCurrentImg((prev) => (prev + 1) % images.length);
   const prevImg = () => setCurrentImg((prev) => (prev - 1 + images.length) % images.length);
 
-  // 🔥 VALIDAR CONVOCATORIA ANTES
+  // 🔥 VALIDAR CONVOCATORIA
   const handleQuieroEntrenar = async () => {
+    if (loadingConvocatoria) return;
+
+    setLoadingConvocatoria(true);
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/convocatoria-activa`);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/lista-espera/convocatoria-activa`
+      );
+
       const data = await res.json();
 
       if (res.ok && data.activa) {
-        router.push(`/convocatoria-activa?data=${encodeURIComponent(JSON.stringify(data.periodo))}`);
+        router.push(
+          `/convocatoria-activa?data=${encodeURIComponent(JSON.stringify(data.periodo))}`
+        );
         return;
       }
 
-      // 👉 si no hay convocatoria
       setOpenModal(true);
 
-    } catch {
+    } catch (error) {
       setAlertMessage('Error al verificar la convocatoria');
       setAlertOpen(true);
+    } finally {
+      setLoadingConvocatoria(false);
     }
   };
 
-  // 👉 submit lista de espera
+  // 👉 REGISTRO LISTA DE ESPERA
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lista-espera`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo: email }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/lista-espera`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo: email }),
+        }
+      );
 
       const data = await res.json();
 
+      // 🔥 si justo se activó convocatoria
       if (res.status === 409 && data.message === 'convocatoria_activa') {
-        router.push(`/convocatoria-activa?data=${encodeURIComponent(JSON.stringify(data.periodo))}`);
+        router.push(
+          `/convocatoria-activa?data=${encodeURIComponent(JSON.stringify(data.periodo))}`
+        );
         return;
       }
 
@@ -110,8 +127,7 @@ export default function HomePage() {
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 
-          {/* 🌙 BOTÓN DARK MODE */}
-          <button className="dark-toggle" onClick={toggle} aria-label="Cambiar tema">
+          <button className="dark-toggle" onClick={toggle}>
             {mounted ? (
               darkMode ? <Moon size={18} /> : <Sun size={18} />
             ) : (
@@ -143,8 +159,9 @@ export default function HomePage() {
           <button
             className="btn btn--blue btn--lg"
             onClick={handleQuieroEntrenar}
+            disabled={loadingConvocatoria}
           >
-            Quiero entrenar
+            {loadingConvocatoria ? 'Cargando...' : 'Quiero entrenar'}
           </button>
         </div>
       </section>
@@ -191,16 +208,6 @@ export default function HomePage() {
             <button className="carousel-btn right" onClick={nextImg}>
               <ChevronRight size={22} />
             </button>
-
-            <div className="carousel-dots">
-              {images.map((_, index) => (
-                <span
-                  key={index}
-                  className={`dot ${index === currentImg ? 'active' : ''}`}
-                  onClick={() => setCurrentImg(index)}
-                />
-              ))}
-            </div>
 
           </div>
         </div>
