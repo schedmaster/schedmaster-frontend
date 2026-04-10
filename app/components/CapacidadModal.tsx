@@ -5,15 +5,15 @@ import { X, AlertTriangle, Ban } from 'lucide-react';
 interface CapacidadModalProps {
   open: boolean;
   disponibles: number;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onClose: () => void;
+  onConfirm?: () => void; // Lo hacemos opcional por si solo se usa como aviso
 }
 
 export default function CapacidadModal({
   open,
   disponibles,
+  onClose,
   onConfirm,
-  onCancel,
 }: CapacidadModalProps) {
 
   if (!open) return null;
@@ -23,11 +23,11 @@ export default function CapacidadModal({
   return (
     <div
       className="modal-overlay"
-      onClick={(e) => e.target === e.currentTarget && onCancel()}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="modal-box">
 
-        <button className="modal-close" onClick={onCancel} aria-label="Cerrar">
+        <button className="modal-close" onClick={onClose} aria-label="Cerrar">
           <X size={20} />
         </button>
 
@@ -44,7 +44,7 @@ export default function CapacidadModal({
             </p>
 
             <div className="modal-actions">
-              <button className="btn btn--red" onClick={onCancel}>
+              <button className="btn btn--red" onClick={onClose}>
                 Entendido
               </button>
             </div>
@@ -62,10 +62,10 @@ export default function CapacidadModal({
             </p>
 
             <div className="modal-actions">
-              <button className="btn btn--gray" onClick={onCancel}>
+              <button className="btn btn--gray" onClick={onClose}>
                 Cancelar
               </button>
-              <button className="btn btn--blue" onClick={onConfirm}>
+              <button className="btn btn--blue" onClick={onConfirm || onClose}>
                 Sí, continuar
               </button>
             </div>

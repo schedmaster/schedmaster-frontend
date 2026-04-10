@@ -7,6 +7,8 @@ import {
   Eye, Mail, UserPlus, CalendarCheck, Activity, Award, AlertTriangle, Flame, TrendingUp, TrendingDown, Minus
 } from 'lucide-react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 const obtenerNombresMeses = () => {
   const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const mesActual = new Date().getMonth();
@@ -15,7 +17,6 @@ const obtenerNombresMeses = () => {
 
 const formatNumber = (num: number) => num.toLocaleString('en-US');
 
-// ── Sub-componentes ──
 const Sparkline = ({ data, secondary, color = '#00a4e0' }: { data: number[]; secondary?: number[]; color?: string }) => {
   const h = 120, w = 800;
   const max  = Math.max(...data, ...(secondary ?? []), 1); 
@@ -53,8 +54,6 @@ const CompactKpi = ({ icon, color, label, value, suffix = '' }: any) => (
   </div>
 );
 
-
-// ── PÁGINA PRINCIPAL ──
 export default function DashboardPage() {
   const router = useRouter();
   const [autorizado, setAutorizado] = useState(false);
@@ -75,7 +74,7 @@ export default function DashboardPage() {
 
     const cargarStats = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/asistencias/dashboard-stats');
+        const res = await fetch(`${API_URL}/asistencias/dashboard-stats`);
         if (res.ok) {
           const data = await res.json();
           setStats(data);

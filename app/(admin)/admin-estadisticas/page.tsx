@@ -7,6 +7,8 @@ import AlertModal from '../../components/AlertModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 interface DatoReporte {
   id: number;
   matricula: string;
@@ -32,7 +34,7 @@ export default function AdminEstadisticasPage() {
 
   const cargarReporte = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/asistencias/reporte');
+      const res = await fetch(`${API_URL}/asistencias/reporte`);
       if (res.ok) {
         const data = await res.json();
         setDatosTabla(data);
@@ -115,7 +117,6 @@ export default function AdminEstadisticasPage() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  {/* Usamos las clases "pill" del CSS que se adaptan al modo oscuro solitas */}
                   <div className="pill">
                     <span style={{ marginRight: '5px' }}>👥</span> Inscritos mostrados: <strong>{totalInscritos}</strong>
                   </div>
@@ -134,7 +135,6 @@ export default function AdminEstadisticasPage() {
                 </div>
               </div>
 
-              {/* Limpiamos las pestañas para que usen solo CSS */}
               <div className="tabs-bar" style={{ marginTop: '10px' }}>
                 <span className="period-label">Periodo:</span>
                 <div className="tab-group">
@@ -152,7 +152,6 @@ export default function AdminEstadisticasPage() {
               </div>
             </header>
 
-            {/* AQUÍ OCURRIÓ LA MAGIA: Borramos todos los 'style' y dejamos trabajar a la clase table-area */}
             <section className="table-area" style={{ marginTop: '20px' }}>
               <div className="table-scroll">
                 <table>
@@ -183,7 +182,6 @@ export default function AdminEstadisticasPage() {
                           <td>{fila.carrera}</td>
                           <td>{fila.servicio}</td>
                           <td>
-                            {/* Convertimos tus colores inline a las clases 'chip' dinámicas */}
                             <span className={`chip ${parseInt(fila.asistencia) >= 80 ? 'chip--presente' : parseInt(fila.asistencia) > 0 ? 'chip--ausente' : 'chip--pendiente'}`}>
                               {fila.asistencia}
                             </span>

@@ -5,21 +5,19 @@ import { Plus, CalendarDays, Pencil, Power, PowerOff, X, Save, Search } from 'lu
 import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 interface Convocatoria {
   id: number;
   periodo: string;
   fechaInicio: string;
   fechaFin: string;
   fechaIngreso: string;
-  fechaFinPeriodo: string; // agregado
+  fechaFinPeriodo: string;
   estado: 'activada' | 'desactivada';
 }
 
 type FormState = Convocatoria;
-
-/* =========================
-   MODAL
-==========================*/
 
 interface ModalProps {
   onClose: () => void;
@@ -118,10 +116,6 @@ const ModalContent = ({
   </div>
 );
 
-/* =========================
-   COMPONENTE PRINCIPAL
-==========================*/
-
 export default function AdminConvocatoriasPage() {
 
   const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
@@ -143,10 +137,6 @@ export default function AdminConvocatoriasPage() {
 
   const [form, setForm] = useState<FormState>(emptyForm);
 
-  /* =========================
-     CARGAR CONVOCATORIAS
-  ==========================*/
-
   const mapConvocatorias = (payload: any): Convocatoria[] => {
     const source = Array.isArray(payload) ? payload : payload?.data;
 
@@ -166,7 +156,7 @@ export default function AdminConvocatoriasPage() {
   const cargarConvocatorias = async (query = '') => {
     try {
       const term = query.trim();
-      const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`;
+      const baseUrl = `${API_URL}/admin-convocatoria`;
       const endpoint = term
         ? `${baseUrl}?q=${encodeURIComponent(term)}`
         : baseUrl;
@@ -194,10 +184,6 @@ export default function AdminConvocatoriasPage() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  /* =========================
-     MODALES
-  ==========================*/
 
   const openCrear = () => {
     setForm(emptyForm);
@@ -227,17 +213,13 @@ export default function AdminConvocatoriasPage() {
       setForm({ ...form, [key]: e.target.value }),
   });
 
-  /* =========================
-     GUARDAR CONVOCATORIA
-  ==========================*/
-
   const guardarConvocatoria = async () => {
     try {
 
       const esEdicion = form.id > 0;
       const url = esEdicion 
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria/${form.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin-convocatoria`;
+        ? `${API_URL}/admin-convocatoria/${form.id}`
+        : `${API_URL}/admin-convocatoria`;
 
       const res = await fetch(url, {
         method: esEdicion ? 'PUT' : 'POST',
@@ -265,10 +247,6 @@ export default function AdminConvocatoriasPage() {
       setAlertOpen(true);
     }
   };
-
-  /* =========================
-     VISTA
-  ==========================*/
 
   return (
     <div className="app">

@@ -6,6 +6,8 @@ import AdminSidebar from '../../components/AdminSidebar';
 import Bitacora, { Comentario } from '../../components/Bitacora';
 import ConfirmModal from '../../components/ConfirmModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 type Rol = 'estudiante' | 'docente' | 'entrenador' | 'administrador_general';
 type Estado = 'activo' | 'inactivo';
 
@@ -36,22 +38,17 @@ const ROL_LABELS: Record<Rol, string> = {
 const ROLES_CON_BITACORA: Rol[] = ['estudiante', 'docente'];
 
 export default function AdminUsuariosPage() {
-
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([]);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRol, setFilterRol] = useState('');
   const [filterEstado, setFilterEstado] = useState('');
   const [filterCarrera, setFilterCarrera] = useState('');
-
   const [bitacoraOpen, setBitacoraOpen] = useState(false);
   const [bitacoraUsuario, setBitacoraUsuario] = useState<{ id: number; nombre: string } | null>(null);
   const [bitacoraComentarios, setBitacoraComentarios] = useState<Comentario[]>([]);
-
   const [openEditModal, setOpenEditModal] = useState(false);
   const [usuarioEditar, setUsuarioEditar] = useState<Usuario | null>(null);
-
   const [openNuevoModal, setOpenNuevoModal] = useState(false);
 
   const emptyEdit = { nombre: '', apellido_paterno: '', apellido_materno: '', correo: '', id_rol: 1 };
@@ -65,7 +62,7 @@ export default function AdminUsuariosPage() {
 
   const fetchUsuarios = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios`);
+      const res = await fetch(`${API_URL}/usuarios`);
       if (res.ok) {
         const data = await res.json();
         const formateados: Usuario[] = data.map((u: any) => ({
@@ -83,7 +80,9 @@ export default function AdminUsuariosPage() {
         }));
         setUsuarios(formateados);
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   useEffect(() => { fetchUsuarios(); }, []);
@@ -122,13 +121,15 @@ export default function AdminUsuariosPage() {
     e.preventDefault();
     if (!usuarioEditar) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/editar`, {
+      const res = await fetch(`${API_URL}/usuarios/editar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: usuarioEditar.id, nombre: formEdit.nombre, apellido_paterno: formEdit.apellido_paterno, apellido_materno: formEdit.apellido_materno, correo: formEdit.correo, id_rol: formEdit.id_rol, id_carrera: usuarioEditar.id_carrera }),
       });
       if (res.ok) { setOpenEditModal(false); closeModal(); fetchUsuarios(); }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   const handleAbrirNuevo = () => {
@@ -145,13 +146,15 @@ export default function AdminUsuariosPage() {
   const handleSubmitNuevo = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/crear`, {
+      const res = await fetch(`${API_URL}/usuarios/crear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: formNuevo.nombre, apellido_paterno: formNuevo.apellido_paterno, apellido_materno: formNuevo.apellido_materno, correo: formNuevo.correo, contrasena: formNuevo.contrasena, id_rol: formNuevo.id_rol }),
       });
       if (res.ok) { setOpenNuevoModal(false); closeModal(); fetchUsuarios(); }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   const handleToggle = (usr: Usuario) => {
@@ -162,14 +165,18 @@ export default function AdminUsuariosPage() {
   const confirmarToggle = async () => {
     if (!usuarioToggle) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/toggle`, {
+      const res = await fetch(`${API_URL}/usuarios/toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: usuarioToggle.id }),
       });
       if (res.ok) fetchUsuarios();
-    } catch (error) { console.error(error); }
-    finally { setOpenConfirm(false); setUsuarioToggle(null); }
+    } catch (error) { 
+      console.error(error); 
+    } finally { 
+      setOpenConfirm(false); 
+      setUsuarioToggle(null); 
+    }
   };
 
   const handleBitacora = async (id: number, nombre: string) => {
@@ -178,7 +185,7 @@ export default function AdminUsuariosPage() {
     setBitacoraOpen(true);
     openModal();
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/bitacora/${id}`);
+      const res = await fetch(`${API_URL}/usuarios/bitacora/${id}`);
       if (res.ok) {
         const data = await res.json();
         const mapped: Comentario[] = data.map((e: any) => ({
@@ -190,12 +197,14 @@ export default function AdminUsuariosPage() {
         }));
         setBitacoraComentarios(mapped);
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   const handleNuevoComentario = async (usuarioId: number, texto: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/bitacora`, {
+      const res = await fetch(`${API_URL}/usuarios/bitacora`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: usuarioId, texto, autor_nombre: 'Admin UTEQ' }),
@@ -211,7 +220,9 @@ export default function AdminUsuariosPage() {
         };
         setBitacoraComentarios(prev => [comentario, ...prev]);
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    }
   };
 
   return (
