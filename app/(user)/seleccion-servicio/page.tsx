@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Dumbbell, Apple, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dumbbell, Apple, Sparkles, X, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import AlertModal from '../../components/AlertModal';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 export default function HomePage() {
   const [openModal, setOpenModal] = useState(false);
@@ -13,7 +14,9 @@ export default function HomePage() {
   const [currentImg, setCurrentImg] = useState(0);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [mounted, setMounted] = useState(false);
 
+  const { darkMode, toggle } = useDarkMode();
   const router = useRouter();
 
   const images = [
@@ -24,8 +27,9 @@ export default function HomePage() {
     '/gimnasio5.jpeg',
   ];
 
-  // AUTO SLIDE
   useEffect(() => {
+    setMounted(true);
+
     const interval = setInterval(() => {
       setCurrentImg((prev) => (prev + 1) % images.length);
     }, 4000);
@@ -36,8 +40,30 @@ export default function HomePage() {
   const nextImg = () => setCurrentImg((prev) => (prev + 1) % images.length);
   const prevImg = () => setCurrentImg((prev) => (prev - 1 + images.length) % images.length);
 
+  // 🔥 VALIDAR CONVOCATORIA ANTES
+  const handleQuieroEntrenar = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/convocatoria-activa`);
+      const data = await res.json();
+
+      if (res.ok && data.activa) {
+        router.push(`/convocatoria-activa?data=${encodeURIComponent(JSON.stringify(data.periodo))}`);
+        return;
+      }
+
+      // 👉 si no hay convocatoria
+      setOpenModal(true);
+
+    } catch {
+      setAlertMessage('Error al verificar la convocatoria');
+      setAlertOpen(true);
+    }
+  };
+
+  // 👉 submit lista de espera
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/lista-espera`, {
         method: 'POST',
@@ -59,6 +85,7 @@ export default function HomePage() {
       }
 
       setSent(true);
+
     } catch {
       setAlertMessage('Error de conexión');
       setAlertOpen(true);
@@ -80,7 +107,22 @@ export default function HomePage() {
           <img src="/logo.png" alt="logo" />
           <span>SchedMaster</span>
         </div>
-        <Link href="/login" className="btn btn--dark">Iniciar sesión</Link>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+
+          {/* 🌙 BOTÓN DARK MODE */}
+          <button className="dark-toggle" onClick={toggle} aria-label="Cambiar tema">
+            {mounted ? (
+              darkMode ? <Moon size={18} /> : <Sun size={18} />
+            ) : (
+              <span style={{ width: 18, height: 18 }} />
+            )}
+          </button>
+
+          <Link href="/login" className="btn btn--dark">
+            Iniciar sesión
+          </Link>
+        </div>
       </header>
 
       {/* HERO */}
@@ -100,7 +142,7 @@ export default function HomePage() {
 
           <button
             className="btn btn--blue btn--lg"
-            onClick={() => setOpenModal(true)}
+            onClick={handleQuieroEntrenar}
           >
             Quiero entrenar
           </button>
@@ -130,7 +172,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CARRUSEL PRO */}
+      {/* CARRUSEL */}
       <section className="services-section">
         <strong>Instalaciones</strong>
         <h2>Conoce el gimnasio</h2>
@@ -138,19 +180,18 @@ export default function HomePage() {
         <div className="card--glass">
           <div className="carousel">
 
-            <button className="carousel-btn left" onClick={prevImg} title="Imagen anterior">
+            <button className="carousel-btn left" onClick={prevImg}>
               <ChevronLeft size={22} />
             </button>
 
             <div className="carousel-wrapper">
-              <img src={images[currentImg]} className="carousel-img" alt="Instalaciones del gimnasio" />
+              <img src={images[currentImg]} className="carousel-img" />
             </div>
 
-            <button className="carousel-btn right" onClick={nextImg} title="Siguiente imagen">
+            <button className="carousel-btn right" onClick={nextImg}>
               <ChevronRight size={22} />
             </button>
 
-            {/* DOTS */}
             <div className="carousel-dots">
               {images.map((_, index) => (
                 <span
@@ -171,22 +212,21 @@ export default function HomePage() {
         <h2>Selecciona un servicio</h2>
 
         <div className="services-grid">
-          <button className="service-card" onClick={() => setOpenModal(true)}>
-            <div className="service-icon"><Dumbbell size={28} /></div>
+          <button className="service-card" onClick={handleQuieroEntrenar}>
+            <Dumbbell size={28} />
             <h3>Gimnasio</h3>
-            <p>Reserva tu horario de entrenamiento</p>
+            <p>Reserva tu horario</p>
           </button>
 
           <Link href="/nutricion" className="service-card disabled">
-            <div className="service-icon"><Apple size={28} /></div>
+            <Apple size={28} />
             <h3>Enfermería</h3>
             <p>Próximamente</p>
           </Link>
 
           <div className="service-card disabled">
-            <div className="service-icon"><Sparkles size={28} /></div>
+            <Sparkles size={28} />
             <h3>Próximamente</h3>
-            <p>Nuevos talleres en camino</p>
           </div>
         </div>
       </section>
@@ -195,34 +235,29 @@ export default function HomePage() {
       {openModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
           <div className="modal-box">
-            <button className="modal-close" onClick={closeModal} title="Cerrar modal">
+            <button className="modal-close" onClick={closeModal}>
               <X size={20} />
             </button>
 
             {!sent ? (
               <>
                 <h2>Convocatoria cerrada</h2>
-                <p>Déjanos tu correo y te avisaremos cuando se abra.</p>
+                <p>Déjanos tu correo y te avisamos.</p>
 
-                <form onSubmit={handleSubmit} className="modal-form">
+                <form onSubmit={handleSubmit}>
                   <input
                     type="email"
-                    placeholder="tucorreo@uteq.edu.mx"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
                   />
-
-                  <button className="btn btn--blue btn--full btn--lg">
-                    Notificarme
-                  </button>
+                  <button className="btn btn--blue btn--full">Notificarme</button>
                 </form>
               </>
             ) : (
-              <div className="modal-success">
-                <div className="success-icon">✓</div>
+              <div>
                 <h3>Registro confirmado</h3>
-                <p>Te notificaremos cuando se habilite.</p>
+                <p>Te avisaremos.</p>
               </div>
             )}
           </div>
