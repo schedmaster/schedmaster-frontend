@@ -77,7 +77,7 @@ export default function AdminInscripcionesPage() {
     try {
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/inscripciones/pendientes`
+        `${process.env.NEXT_PUBLIC_API_URL}/inscripciones/pendientes`
       );
 
       if (res.ok) {
