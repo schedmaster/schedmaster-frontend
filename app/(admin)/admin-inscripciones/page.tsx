@@ -126,10 +126,9 @@ export default function AdminInscripcionesPage() {
 
     const { id, estado } = accionPendiente;
 
-    const endpoint =
-      estado === 'aprobado'
-        ? '/api/inscripciones/aceptar'
-        : '/api/inscripciones/rechazar';
+    const endpoint = estado === 'aprobado'
+  ? '/inscripciones/aceptar'
+  : '/inscripciones/rechazar';
 
     try {
 
