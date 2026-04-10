@@ -43,7 +43,7 @@ export default function HomePage() {
   // 🔥 VALIDAR CONVOCATORIA ANTES
   const handleQuieroEntrenar = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/convocatoria-activa`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/convocatoria-activa`);
       const data = await res.json();
 
       if (res.ok && data.activa) {
@@ -65,7 +65,7 @@ export default function HomePage() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/lista-espera`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lista-espera`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo: email }),
