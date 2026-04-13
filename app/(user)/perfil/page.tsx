@@ -7,7 +7,11 @@ import { useRouter } from 'next/navigation';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import AvisoPrivacidadModal from "@/app/components/AvisoPrivacidadModal"; 
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 interface User {
+  id_usuario?: number;
+  id_rol?: number;
   nombre: string;
   apellido_paterno: string;
   apellido_materno: string;
@@ -54,7 +58,32 @@ export default function PerfilPage() {
       router.push('/login');
     } else {
       const parsedUser: User = JSON.parse(storedUser);
+
+      // Render inicial inmediato para no bloquear vista por red.
       setUser(parsedUser);
+
+      const syncProfile = async () => {
+        if (!parsedUser.id_usuario) return;
+
+        try {
+          const res = await fetch(`${API_URL}/auth/perfil/${parsedUser.id_usuario}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (!res.ok) return;
+
+          const data = await res.json();
+          if (!data?.usuario) return;
+
+          setUser(data.usuario as User);
+          localStorage.setItem('user', JSON.stringify(data.usuario));
+        } catch (error) {
+          console.error('Error al sincronizar perfil:', error);
+        }
+      };
+
+      syncProfile();
     }
   }, [router]);
 
