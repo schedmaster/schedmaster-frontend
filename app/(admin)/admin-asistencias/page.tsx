@@ -168,10 +168,13 @@ export default function AdminAsistenciasPage() {
   }, [autoMarcarAusentes]);
 
   // ── filtros combinados ─────────────────────────────────────────
+  // Clave de horario: siempre "HH:MM-HH:MM" (sin espacios, guión simple)
+  const claveHorario = (a: Asistencia) => `${a.horarioInicio}-${a.horarioFin}`;
+
   useEffect(() => {
     let f = [...asistencias];
     if (searchTerm)    f = f.filter(a => a.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
-    if (filterHorario) f = f.filter(a => `${a.horarioInicio}-${a.horarioFin}` === filterHorario);
+    if (filterHorario) f = f.filter(a => claveHorario(a) === filterHorario);
     if (filterTipo)    f = f.filter(a => a.tipoEntrenamiento.toLowerCase() === filterTipo.toLowerCase());
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
@@ -298,7 +301,7 @@ export default function AdminAsistenciasPage() {
 
             <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
               <option value="">Todos los horarios</option>
-              {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
+              {Array.from(new Set(asistencias.map(claveHorario))).map(h => (
                 <option key={h} value={h}>{h.replace('-',' – ')}</option>
               ))}
             </select>
