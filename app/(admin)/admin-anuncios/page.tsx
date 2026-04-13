@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Search, Megaphone } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
+import ConfirmModal from '../../components/ConfirmModal';
 
 interface Anuncio {
   id: number;
@@ -23,6 +24,11 @@ export default function AdminAnunciosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Anuncio | null>(null);
 
+  // ── CONFIRM MODAL ──────────────────────────────────────────
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [pendingDeleteTitulo, setPendingDeleteTitulo] = useState('');
+
   const [form, setForm] = useState({
     titulo: '',
     descripcion: '',
@@ -34,25 +40,10 @@ export default function AdminAnunciosPage() {
 
   const normalizeAnuncios = (payload: unknown): Anuncio[] => {
     if (Array.isArray(payload)) return payload as Anuncio[];
-
-    if (
-      payload &&
-      typeof payload === 'object' &&
-      'data' in payload &&
-      Array.isArray((payload as { data: unknown }).data)
-    ) {
-      return (payload as { data: Anuncio[] }).data;
-    }
-
-    if (
-      payload &&
-      typeof payload === 'object' &&
-      'anuncios' in payload &&
-      Array.isArray((payload as { anuncios: unknown }).anuncios)
-    ) {
-      return (payload as { anuncios: Anuncio[] }).anuncios;
-    }
-
+    if (payload && typeof payload === 'object' && 'data' in payload && Array.isArray((payload as any).data))
+      return (payload as any).data;
+    if (payload && typeof payload === 'object' && 'anuncios' in payload && Array.isArray((payload as any).anuncios))
+      return (payload as any).anuncios;
     return [];
   };
 
@@ -69,76 +60,56 @@ export default function AdminAnunciosPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({
-      titulo: '',
-      descripcion: '',
-      prioridad: 'Alta',
-      fotografia: null,
-    });
+    setForm({ titulo: '', descripcion: '', prioridad: 'Alta', fotografia: null });
     setPreview(null);
     setModalOpen(true);
   };
 
   const openEdit = (a: Anuncio) => {
     setEditing(a);
-
-    setForm({
-      titulo: a.titulo || '',
-      descripcion: a.descripcion || '',
-      prioridad: a.prioridad || 'Alta',
-      fotografia: null,
-    });
-
-    setPreview(
-      a.fotografia
-        ? `${BASE_URL}/imagenes/${a.fotografia}`
-        : null
-    );
-
+    setForm({ titulo: a.titulo || '', descripcion: a.descripcion || '', prioridad: a.prioridad || 'Alta', fotografia: null });
+    setPreview(a.fotografia ? `${BASE_URL}/imagenes/${a.fotografia}` : null);
     setModalOpen(true);
   };
 
-  const deleteAnuncio = async (id: number) => {
-    try {
-      await fetch(`${API_URL}/anuncios/${id}`, {
-        method: 'DELETE',
-      });
+  // ── Abre el modal de confirmación antes de eliminar ────────
+  const handleDeleteClick = (a: Anuncio) => {
+    setPendingDeleteId(a.id);
+    setPendingDeleteTitulo(a.titulo);
+    setConfirmOpen(true);
+  };
 
-      setAnuncios(prev => prev.filter(a => a.id !== id));
+  // ── Ejecuta el delete solo si el usuario confirmó ──────────
+  const confirmarDelete = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await fetch(`${API_URL}/anuncios/${pendingDeleteId}`, { method: 'DELETE' });
+      setAnuncios(prev => prev.filter(a => a.id !== pendingDeleteId));
     } catch (error) {
       console.error(error);
+    } finally {
+      setConfirmOpen(false);
+      setPendingDeleteId(null);
+      setPendingDeleteTitulo('');
     }
   };
 
   const handleSave = async () => {
     try {
       const formData = new FormData();
-
       formData.append('titulo', form.titulo);
       formData.append('descripcion', form.descripcion);
       formData.append('prioridad', form.prioridad);
+      if (form.fotografia) formData.append('imagen', form.fotografia);
 
-      if (form.fotografia) {
-        formData.append('imagen', form.fotografia);
-      }
-
-      const url = editing
-        ? `${API_URL}/anuncios/${editing.id}`
-        : `${API_URL}/anuncios`;
-
+      const url = editing ? `${API_URL}/anuncios/${editing.id}` : `${API_URL}/anuncios`;
       const method = editing ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
-        method,
-        body: formData,
-      });
-
+      const res = await fetch(url, { method, body: formData });
       const data = await res.json();
 
       if (editing) {
-        setAnuncios(prev =>
-          prev.map(a => (a.id === editing.id ? data : a))
-        );
+        setAnuncios(prev => prev.map(a => (a.id === editing.id ? data : a)));
       } else {
         setAnuncios(prev => [...prev, data]);
       }
@@ -146,7 +117,6 @@ export default function AdminAnunciosPage() {
       setModalOpen(false);
       setEditing(null);
       setPreview(null);
-
     } catch (error) {
       console.error(error);
     }
@@ -199,7 +169,6 @@ export default function AdminAnunciosPage() {
                     <th>Acciones</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {anunciosFiltrados.length === 0 ? (
                     <tr>
@@ -214,23 +183,9 @@ export default function AdminAnunciosPage() {
                     anunciosFiltrados.map(a => (
                       <tr key={a.id}>
                         <td>{a.titulo}</td>
-
-                        <td>
-                          <span className={prioridadChip(a.prioridad)}>
-                            {a.prioridad}
-                          </span>
-                        </td>
-
-                        <td className="muted">
-                          {new Date(a.fecha_publicacion).toLocaleDateString()}
-                        </td>
-
-                        <td>
-                          <span className={`chip ${a.activo ? 'chip--activo' : 'chip--inactivo'}`}>
-                            {a.activo ? 'Activo' : 'Oculto'}
-                          </span>
-                        </td>
-
+                        <td><span className={prioridadChip(a.prioridad)}>{a.prioridad}</span></td>
+                        <td className="muted">{new Date(a.fecha_publicacion).toLocaleDateString()}</td>
+                        <td><span className={`chip ${a.activo ? 'chip--activo' : 'chip--inactivo'}`}>{a.activo ? 'Activo' : 'Oculto'}</span></td>
                         <td>
                           {a.fotografia && (
                             <img
@@ -240,14 +195,13 @@ export default function AdminAnunciosPage() {
                             />
                           )}
                         </td>
-
                         <td>
                           <div className="row-actions">
                             <button className="btn-icon btn-icon--cyan" title="Editar anuncio" onClick={() => openEdit(a)}>
                               <Pencil size={14} />
                             </button>
-
-                            <button className="btn-icon btn-icon--red" title="Eliminar anuncio" onClick={() => deleteAnuncio(a.id)}>
+                            {/* Ahora abre ConfirmModal en lugar de eliminar directo */}
+                            <button className="btn-icon btn-icon--red" title="Eliminar anuncio" onClick={() => handleDeleteClick(a)}>
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -256,7 +210,6 @@ export default function AdminAnunciosPage() {
                     ))
                   )}
                 </tbody>
-
               </table>
             </div>
           </section>
@@ -264,10 +217,10 @@ export default function AdminAnunciosPage() {
         </div>
       </main>
 
+      {/* ── MODAL CREAR / EDITAR ─────────────────────────────── */}
       {modalOpen && (
         <div className="modal-overlay">
           <div className="modal-box modal-box--wide">
-
             <div className="modal-header">
               <div>
                 <h3>{editing ? 'Editar anuncio' : 'Nuevo anuncio'}</h3>
@@ -277,7 +230,6 @@ export default function AdminAnunciosPage() {
             </div>
 
             <div className="modal-body">
-
               <div>
                 <label className="date-label">Título</label>
                 <input
@@ -318,20 +270,14 @@ export default function AdminAnunciosPage() {
                   type="file"
                   className="form-select"
                   accept="image/*"
-                  placeholder="Selecciona una imagen para el anuncio"
                   title="Selecciona una imagen para el anuncio"
                   aria-label="Selecciona una imagen para el anuncio"
                   onChange={(e) => {
                     const file = e.target.files?.[0] || null;
-
                     setForm({ ...form, fotografia: file });
-
-                    if (file) {
-                      setPreview(URL.createObjectURL(file));
-                    }
+                    if (file) setPreview(URL.createObjectURL(file));
                   }}
                 />
-
                 {preview && (
                   <img
                     src={preview}
@@ -340,21 +286,30 @@ export default function AdminAnunciosPage() {
                   />
                 )}
               </div>
-
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn--outline" onClick={() => setModalOpen(false)}>
-                Cancelar
-              </button>
-              <button className="btn btn--yellow" onClick={handleSave}>
-                Guardar
-              </button>
+              <button className="btn btn--outline" onClick={() => setModalOpen(false)}>Cancelar</button>
+              <button className="btn btn--yellow" onClick={handleSave}>Guardar</button>
             </div>
-
           </div>
         </div>
       )}
+
+      {/* ── MODAL CONFIRMAR ELIMINAR ─────────────────────────── */}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Eliminar anuncio"
+        message={`¿Seguro que deseas eliminar el anuncio "${pendingDeleteTitulo}"? Esta acción no se puede deshacer.`}
+        confirmText="Sí, eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmarDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingDeleteId(null);
+          setPendingDeleteTitulo('');
+        }}
+      />
 
     </div>
   );

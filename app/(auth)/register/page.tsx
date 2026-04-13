@@ -191,7 +191,7 @@ export default function RegisterPage() {
       <div className="register-page container">
         {!success ? (
           <div className="card--glass">
-            <button type="button" className="btn btn--back" onClick={() => router.push('/login')}>
+            <button type="button" className="btn btn--back" onClick={() => router.push('/seleccion-servicio')}>
               <ArrowLeft size={18} /> Volver al inicio
             </button>
 

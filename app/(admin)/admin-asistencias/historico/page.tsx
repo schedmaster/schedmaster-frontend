@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import AdminSidebar from '../../../components/AdminSidebar'
 import AlertModal from "../../../components/AlertModal"
 
+// Igual que las demás páginas admin — sin /api duplicado
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-const BASE_URL = API_URL.replace('/api', '')
 
 interface ArchivoHistorico {
   id_historico: number
@@ -28,23 +28,44 @@ export default function HistoricoAsistenciasPage() {
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState("")
 
-  const cargarHistorico = async () => {
+  /* ── CARGAR HISTORICO ─────────────────────────────────────── */
+  const cargarHistorico = async (query = '') => {
     try {
-      const res = await fetch(`${API_URL}/asistencias/historico`)
+      const term = query.trim()
+      // Usa el mismo patrón que asistencias: ${API_URL}/asistencias/...
+      const endpoint = term
+        ? `${API_URL}/asistencias/historico?q=${encodeURIComponent(term)}`
+        : `${API_URL}/asistencias/historico`
 
-      if (!res.ok) throw new Error("Error en la respuesta del servidor")
+      const res = await fetch(endpoint)
+
+      if (!res.ok) {
+        // Intenta leer el mensaje del backend antes de mostrar error genérico
+        const errorData = await res.json().catch(() => null)
+        const msg = errorData?.message || `Error ${res.status}: ${res.statusText}`
+        setAlertMessage(msg)
+        setAlertOpen(true)
+        return
+      }
 
       const data = await res.json()
-      setArchivos(data)
+      setArchivos(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error(error)
-      setAlertMessage("Error cargando histórico")
+      setAlertMessage("No se pudo conectar con el servidor")
       setAlertOpen(true)
     }
   }
 
   useEffect(() => {
-    cargarHistorico()
+    const timer = setTimeout(() => {
+      cargarHistorico(searchQuery)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
+    cargarHistorico('')
   }, [])
 
   const handleSubir = async () => {
@@ -85,10 +106,11 @@ export default function HistoricoAsistenciasPage() {
 
       <main className="main">
         <div className="main-inner">
+
           <header className="section-header">
             <div>
               <h2>Histórico de Asistencias</h2>
-              <p>Consulta listas físicas digitalizadas</p>
+              <p>Sube y consulta listas físicas digitalizadas</p>
             </div>
             <button
               className="btn btn--outline"
@@ -187,7 +209,9 @@ export default function HistoricoAsistenciasPage() {
                             className="btn-icon btn-icon--cyan"
                             title="Ver documento"
                             onClick={() => {
-                              window.open(`${BASE_URL}/${a.ruta_archivo}`, "_blank")
+                              // Construye la URL correcta para ver el archivo
+                              const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001'
+                              window.open(`${base}/${a.ruta_archivo}`, "_blank")
                             }}
                           >
                             <Eye size={14} />

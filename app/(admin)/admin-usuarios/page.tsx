@@ -32,7 +32,7 @@ const ROL_LABELS: Record<Rol, string> = {
   estudiante: 'Alumno',
   docente: 'Docente',
   entrenador: 'Entrenador',
-  administrador_general: 'Admin General',
+  administrador_general: 'Admin',
 };
 
 const ROLES_CON_BITACORA: Rol[] = ['estudiante', 'docente'];
@@ -80,9 +80,7 @@ export default function AdminUsuariosPage() {
         }));
         setUsuarios(formateados);
       }
-    } catch (error) { 
-      console.error(error); 
-    }
+    } catch (error) { console.error(error); }
   };
 
   useEffect(() => { fetchUsuarios(); }, []);
@@ -127,9 +125,7 @@ export default function AdminUsuariosPage() {
         body: JSON.stringify({ id_usuario: usuarioEditar.id, nombre: formEdit.nombre, apellido_paterno: formEdit.apellido_paterno, apellido_materno: formEdit.apellido_materno, correo: formEdit.correo, id_rol: formEdit.id_rol, id_carrera: usuarioEditar.id_carrera }),
       });
       if (res.ok) { setOpenEditModal(false); closeModal(); fetchUsuarios(); }
-    } catch (error) { 
-      console.error(error); 
-    }
+    } catch (error) { console.error(error); }
   };
 
   const handleAbrirNuevo = () => {
@@ -152,9 +148,7 @@ export default function AdminUsuariosPage() {
         body: JSON.stringify({ nombre: formNuevo.nombre, apellido_paterno: formNuevo.apellido_paterno, apellido_materno: formNuevo.apellido_materno, correo: formNuevo.correo, contrasena: formNuevo.contrasena, id_rol: formNuevo.id_rol }),
       });
       if (res.ok) { setOpenNuevoModal(false); closeModal(); fetchUsuarios(); }
-    } catch (error) { 
-      console.error(error); 
-    }
+    } catch (error) { console.error(error); }
   };
 
   const handleToggle = (usr: Usuario) => {
@@ -171,12 +165,8 @@ export default function AdminUsuariosPage() {
         body: JSON.stringify({ id_usuario: usuarioToggle.id }),
       });
       if (res.ok) fetchUsuarios();
-    } catch (error) { 
-      console.error(error); 
-    } finally { 
-      setOpenConfirm(false); 
-      setUsuarioToggle(null); 
-    }
+    } catch (error) { console.error(error); }
+    finally { setOpenConfirm(false); setUsuarioToggle(null); }
   };
 
   const handleBitacora = async (id: number, nombre: string) => {
@@ -197,9 +187,7 @@ export default function AdminUsuariosPage() {
         }));
         setBitacoraComentarios(mapped);
       }
-    } catch (error) { 
-      console.error(error); 
-    }
+    } catch (error) { console.error(error); }
   };
 
   const handleNuevoComentario = async (usuarioId: number, texto: string) => {
@@ -220,9 +208,7 @@ export default function AdminUsuariosPage() {
         };
         setBitacoraComentarios(prev => [comentario, ...prev]);
       }
-    } catch (error) { 
-      console.error(error); 
-    }
+    } catch (error) { console.error(error); }
   };
 
   return (
@@ -242,22 +228,70 @@ export default function AdminUsuariosPage() {
             </button>
           </header>
 
+          {/* ── FILTROS RESPONSIVOS ──────────────────────────────────── */}
           <section className="filter-bar">
             <div className="field">
               <Search />
-              <input type="search" placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              <input
+                type="search"
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
             </div>
+
+            {/* Filtros que faltaban conectar al JSX */}
+            <select
+              className="select"
+              value={filterRol}
+              onChange={e => setFilterRol(e.target.value)}
+              aria-label="Filtrar por rol"
+            >
+              <option value="">Todos los roles</option>
+              <option value="estudiante">Alumno</option>
+              <option value="docente">Docente</option>
+              <option value="entrenador">Entrenador</option>
+              <option value="administrador_general">Admin General</option>
+            </select>
+
+            <select
+              className="select"
+              value={filterEstado}
+              onChange={e => setFilterEstado(e.target.value)}
+              aria-label="Filtrar por estado"
+            >
+              <option value="">Todos los estados</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+
+            <select
+              className="select"
+              value={filterCarrera}
+              onChange={e => setFilterCarrera(e.target.value)}
+              aria-label="Filtrar por carrera"
+            >
+              <option value="">Todas las carreras</option>
+              {Array.from(new Set(usuarios.map(u => u.carrera))).map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </section>
 
+          {/* ── LISTA DE USUARIOS ────────────────────────────────────── */}
           <section className="row-list">
             {filteredUsuarios.map(usr => (
               <div key={usr.id} className="row-card">
                 <div className={`row-avatar ${getAvatarClass(usr.id)}`}>{usr.iniciales}</div>
+
                 <div className="row-info">
                   <span className="row-name">{usr.nombre} {usr.apellido}</span>
                   <span className="row-sub muted">{usr.correo}</span>
+                  <span className="row-sub muted">{usr.carrera}</span>
                 </div>
-                <div className="row-actions">
+
+                {/* row-actions con flex-wrap para que no se desborde en móvil */}
+                <div className="row-actions" style={{ flexWrap: 'wrap', gap: '6px' }}>
                   <span className={`chip chip--${usr.rol}`}>{ROL_LABELS[usr.rol]}</span>
                   <span className={`chip chip--${usr.estado}`}>{usr.estado}</span>
                   {ROLES_CON_BITACORA.includes(usr.rol) && (
@@ -290,9 +324,11 @@ export default function AdminUsuariosPage() {
               </div>
             ))}
           </section>
+
         </div>
       </main>
 
+      {/* ── MODAL EDITAR ─────────────────────────────────────────────── */}
       {openEditModal && (
         <div className="modal-overlay">
           <div className="modal-box modal-box--wide">
@@ -346,6 +382,7 @@ export default function AdminUsuariosPage() {
         </div>
       )}
 
+      {/* ── MODAL NUEVO USUARIO ──────────────────────────────────────── */}
       {openNuevoModal && (
         <div className="modal-overlay">
           <div className="modal-box modal-box--wide">
@@ -401,6 +438,7 @@ export default function AdminUsuariosPage() {
         </div>
       )}
 
+      {/* ── BITÁCORA ─────────────────────────────────────────────────── */}
       {bitacoraUsuario && (
         <Bitacora
           isOpen={bitacoraOpen}
@@ -419,7 +457,6 @@ export default function AdminUsuariosPage() {
         title={usuarioToggle?.activo ? 'Desactivar usuario' : 'Activar usuario'}
         message={usuarioToggle?.activo ? '¿Seguro que deseas desactivar este usuario?' : '¿Seguro que deseas activar este usuario?'}
       />
-
     </div>
   );
 }
