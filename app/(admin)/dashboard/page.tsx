@@ -73,20 +73,18 @@ export default function DashboardPage() {
     };
 
     const cargarStats = async () => {
-  try {
-    const res = await fetch(`${API_URL}/asistencias/dashboard-stats`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.basicos) {
-        setStats(data);
+      try {
+        const res = await fetch(`${API_URL}/asistencias/dashboard-stats`);
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar stats:", error);
+      } finally {
+        setCargando(false);
       }
-    }
-  } catch (error) {
-    console.error("Error al cargar stats:", error);
-  } finally {
-    setCargando(false);
-  }
-};
+    };
 
     verificarAcceso();
     cargarStats();
