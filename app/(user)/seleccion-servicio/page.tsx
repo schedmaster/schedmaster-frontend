@@ -126,7 +126,6 @@ export default function HomePage() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-
           <button className="dark-toggle" onClick={toggle}>
             {mounted ? (
               darkMode ? <Moon size={18} /> : <Sun size={18} />
@@ -196,7 +195,6 @@ export default function HomePage() {
 
         <div className="card--glass">
           <div className="carousel">
-
             <button className="carousel-btn left" onClick={prevImg}>
               <ChevronLeft size={22} />
             </button>
@@ -208,7 +206,6 @@ export default function HomePage() {
             <button className="carousel-btn right" onClick={nextImg}>
               <ChevronRight size={22} />
             </button>
-
           </div>
         </div>
       </section>
@@ -238,10 +235,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* MODAL */}
+      {/* MODAL LISTA DE ESPERA */}
       {openModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
           <div className="modal-box">
+
             <button className="modal-close" onClick={closeModal}>
               <X size={20} />
             </button>
@@ -249,24 +247,31 @@ export default function HomePage() {
             {!sent ? (
               <>
                 <h2>Convocatoria cerrada</h2>
-                <p>Déjanos tu correo y te avisamos.</p>
+                <p>
+                  Actualmente no hay convocatoria abierta para el gimnasio.
+                  Déjanos tu correo y te avisaremos cuando se habilite.
+                </p>
 
-                <form onSubmit={handleSubmit}>
+                <form className="modal-form" onSubmit={handleSubmit}>
                   <input
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
+                    placeholder="tucorreo@uteq.edu.mx"
                     required
                   />
-                  <button className="btn btn--blue btn--full">Notificarme</button>
+                  <button className="btn btn--blue btn--full">
+                    Notificarme
+                  </button>
                 </form>
               </>
             ) : (
-              <div>
+              <div className="modal-success">
                 <h3>Registro confirmado</h3>
-                <p>Te avisaremos.</p>
+                <p>Te avisaremos cuando se abra la convocatoria.</p>
               </div>
             )}
+
           </div>
         </div>
       )}
