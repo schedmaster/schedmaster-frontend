@@ -4,10 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '../../components/AdminSidebar';
 import {
-  Eye, Mail, UserPlus, CalendarCheck, Activity, Award, AlertTriangle, Flame, TrendingUp, TrendingDown, Minus
+  Eye, Mail, UserPlus, CalendarCheck, Activity, Award, AlertTriangle, Flame
 } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 const obtenerNombresMeses = () => {
   const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -19,12 +17,12 @@ const formatNumber = (num: number) => num.toLocaleString('en-US');
 
 const Sparkline = ({ data, secondary, color = '#00a4e0' }: { data: number[]; secondary?: number[]; color?: string }) => {
   const h = 120, w = 800;
-  const max  = Math.max(...data, ...(secondary ?? []), 1); 
+  const max  = Math.max(...data, ...(secondary ?? []), 1);
   const step = w / (Math.max(data.length - 1, 1));
   const toPath = (arr: number[]) => arr.map((v,i) => `${i===0?'M':'L'} ${i*step} ${h-(v/max)*h}`).join(' ');
   const toArea = (arr: number[]) => toPath(arr) + ` L ${(arr.length-1)*step} ${h} L 0 ${h} Z`;
   const mesesLabels = obtenerNombresMeses();
-  
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '280px', marginTop: '20px' }}>
       <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', height: '85%', overflow: 'visible' }} preserveAspectRatio="none">
@@ -68,28 +66,32 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const verificarAcceso = () => {
-      if (!localStorage.getItem('user')) router.push('/login');
-      else setAutorizado(true);
+      if (!localStorage.getItem('user')) {
+        router.push('/login');
+        return false;
+      }
+      setAutorizado(true);
+      return true;
     };
 
     const cargarStats = async () => {
-  try {
-    const res = await fetch(`${API_URL}/asistencias/dashboard-stats`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.basicos) {
-        setStats(data);
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/asistencias/dashboard-stats`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.basicos) {
+            setStats(data);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar stats:", error);
+      } finally {
+        setCargando(false);
       }
-    }
-  } catch (error) {
-    console.error("Error al cargar stats:", error);
-  } finally {
-    setCargando(false);
-  }
-};
+    };
 
-    verificarAcceso();
-    cargarStats();
+    const acceso = verificarAcceso();
+    if (acceso) cargarStats();
   }, [router]);
 
   if (!autorizado || cargando) {
@@ -98,7 +100,7 @@ export default function DashboardPage() {
 
   return (
     <div className="app">
-     <AdminSidebar />
+      <AdminSidebar />
 
       <main className="main">
         <div className="main-inner">
@@ -147,7 +149,7 @@ export default function DashboardPage() {
           </section>
 
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
-            
+
             <div className="dashboard-panel" style={{ marginBottom: 0 }}>
               <h3 style={{ margin: '0 0 20px 0', fontSize: '16px' }}>Métricas de rendimiento</h3>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
