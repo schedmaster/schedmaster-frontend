@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import AdminSidebar from '../../../components/AdminSidebar'
 import AlertModal from "../../../components/AlertModal"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-
+// Igual que las demás páginas admin — sin /api duplicado
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 interface ArchivoHistorico {
   id_historico: number
@@ -24,29 +24,36 @@ export default function HistoricoAsistenciasPage() {
   const [archivo, setArchivo] = useState<File | null>(null)
   const [fecha, setFecha] = useState("")
   const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState("")
 
-  /* ==========================
-     CARGAR HISTORICO
-  ========================== */
+  /* ── CARGAR HISTORICO ─────────────────────────────────────── */
   const cargarHistorico = async (query = '') => {
     try {
       const term = query.trim()
+      // Usa el mismo patrón que asistencias: ${API_URL}/asistencias/...
       const endpoint = term
-        ? `${API_URL}/api/asistencias/historico?q=${encodeURIComponent(term)}`
-        : `${API_URL}/api/asistencias/historico`
+        ? `${API_URL}/asistencias/historico?q=${encodeURIComponent(term)}`
+        : `${API_URL}/asistencias/historico`
 
       const res = await fetch(endpoint)
-      
-      if (!res.ok) throw new Error("Error en la respuesta del servidor")
-      
+
+      if (!res.ok) {
+        // Intenta leer el mensaje del backend antes de mostrar error genérico
+        const errorData = await res.json().catch(() => null)
+        const msg = errorData?.message || `Error ${res.status}: ${res.statusText}`
+        setAlertMessage(msg)
+        setAlertOpen(true)
+        return
+      }
+
       const data = await res.json()
-      setArchivos(data)
+      setArchivos(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error(error)
-      setAlertMessage("Error cargando histórico")
+      setAlertMessage("No se pudo conectar con el servidor")
       setAlertOpen(true)
     }
   }
@@ -55,7 +62,6 @@ export default function HistoricoAsistenciasPage() {
     const timer = setTimeout(() => {
       cargarHistorico(searchQuery)
     }, 250)
-
     return () => clearTimeout(timer)
   }, [searchQuery])
 
@@ -63,52 +69,50 @@ export default function HistoricoAsistenciasPage() {
     cargarHistorico('')
   }, [])
 
-  /* ==========================
-     SUBIR ARCHIVO
-  ========================== */
+  /* ── SUBIR ARCHIVO ───────────────────────────────────────── */
   const handleSubir = async () => {
     if (!archivo || !fecha) {
-      setAlertMessage("Selecciona archivo y fecha")
+      setAlertMessage("Selecciona un archivo y una fecha")
       setAlertOpen(true)
       return
     }
 
+    setLoading(true)
+
     const formData = new FormData()
     formData.append("archivo", archivo)
     formData.append("fecha", fecha)
-    formData.append("id_usuario", "1") // Aquí asume el ID 1 del Admin
+    formData.append("id_usuario", "1")
 
     try {
-      const res = await fetch(`${API_URL}/api/asistencias/upload-and-hash`, {
+      // Mismo patrón: sin /api duplicado
+      const res = await fetch(`${API_URL}/asistencias/upload-and-hash`, {
         method: "POST",
         body: formData
       })
 
       const data = await res.json()
-      
+
       if (res.ok) {
         setAlertMessage("Archivo subido con éxito")
+        setArchivo(null)
+        setFecha("")
+        cargarHistorico(searchQuery)
       } else {
-        setAlertMessage(data.message || "Error al subir")
+        setAlertMessage(data.message || "Error al subir el archivo")
       }
-      
-      setAlertOpen(true)
-      setArchivo(null)
-      setFecha("")
-      cargarHistorico(searchQuery)
     } catch (error) {
       console.error(error)
-      setAlertMessage("Error subiendo archivo")
+      setAlertMessage("No se pudo conectar con el servidor")
+    } finally {
+      setLoading(false)
       setAlertOpen(true)
     }
   }
 
-  /* ==========================
-     FORMATEAR FECHA
-  ========================== */
+  /* ── FORMATEAR FECHA ─────────────────────────────────────── */
   const formatDate = (date: string) => {
     if (!date) return "-"
-    // Aseguramos que la fecha no se desfase por la zona horaria al mostrarla
     return new Date(date).toISOString().split('T')[0]
   }
 
@@ -118,6 +122,7 @@ export default function HistoricoAsistenciasPage() {
 
       <main className="main">
         <div className="main-inner">
+
           <header className="section-header">
             <div>
               <h2>Histórico de Asistencias</h2>
@@ -131,27 +136,21 @@ export default function HistoricoAsistenciasPage() {
             </button>
           </header>
 
-          {/* CONTROLES */}
+          {/* ── CONTROLES DE SUBIDA ─────────────────────────────── */}
           <div className="controls-container">
             <label htmlFor="archivoHistorico" className="btn btn--blue btn-label">
               <Upload size={18} /> Seleccionar archivo
             </label>
-
             <input
               type="file"
               id="archivoHistorico"
               hidden
-              className="hidden-input"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null
-                setArchivo(file)
-              }}
+              onChange={(e) => setArchivo(e.target.files?.[0] || null)}
             />
 
             <input
               type="date"
               className="form-select"
-              placeholder="Selecciona una fecha"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
             />
@@ -159,26 +158,25 @@ export default function HistoricoAsistenciasPage() {
             <button
               className="btn btn--yellow"
               onClick={handleSubir}
-              disabled={!archivo || !fecha}
+              disabled={!archivo || !fecha || loading}
             >
-              Subir lista
+              {loading ? 'Subiendo...' : 'Subir lista'}
             </button>
           </div>
 
-          {/* ARCHIVO SELECCIONADO */}
+          {/* ── ARCHIVO SELECCIONADO ─────────────────────────────── */}
           {archivo && (
             <div className="row-card">
               <div className="row-info">
                 <span className="row-name row-name-flex">
                   <CheckCircle size={16} color="green" /> Archivo seleccionado
                 </span>
-                <span className="row-sub muted">
-                  {archivo.name}
-                </span>
+                <span className="row-sub muted">{archivo.name}</span>
               </div>
             </div>
           )}
 
+          {/* ── BUSCADOR ─────────────────────────────────────────── */}
           <section className="filter-bar">
             <div className="field">
               <Search />
@@ -191,7 +189,7 @@ export default function HistoricoAsistenciasPage() {
             </div>
           </section>
 
-          {/* TABLA */}
+          {/* ── TABLA ────────────────────────────────────────────── */}
           <section className="table-area">
             <div className="table-scroll">
               <table>
@@ -221,7 +219,9 @@ export default function HistoricoAsistenciasPage() {
                             className="btn-icon btn-icon--cyan"
                             title="Ver documento"
                             onClick={() => {
-                              window.open(`${API_URL}/${a.ruta_archivo}`, "_blank")
+                              // Construye la URL correcta para ver el archivo
+                              const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001'
+                              window.open(`${base}/${a.ruta_archivo}`, "_blank")
                             }}
                           >
                             <Eye size={14} />

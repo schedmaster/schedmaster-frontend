@@ -1823,3 +1823,132 @@ html:not(.dark) .export-option-icon.pdf  { color: #ef4444; }
 .input-error {
   border: 1px solid red;
 }
+/* ============================================================
+   RESPONSIVE FIX — Agregar al final de globals.css
+   ============================================================ */
+
+/* ── FILTER-BAR MÓVIL ─────────────────────────────────────── */
+@media (max-width: 1200px) {
+
+  /* El field del buscador ocupa todo el ancho en móvil */
+  .filter-bar .field {
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* Los selects se ajustan al ancho disponible, no forzar 100% */
+  .filter-bar .select {
+    min-width: 0;
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  /* Botones de asistencias no ocupan todo el ancho */
+  .btn--asistencias-action {
+    min-width: 0;
+    flex: 1 1 calc(50% - 8px);
+    width: auto !important;
+  }
+
+  /* Botones generales en section-header siguen siendo full */
+  .section-header .btn--yellow,
+  .section-header .btn--blue {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Botones dentro de filter-bar NO son full width */
+  .filter-bar .btn--yellow,
+  .filter-bar .btn--blue,
+  .filter-bar .btn--outline {
+    width: auto !important;
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+  }
+
+  /* stat-grid en móvil: 2 columnas en lugar de 1 */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* row-actions permite wrap para que los botones no se salgan */
+  .row-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 120px;
+    gap: 6px;
+  }
+
+  /* row-card ajusta el layout en pantallas pequeñas */
+  .row-card {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* row-info ocupa el espacio disponible sin desbordarse */
+  .row-info {
+    max-width: calc(100% - 70px);
+  }
+
+  /* row-name no corta el texto en móvil si es necesario */
+  .row-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 14px;
+  }
+
+  /* Chips en row-actions no se salen */
+  .chip {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* ── PANTALLAS MUY PEQUEÑAS (< 480px) ────────────────────── */
+@media (max-width: 480px) {
+
+  /* stat-grid pasa a 1 columna en pantallas muy pequeñas */
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* filter-bar: todos los elementos en columna */
+  .filter-bar .select,
+  .filter-bar .btn--asistencias-action,
+  .filter-bar .btn--yellow,
+  .filter-bar .btn--blue,
+  .filter-bar .btn--outline {
+    flex: 1 1 100%;
+  }
+
+  /* modal-box no se sale de la pantalla */
+  .modal-box--wide {
+    max-width: 100%;
+    margin: 0 8px;
+  }
+
+  /* stat-card-value un poco más pequeño */
+  .stat-card-value {
+    font-size: 28px;
+  }
+
+  /* dias-container en modal horarios */
+  .dias-container {
+    gap: 6px;
+  }
+  .dia-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* table-scroll previene overflow horizontal */
+  .table-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* section-header botones */
+  .section-header {
+    gap: 12px;
+  }
+}
