@@ -103,22 +103,23 @@ export default function AdminEstadisticasPage() {
 
   return (
     <>
-      <div className="app">
+      <div className="app app--admin-stats">
         <AdminSidebar />
 
         <main className="main">
           <div className="main-inner">
 
-            <header className="section-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '20px' }}>
+            <header className="section-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
               <div>
                 <h2>Reportes</h2>
                 <p>Visión completa del ciclo: interesados → notificados → inscritos → asistencia.</p>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
+                
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <div className="pill">
-                    <span style={{ marginRight: '5px' }}>👥</span> Inscritos mostrados: <strong>{totalInscritos}</strong>
+                  <div className="chip chip--blue" style={{ fontSize: '14px', padding: '8px 15px', background: '#e0f2fe', color: '#0369a1', borderRadius: '20px' }}>
+                    <span style={{ marginRight: '5px' }}>👥</span> Inscritos totales: <strong>{totalInscritos}</strong>
                   </div>
                   <div className="pill">
                     <span style={{ marginRight: '5px' }}>📈</span> Convocatorias activas: <strong>{convActivas}</strong>
@@ -135,9 +136,9 @@ export default function AdminEstadisticasPage() {
                 </div>
               </div>
 
-              <div className="tabs-bar" style={{ marginTop: '10px' }}>
-                <span className="period-label">Periodo:</span>
-                <div className="tab-group">
+              <div className="tabs-bar" style={{ marginTop: '8px', borderBottom: 'none', width: '100%' }}>
+                <span className="period-label" style={{ fontWeight: 'bold', fontSize: '12px', color: '#666', marginRight: '15px', textTransform: 'uppercase' }}>Periodo:</span>
+                <div className="tab-group" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {TABS.map(t => (
                     <button 
                       key={t.value} 
@@ -152,7 +153,7 @@ export default function AdminEstadisticasPage() {
               </div>
             </header>
 
-            <section className="table-area" style={{ marginTop: '20px' }}>
+            <section className="table-area" style={{ marginTop: '12px' }}>
               <div className="table-scroll">
                 <table>
                   <thead>

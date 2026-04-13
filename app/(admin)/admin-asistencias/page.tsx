@@ -140,7 +140,7 @@ export default function AdminAsistenciasPage() {
   };
 
   return (
-    <div className="app">
+    <div className="app app--admin-attendance">
       <AdminSidebar/>
 
       <main className="main">
@@ -167,9 +167,9 @@ export default function AdminAsistenciasPage() {
 
           {/* ── BARRA DE FILTROS RESPONSIVA ─────────────────────────── */}
           <div className="filter-bar">
-            {/* Buscador: usa clase field en lugar de inline style con width fijo */}
+            
             <div className="field">
-              <Search size={18} />
+              <Search size={18} color="#888" />
               <input
                 type="text"
                 placeholder="Buscar alumno..."
