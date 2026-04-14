@@ -30,22 +30,57 @@ export default function AdminAsistenciasPage() {
   const router = useRouter();
 
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
-  const [fecha, setFecha] = useState<string>(() =>
-    new Date().toISOString().split('T')[0]
-  );
+  const [periodos, setPeriodos] = useState<any[]>([]); 
+  const [fecha, setFecha] = useState<string>(() => {
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
+  });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterHorario, setFilterHorario] = useState('');
   const [filterTipo, setFilterTipo] = useState('');
   const [filterEstado, setFilterEstado] = useState(''); 
   const [filterCarrera, setFilterCarrera] = useState('');
+  const [filterPeriodo, setFilterPeriodo] = useState(''); 
+  
   const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+
+  const fetchPeriodos = async () => {
+    try {
+      const res = await fetch(`${API_URL}/periodos`); 
+      if (res.ok) {
+        const data = await res.json();
+        setPeriodos(data);
+        
+        // 👈 NUEVO: Auto-seleccionar la convocatoria activa por defecto
+        if (data.length > 0) {
+          const periodoActivo = data.find((p: any) => p.estado === 'activo') || data[0];
+          setFilterPeriodo(periodoActivo.id_periodo.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error al obtener periodos:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPeriodos();
+  }, []);
 
   const fetchAsistencias = async (query = '') => {
     try {
       const params = new URLSearchParams();
       params.set('fecha', fecha);
+      
+      if (filterPeriodo) {
+        params.set('id_periodo', filterPeriodo);
+      }
+
       const term = query.trim();
       if (term) params.set('q', term);
 
@@ -80,7 +115,12 @@ export default function AdminAsistenciasPage() {
     }
   };
 
-  useEffect(() => { fetchAsistencias(); }, [fecha]);
+  // Se ejecuta cuando cambia la fecha o el periodo seleccionado
+  useEffect(() => { 
+    if (filterPeriodo) {
+      fetchAsistencias(); 
+    }
+  }, [fecha, filterPeriodo]);
 
   useEffect(() => {
     let f = [...asistencias];
@@ -110,12 +150,23 @@ export default function AdminAsistenciasPage() {
     return currentTime >= inicio || currentTime <= fin;
   };
 
+  const now = new Date();
+  const hoyString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isNotToday = fecha !== hoyString;
+
   const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
+    if (isNotToday) {
+      setModalMessage("Operación no permitida: Solo se puede registrar asistencia en el día actual.");
+      setModalOpen(true);
+      return;
+    }
+
     if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
       setModalMessage(`Acción denegada: no puedes pasar asistencia fuera de horario. El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
       setModalOpen(true);
       return; 
     }
+
     try {
       const res = await fetch(`${API_URL}/asistencias/registrar`, {
         method: 'POST',
@@ -178,17 +229,19 @@ export default function AdminAsistenciasPage() {
               />
             </div>
 
+            {/* 👈 SELECT ACTUALIZADO SIN LA OPCIÓN MANUAL */}
+            <select className="select" value={filterPeriodo} onChange={e => setFilterPeriodo(e.target.value)} aria-label="Filtrar por Convocatoria">
+              {periodos.map(p => (
+                <option key={p.id_periodo} value={p.id_periodo}>
+                  {p.nombre_periodo} ({p.estado})
+                </option>
+              ))}
+            </select>
+
             <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
               <option value="">Todos los horarios</option>
               {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
                 <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
-
-            <select className="select" value={filterTipo} onChange={e => setFilterTipo(e.target.value)} aria-label="Filtrar por tipo de entrenamiento">
-              <option value="">Todos los tipos</option>
-              {Array.from(new Set(asistencias.map(a => a.tipoEntrenamiento))).map(t => (
-                <option key={t} value={t}>{t}</option>
               ))}
             </select>
 
@@ -265,7 +318,6 @@ export default function AdminAsistenciasPage() {
 
                   <div className="row-info">
                     <span className="row-name">{asist.nombre} {asist.apellido}</span>
-                    {/* row-sub en móvil muestra datos en columna, no en línea */}
                     <span className="row-sub muted">
                       {asist.horarioInicio} - {asist.horarioFin}
                       &nbsp;·&nbsp;{asist.carrera}
@@ -279,15 +331,17 @@ export default function AdminAsistenciasPage() {
                     {asist.estado === 'pendiente' ? (
                       <>
                         <button
-                          className="btn-mini btn-mini--green"
+                          className={`btn-mini ${isNotToday ? 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400' : 'btn-mini--green'}`}
                           type="button"
+                          disabled={isNotToday}
                           onClick={() => registrarAsistenciaBD(asist, true)}
                         >
                           Presente
                         </button>
                         <button
-                          className="btn-mini btn-mini--red"
+                          className={`btn-mini ${isNotToday ? 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400' : 'btn-mini--red'}`}
                           type="button"
+                          disabled={isNotToday}
                           onClick={() => registrarAsistenciaBD(asist, false)}
                         >
                           Ausente
