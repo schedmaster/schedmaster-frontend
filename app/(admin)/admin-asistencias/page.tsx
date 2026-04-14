@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
@@ -39,7 +39,6 @@ export default function AdminAsistenciasPage() {
   const [filterTipo, setFilterTipo]       = useState('');
   const [filterEstado, setFilterEstado]   = useState('');
   const [filterCarrera, setFilterCarrera] = useState('');
-  const [filteredAsistencias, setFilteredAsistencias] = useState<Asistencia[]>([]);
 
   // Alert modal
   const [modalOpen, setModalOpen]       = useState(false);
@@ -167,24 +166,22 @@ export default function AdminAsistenciasPage() {
     return () => clearInterval(interval);
   }, [autoMarcarAusentes]);
 
-  // ── filtros combinados ─────────────────────────────────────────
-  // Clave de horario: siempre "HH:MM-HH:MM" (sin espacios, guión simple)
-  const claveHorario = (a: Asistencia) => `${a.horarioInicio}-${a.horarioFin}`;
-
-  useEffect(() => {
+  // ── filtros combinados — useMemo evita closures viejos ──────────
+  const filteredAsistencias = useMemo(() => {
     let f = [...asistencias];
-    if (searchTerm)    f = f.filter(a => a.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
-    if (filterHorario) f = f.filter(a => claveHorario(a) === filterHorario);
+    const term = searchTerm.trim().toLowerCase();
+    if (term)          f = f.filter(a => a.nombre.toLowerCase().includes(term));
+    if (filterHorario) f = f.filter(a => `${a.horarioInicio}-${a.horarioFin}` === filterHorario);
     if (filterTipo)    f = f.filter(a => a.tipoEntrenamiento.toLowerCase() === filterTipo.toLowerCase());
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
-    setFilteredAsistencias(f);
+    return f;
   }, [asistencias, searchTerm, filterHorario, filterTipo, filterEstado, filterCarrera]);
 
-  // ── estadísticas ───────────────────────────────────────────────
-  const totalReservas   = asistencias.length;
-  const presentes       = asistencias.filter(a => a.estado === 'presente').length;
-  const ausentes        = asistencias.filter(a => a.estado === 'ausente').length;
+  // ── estadísticas — sobre la vista filtrada ────────────────────
+  const totalReservas   = filteredAsistencias.length;
+  const presentes       = filteredAsistencias.filter(a => a.estado === 'presente').length;
+  const ausentes        = filteredAsistencias.filter(a => a.estado === 'ausente').length;
   const tasaAsistencia  = totalReservas > 0
     ? Math.round((presentes / totalReservas) * 100) : 0;
 
@@ -301,8 +298,8 @@ export default function AdminAsistenciasPage() {
 
             <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
               <option value="">Todos los horarios</option>
-              {Array.from(new Set(asistencias.map(claveHorario))).map(h => (
-                <option key={h} value={h}>{h.replace('-',' – ')}</option>
+              {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
+                <option key={h} value={h}>{h.replace('-', ' – ')}</option>
               ))}
             </select>
 
