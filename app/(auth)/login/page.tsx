@@ -214,9 +214,9 @@ export default function LoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 required
               />
-              <div className="forgot-password">
-                <a href="#">¿Olvidaste tu contraseña?</a>
-              </div>
+              {/* <div className="forgot-password"> */}
+                {/* <a href="#">¿Olvidaste tu contraseña?</a> */}
+              {/* </div> */}
             </div>
 
             <button
