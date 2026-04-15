@@ -67,25 +67,6 @@ export default function AdminAsistenciasPage() {
       console.error('Error al obtener periodos:', error);
     }
   };
-<<<<<<< HEAD
-
-  useEffect(() => {
-    fetchPeriodos();
-  }, []);
-
-  const fetchAsistencias = async (query = '') => {
-    try {
-      const params = new URLSearchParams();
-      params.set('fecha', fecha);
-      
-      if (filterPeriodo) {
-        params.set('id_periodo', filterPeriodo);
-      }
-
-      const term = query.trim();
-      if (term) params.set('q', term);
-=======
->>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
 
   useEffect(() => {
     fetchPeriodos();
@@ -141,23 +122,6 @@ export default function AdminAsistenciasPage() {
     }
   }, [fecha, filterPeriodo]);
 
-<<<<<<< HEAD
-    if (pendientes.length > 0) {
-      // Recargamos para reflejar los cambios
-      fetchAsistencias();
-    }
-  }, [asistencias, esFechaHoy, fecha, fetchAsistencias]);
-
-  // Se ejecuta cuando cambia la fecha o el periodo seleccionado
-  useEffect(() => { 
-    if (filterPeriodo) {
-      fetchAsistencias(); 
-    }
-  }, [fecha, filterPeriodo]);
-
-  // Revisamos ausentes cada minuto
-=======
->>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
   useEffect(() => {
     let f = [...asistencias];
     if (filterHorario) f = f.filter(a => `${a.horarioInicio}-${a.horarioFin}` === filterHorario);
@@ -203,26 +167,6 @@ export default function AdminAsistenciasPage() {
       return; 
     }
 
-<<<<<<< HEAD
-  const now = new Date();
-  const hoyString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const isNotToday = fecha !== hoyString;
-
-  const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
-    if (isNotToday) {
-      setModalMessage("Operación no permitida: Solo se puede registrar asistencia en el día actual.");
-      setModalOpen(true);
-      return;
-    }
-
-    if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
-      setModalMessage(`Acción denegada: no puedes pasar asistencia fuera de horario. El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
-      setModalOpen(true);
-      return; 
-    }
-
-=======
->>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
     try {
       const res = await fetch(`${API_URL}/asistencias/registrar`, {
         method: 'POST',
@@ -291,18 +235,6 @@ export default function AdminAsistenciasPage() {
                 <option key={p.id_periodo} value={p.id_periodo}>
                   {p.nombre_periodo} ({p.estado})
                 </option>
-<<<<<<< HEAD
-              ))}
-            </select>
-
-            <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
-              <option value="">Todos los horarios</option>
-              {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
-                <option key={h} value={h}>{h.replace('-', ' – ')}</option>
-              ))}
-            </select>
-
-=======
               ))}
             </select>
 
@@ -313,7 +245,6 @@ export default function AdminAsistenciasPage() {
               ))}
             </select>
 
->>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
             <select className="select" value={filterEstado} onChange={e => setFilterEstado(e.target.value)} aria-label="Filtrar por estado">
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendientes</option>
