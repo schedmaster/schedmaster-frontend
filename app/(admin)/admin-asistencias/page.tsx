@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RefreshCw, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { RefreshCw, Search } from 'lucide-react'; 
 import AdminSidebar from '../../components/AdminSidebar';
 import AlertModal from '../../components/AlertModal';
-import ConfirmModal from '../../components/ConfirmModal';
 import { useRouter } from 'next/navigation';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 const AVATAR_COLORS = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7','ac8'] as const;
 const getAvatarClass = (id: number) => AVATAR_COLORS[id % AVATAR_COLORS.length];
 
 interface Asistencia {
-  id: number;
+  id: number; 
   id_inscripcion: number;
   id_horario: number;
   nombre: string;
@@ -23,8 +24,6 @@ interface Asistencia {
   carrera: string;
   matricula: string;
   estado: 'presente' | 'ausente' | 'pendiente';
-  // días en que aplica el horario, ej: ['Lunes', 'Miércoles']
-  diasHorario?: string[];
 }
 
 export default function AdminAsistenciasPage() {
@@ -42,8 +41,8 @@ export default function AdminAsistenciasPage() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterHorario, setFilterHorario] = useState('');
-  const [filterTipo, setFilterTipo]       = useState('');
-  const [filterEstado, setFilterEstado]   = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
+  const [filterEstado, setFilterEstado] = useState(''); 
   const [filterCarrera, setFilterCarrera] = useState('');
   const [filterPeriodo, setFilterPeriodo] = useState(''); 
   
@@ -68,6 +67,25 @@ export default function AdminAsistenciasPage() {
       console.error('Error al obtener periodos:', error);
     }
   };
+<<<<<<< HEAD
+
+  useEffect(() => {
+    fetchPeriodos();
+  }, []);
+
+  const fetchAsistencias = async (query = '') => {
+    try {
+      const params = new URLSearchParams();
+      params.set('fecha', fecha);
+      
+      if (filterPeriodo) {
+        params.set('id_periodo', filterPeriodo);
+      }
+
+      const term = query.trim();
+      if (term) params.set('q', term);
+=======
+>>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
 
   useEffect(() => {
     fetchPeriodos();
@@ -85,66 +103,45 @@ export default function AdminAsistenciasPage() {
       const term = query.trim();
       if (term) params.set('q', term);
 
-      const datosFormateados: Asistencia[] = data.map((item: any) => {
-        const [inicio, fin] = item.horario ? item.horario.split(' - ') : ['00:00', '00:00'];
-        const nombres  = (item.usuario as string).split(' ');
-        const iniciales = nombres.length > 1
-          ? (nombres[0][0] + nombres[1][0]).toUpperCase()
-          : nombres[0][0].toUpperCase();
-
-        return {
-          id:               item.id_usuario,
-          id_inscripcion:   item.id_inscripcion,
-          id_horario:       item.id_horario,
-          nombre:           item.usuario,
-          apellido:         '',
-          iniciales,
-          horarioInicio:    inicio.trim(),
-          horarioFin:       fin.trim(),
-          tipoEntrenamiento:'Gimnasio',
-          carrera:          item.carrera,
-          matricula:        item.correo,
-          estado:           item.estado.toLowerCase() as Asistencia['estado'],
-          diasHorario:      item.diasHorario ?? [],
-        };
-      });
-
-      setAsistencias(datosFormateados);
+      const res = await fetch(`${API_URL}/asistencias/admin?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const datosFormateados = data.map((item: any) => {
+          const [inicio, fin] = item.horario ? item.horario.split(' - ') : ['00:00', '00:00'];
+          const nombres = item.usuario.split(' ');
+          const iniciales = nombres.length > 1 
+            ? (nombres[0][0] + nombres[1][0]).toUpperCase() 
+            : nombres[0][0].toUpperCase();
+          return {
+            id: item.id_usuario,
+            id_inscripcion: item.id_inscripcion,
+            id_horario: item.id_horario,
+            nombre: item.usuario,
+            apellido: '', 
+            iniciales,
+            horarioInicio: inicio,
+            horarioFin: fin,
+            tipoEntrenamiento: 'Gimnasio', 
+            carrera: item.carrera,
+            matricula: item.correo, 
+            estado: item.estado.toLowerCase() as 'presente' | 'ausente' | 'pendiente',
+          };
+        });
+        setAsistencias(datosFormateados);
+      }
     } catch (error) {
       console.error('Error al conectar con la API:', error);
     }
-  }, [fecha]);
+  };
 
-  // Auto‑marcar ausentes cuando pasa la hora (solo si es hoy)
-  const autoMarcarAusentes = useCallback(async () => {
-    if (!esFechaHoy()) return;
-
-    const now  = new Date();
-    const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-    const pendientes = asistencias.filter(a =>
-      a.estado === 'pendiente' &&
-      a.horarioFin !== '00:00' &&
-      hhmm > a.horarioFin
-    );
-
-    for (const asist of pendientes) {
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/asistencias/registrar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_usuario:       asist.id,
-            id_inscripcion:   asist.id_inscripcion,
-            id_horario:       asist.id_horario,
-            asistio:          false,
-            id_registrado_por: 1,
-            fecha_registro:   fecha,
-          }),
-        });
-      } catch { /* silencioso */ }
+  // Se ejecuta cuando cambia la fecha o el periodo seleccionado
+  useEffect(() => { 
+    if (filterPeriodo) {
+      fetchAsistencias(); 
     }
+  }, [fecha, filterPeriodo]);
 
+<<<<<<< HEAD
     if (pendientes.length > 0) {
       // Recargamos para reflejar los cambios
       fetchAsistencias();
@@ -159,32 +156,35 @@ export default function AdminAsistenciasPage() {
   }, [fecha, filterPeriodo]);
 
   // Revisamos ausentes cada minuto
+=======
+>>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
   useEffect(() => {
-    autoMarcarAusentes();
-    const interval = setInterval(autoMarcarAusentes, 60_000);
-    return () => clearInterval(interval);
-  }, [autoMarcarAusentes]);
-
-  // ── filtros combinados — useMemo evita closures viejos ──────────
-  const filteredAsistencias = useMemo(() => {
     let f = [...asistencias];
-    const term = searchTerm.trim().toLowerCase();
-    if (term)          f = f.filter(a => a.nombre.toLowerCase().includes(term));
     if (filterHorario) f = f.filter(a => `${a.horarioInicio}-${a.horarioFin}` === filterHorario);
     if (filterTipo)    f = f.filter(a => a.tipoEntrenamiento.toLowerCase() === filterTipo.toLowerCase());
     if (filterEstado)  f = f.filter(a => a.estado === filterEstado);
     if (filterCarrera) f = f.filter(a => a.carrera.toLowerCase() === filterCarrera.toLowerCase());
-    return f;
-  }, [asistencias, searchTerm, filterHorario, filterTipo, filterEstado, filterCarrera]);
+    if (searchTerm)    f = f.filter(a => a.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
+    setFilteredAsistencias(f);
+  }, [asistencias, filterHorario, filterTipo, filterEstado, filterCarrera, searchTerm]); 
 
-  // ── estadísticas — sobre la vista filtrada ────────────────────
-  const totalReservas   = filteredAsistencias.length;
-  const presentes       = filteredAsistencias.filter(a => a.estado === 'presente').length;
-  const ausentes        = filteredAsistencias.filter(a => a.estado === 'ausente').length;
-  const tasaAsistencia  = totalReservas > 0
+  const totalReservas  = asistencias.length;
+  const presentes      = asistencias.filter(a => a.estado === 'presente').length;
+  const ausentes       = asistencias.filter(a => a.estado === 'ausente').length;
+  const tasaAsistencia = presentes + ausentes > 0
     ? Math.round((presentes / totalReservas) * 100) : 0;
 
-  // ── registrar con validaciones ────────────────────────────────
+  const isWithinSchedule = (inicio: string, fin: string) => {
+    if (!inicio || !fin || inicio === '00:00') return true; 
+    const now = new Date();
+    const isToday = fecha === now.toISOString().split('T')[0];
+    if (!isToday) return true;
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+    if (inicio <= fin) return currentTime >= inicio && currentTime <= fin;
+    return currentTime >= inicio || currentTime <= fin;
+  };
 
   const now = new Date();
   const hoyString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -203,78 +203,52 @@ export default function AdminAsistenciasPage() {
       return; 
     }
 
+<<<<<<< HEAD
+  const now = new Date();
+  const hoyString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isNotToday = fecha !== hoyString;
+
+  const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
+    if (isNotToday) {
+      setModalMessage("Operación no permitida: Solo se puede registrar asistencia en el día actual.");
+      setModalOpen(true);
+      return;
+    }
+
+    if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
+      setModalMessage(`Acción denegada: no puedes pasar asistencia fuera de horario. El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`);
+      setModalOpen(true);
+      return; 
+    }
+
+=======
+>>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/asistencias/registrar`, {
+      const res = await fetch(`${API_URL}/asistencias/registrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_usuario:        asist.id,
-          id_inscripcion:    asist.id_inscripcion,
-          id_horario:        asist.id_horario,
+          id_usuario: asist.id,
+          id_inscripcion: asist.id_inscripcion,
+          id_horario: asist.id_horario,
           asistio,
-          id_registrado_por: 1,
-          fecha_registro:    fecha,
-        }),
+          id_registrado_por: 1, 
+          fecha_registro: fecha
+        })
       });
       if (res.ok) {
-        setAsistencias(prev =>
-          prev.map(a => a.id === asist.id
-            ? { ...a, estado: asistio ? 'presente' : 'ausente' }
-            : a
-          )
-        );
+        setAsistencias(prev => prev.map(a =>
+          a.id === asist.id ? { ...a, estado: asistio ? 'presente' : 'ausente' } : a
+        ));
       }
     } catch (error) {
-      console.error('Error al registrar asistencia:', error);
+      console.error("Error al registrar asistencia:", error);
     }
   };
-
-  const handleRegistrar = (asist: Asistencia, asistio: boolean) => {
-    // VALIDACIÓN 1: el día de la semana de la fecha seleccionada debe coincidir
-    // con los días del horario del usuario.
-    if (!esDiaValido(asist.diasHorario)) {
-      setModalMessage(
-        `No puedes registrar asistencia: el horario de ${asist.nombre} ` +
-        `no corresponde al día seleccionado ` +
-        `(aplica los días: ${asist.diasHorario?.join(', ') || 'no definidos'}).`
-      );
-      setModalOpen(true);
-      return;
-    }
-
-    // VALIDACIÓN 2: si es hoy, debe estar dentro del rango de hora.
-    if (esFechaHoy() && !dentroDeHorario(asist.horarioInicio, asist.horarioFin)) {
-      setModalMessage(
-        `Acción denegada: no puedes pasar asistencia fuera de horario. ` +
-        `El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`
-      );
-      setModalOpen(true);
-      return;
-    }
-
-    // CONFIRMACIÓN antes de registrar
-    const accion = asistio ? 'PRESENTE' : 'AUSENTE';
-    setConfirmMessage(`¿Confirmas marcar a ${asist.nombre} como ${accion}?`);
-    setPendingAction(() => () => ejecutarRegistro(asist, asistio));
-    setConfirmOpen(true);
-  };
-
-  const handleConfirm = () => {
-    pendingAction?.();
-    setConfirmOpen(false);
-    setPendingAction(null);
-  };
-
-  const handleCancel = () => {
-    setConfirmOpen(false);
-    setPendingAction(null);
-  };
-
-  // ── render ─────────────────────────────────────────────────────
 
   return (
     <div className="app app--admin-attendance">
-      <AdminSidebar />
+      <AdminSidebar/>
 
       <main className="main">
         <div className="main-inner">
@@ -298,14 +272,14 @@ export default function AdminAsistenciasPage() {
             </div>
           </header>
 
-          {/* ── BARRA DE FILTROS ──────────────────────────────────── */}
+          {/* ── BARRA DE FILTROS RESPONSIVA ─────────────────────────── */}
           <div className="filter-bar">
-
+            
             <div className="field">
               <Search size={18} color="#888" />
               <input
                 type="text"
-                placeholder="Buscar por nombre..."
+                placeholder="Buscar alumno..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -317,6 +291,7 @@ export default function AdminAsistenciasPage() {
                 <option key={p.id_periodo} value={p.id_periodo}>
                   {p.nombre_periodo} ({p.estado})
                 </option>
+<<<<<<< HEAD
               ))}
             </select>
 
@@ -327,6 +302,18 @@ export default function AdminAsistenciasPage() {
               ))}
             </select>
 
+=======
+              ))}
+            </select>
+
+            <select className="select" value={filterHorario} onChange={e => setFilterHorario(e.target.value)} aria-label="Filtrar por horario">
+              <option value="">Todos los horarios</option>
+              {Array.from(new Set(asistencias.map(a => `${a.horarioInicio}-${a.horarioFin}`))).map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+
+>>>>>>> 4a3d3e917d656b47f67230c4f503051dacf1a088
             <select className="select" value={filterEstado} onChange={e => setFilterEstado(e.target.value)} aria-label="Filtrar por estado">
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendientes</option>
@@ -340,8 +327,8 @@ export default function AdminAsistenciasPage() {
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-
-            <button className="btn btn--blue btn--asistencias-action" type="button" onClick={fetchAsistencias}>
+            
+            <button className="btn btn--blue btn--asistencias-action" type="button" onClick={() => fetchAsistencias(searchTerm)}>
               <RefreshCw size={18} /> Actualizar
             </button>
 
@@ -354,7 +341,7 @@ export default function AdminAsistenciasPage() {
             </button>
           </div>
 
-          {/* ── STAT CARDS ───────────────────────────────────────── */}
+          {/* ── STAT CARDS ───────────────────────────────────────────── */}
           <div className="stat-grid">
             <div className="stat-card">
               <div className="stat-card-info">
@@ -386,12 +373,12 @@ export default function AdminAsistenciasPage() {
             </div>
           </div>
 
-          {/* ── LISTA ────────────────────────────────────────────── */}
+          {/* ── LISTA DE ASISTENCIAS ─────────────────────────────────── */}
           <section className="row-list">
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
                 <p>No hay registros para mostrar</p>
-                <small>Aún no hay inscripciones aprobadas para el día seleccionado o la búsqueda no coincide.</small>
+                <small>Aún no hay inscripciones aprobadas para el día de hoy o la búsqueda no coincide.</small>
               </div>
             ) : (
               filteredAsistencias.map(asist => (
@@ -401,10 +388,12 @@ export default function AdminAsistenciasPage() {
                   <div className="row-info">
                     <span className="row-name">{asist.nombre} {asist.apellido}</span>
                     <span className="row-sub muted">
-                      {asist.horarioInicio} – {asist.horarioFin}
+                      {asist.horarioInicio} - {asist.horarioFin}
                       &nbsp;·&nbsp;{asist.carrera}
                     </span>
-                    <span className="row-sub muted">{asist.matricula}</span>
+                    <span className="row-sub muted">
+                      {asist.matricula}
+                    </span>
                   </div>
 
                   <div className="row-actions">
@@ -441,23 +430,11 @@ export default function AdminAsistenciasPage() {
         </div>
       </main>
 
-      {/* Alert — horario inválido */}
       <AlertModal
         open={modalOpen}
         title="Aviso"
         message={modalMessage}
         onClose={() => setModalOpen(false)}
-      />
-
-      {/* Confirm — antes de registrar presente/ausente */}
-      <ConfirmModal
-        open={confirmOpen}
-        title="Confirmar registro"
-        message={confirmMessage}
-        confirmText="Confirmar"
-        cancelText="Cancelar"
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
       />
     </div>
   );
