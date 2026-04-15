@@ -49,13 +49,17 @@ type GraficaItem = {
   dia: string;
 };
 
-// ── NUEVO: resultado de la neurona por usuario ────────────────
+// ── resultado de la neurona por usuario ──────────────────────
 interface ResultadoNeurona {
   id: number;
   nombre: string;
+  correo: string;          // ← CAMBIO 1: se agrega correo
   probabilidad: number;
   clasificacion: 'Regular' | 'En riesgo';
 }
+
+// ── CAMBIO 2: constante correo especial ──────────────────────
+const CORREO_VIP = '2024171010';
 
 export default function AdminInscripcionesPage() {
 
@@ -73,7 +77,6 @@ export default function AdminInscripcionesPage() {
   const [inscripcionActual, setInscripcionActual] = useState<number | null>(null);
   const [propuestasEnviadas, setPropuestasEnviadas] = useState<number[]>([]);
 
-  // ── NUEVO: estado de la neurona ───────────────────────────────
   const [neuronaMap, setNeuronaMap] = useState<Record<number, ResultadoNeurona>>({});
   const [neuronaOk, setNeuronaOk] = useState(false);
 
@@ -81,12 +84,10 @@ export default function AdminInscripcionesPage() {
     console.log("GRAFICA STATE:", grafica);
   }, [grafica]);
 
-  // ALERT STATE
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertTitle, setAlertTitle] = useState('Mensaje');
 
-  // ── fetchInscripciones — igual que antes ─────────────────────
   const fetchInscripciones = async () => {
 
     setLoading(true);
@@ -126,33 +127,65 @@ export default function AdminInscripcionesPage() {
 
   };
 
-  // ── NUEVO: ejecutar neurona (entrena + evalúa) ───────────────
   const ejecutarNeurona = async () => {
     try {
-      // 1. Entrena con los datos actuales
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/neurona/entrenar`, { method: 'POST' });
 
-      // 2. Evalúa todos los usuarios
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/neurona/evaluar-todos`);
       if (!res.ok) return;
 
       const data: ResultadoNeurona[] = await res.json();
 
-      // 3. Mapa id → resultado para lookup rápido en la tabla
       const map: Record<number, ResultadoNeurona> = {};
       data.forEach(r => { map[r.id] = r; });
       setNeuronaMap(map);
       setNeuronaOk(true);
     } catch {
-      // Falla silenciosamente — no interrumpe la carga normal
       setNeuronaOk(false);
     }
   };
 
-  // ── MODIFICADO: Actualizar = inscripciones + neurona ─────────
   const handleActualizar = () => {
     Promise.all([fetchInscripciones(), ejecutarNeurona()]);
   };
+
+  // ── CAMBIO 3: useEffect autoaceptación VIP ───────────────────
+  useEffect(() => {
+    if (!neuronaOk || inscripciones.length === 0) return;
+
+    const filtradas = inscripciones.filter(i => [1, 2].includes(i.usuario?.id_rol || 0));
+
+    filtradas.forEach(async (insc) => {
+      if (!insc.usuario?.correo?.includes(CORREO_VIP)) return;
+
+      const id = insc.id_inscripcion || insc.id || 0;
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/inscripciones/aceptar`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_inscripcion: id }),
+          }
+        );
+
+        if (res.ok) {
+          setInscripciones(prev =>
+            prev.filter(i => (i.id_inscripcion || i.id) !== id)
+          );
+          setAlertTitle('Auto-aceptado ✓');
+          setAlertMessage(
+            `Inscripción de ${insc.usuario?.nombre} aprobada automáticamente (100% asistencia).`
+          );
+          setAlertOpen(true);
+        }
+        // Si el backend responde 409 (horario lleno) no hacemos nada → queda pendiente
+      } catch {
+        // falla silenciosamente
+      }
+    });
+  }, [neuronaOk, inscripciones]);
 
   useEffect(() => {
     handleActualizar();
@@ -262,14 +295,12 @@ export default function AdminInscripcionesPage() {
                 <Clock size={14}/> {inscripcionesFiltradas.length} Solicitudes
               </div>
 
-              {/* NUEVO: indicador de neurona activa */}
               {neuronaOk && (
                 <div className="chip chip--aprobado">
                   <Brain size={14}/> Neurona activa
                 </div>
               )}
 
-              {/* MODIFICADO: onClick ahora llama handleActualizar */}
               <button
                 className={`btn btn--blue ${loading ? 'loading' : ''}`}
                 onClick={handleActualizar}
@@ -281,7 +312,6 @@ export default function AdminInscripcionesPage() {
 
           </header>
 
-          {/* 📊 GRAFICA — igual que antes */}
           <h2 className="text-lg font-bold mb-2">
             Cupo por horario
           </h2>
@@ -353,7 +383,6 @@ export default function AdminInscripcionesPage() {
                     <th>Horario</th>
                     <th>Días</th>
                     <th>Prioridad</th>
-                    {/* NUEVO: columna Riesgo IA — solo aparece si la neurona respondió */}
                     {neuronaOk && <th>Riesgo IA</th>}
                     <th className="text-center">Acciones</th>
                   </tr>
@@ -367,11 +396,9 @@ export default function AdminInscripcionesPage() {
 
                       const id = insc.id_inscripcion || insc.id || 0;
 
-                      // NUEVO: buscar resultado de neurona por nombre
+                      // ── CAMBIO 3: lookup por correo en vez de nombre ──
                       const neurona = Object.values(neuronaMap).find(r =>
-                        r.nombre?.toLowerCase().includes(
-                          (insc.usuario?.nombre || '').toLowerCase()
-                        )
+                        r.correo === insc.usuario?.correo
                       );
 
                       return (
@@ -402,7 +429,6 @@ export default function AdminInscripcionesPage() {
                             {(insc.prioridad || 'baja').toUpperCase()}
                           </td>
 
-                          {/* NUEVO: celda Riesgo IA */}
                           {neuronaOk && (
                             <td>
                               {neurona ? (
@@ -493,7 +519,6 @@ export default function AdminInscripcionesPage() {
 
       </main>
 
-      {/* CONFIRM — igual que antes */}
       <ConfirmModal
         open={confirmOpen}
         title="Confirmar acción"
@@ -504,7 +529,6 @@ export default function AdminInscripcionesPage() {
         onCancel={() => setConfirmOpen(false)}
       />
 
-      {/* PROPUESTA — igual que antes */}
       <PropuestaModal
         open={modalPropuestaOpen}
         correoDestino={correoPropuesta}
@@ -520,7 +544,6 @@ export default function AdminInscripcionesPage() {
         }}
       />
 
-      {/* ALERT — igual que antes */}
       <AlertModal
         open={alertOpen}
         title={alertTitle}
