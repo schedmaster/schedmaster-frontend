@@ -56,8 +56,6 @@ export default function AdminAsistenciasPage() {
       if (res.ok) {
         const data = await res.json();
         setPeriodos(data);
-        
-        // 👈 NUEVO: Auto-seleccionar la convocatoria activa por defecto
         if (data.length > 0) {
           const periodoActivo = data.find((p: any) => p.estado === 'activo') || data[0];
           setFilterPeriodo(periodoActivo.id_periodo.toString());
@@ -100,8 +98,9 @@ export default function AdminAsistenciasPage() {
             nombre: item.usuario,
             apellido: '', 
             iniciales,
-            horarioInicio: inicio,
-            horarioFin: fin,
+            // ✅ FIX: Normalizar a HH:mm para evitar problemas con segundos ("07:00:00" → "07:00")
+            horarioInicio: inicio.slice(0, 5),
+            horarioFin: fin.slice(0, 5),
             tipoEntrenamiento: 'Gimnasio', 
             carrera: item.carrera,
             matricula: item.correo, 
@@ -115,7 +114,6 @@ export default function AdminAsistenciasPage() {
     }
   };
 
-  // Se ejecuta cuando cambia la fecha o el periodo seleccionado
   useEffect(() => { 
     if (filterPeriodo) {
       fetchAsistencias(); 
@@ -143,9 +141,10 @@ export default function AdminAsistenciasPage() {
     const now = new Date();
     const isToday = fecha === now.toISOString().split('T')[0];
     if (!isToday) return true;
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+    const h = now.getHours();
+    const m = now.getMinutes();
+    // ✅ FIX: currentTime ahora tiene el mismo formato HH:mm que inicio/fin (ya normalizados)
+    const currentTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
     if (inicio <= fin) return currentTime >= inicio && currentTime <= fin;
     return currentTime >= inicio || currentTime <= fin;
   };
@@ -216,7 +215,6 @@ export default function AdminAsistenciasPage() {
             </div>
           </header>
 
-          {/* ── BARRA DE FILTROS RESPONSIVA ─────────────────────────── */}
           <div className="filter-bar">
             
             <div className="field">
@@ -229,7 +227,6 @@ export default function AdminAsistenciasPage() {
               />
             </div>
 
-            {/* 👈 SELECT ACTUALIZADO SIN LA OPCIÓN MANUAL */}
             <select className="select" value={filterPeriodo} onChange={e => setFilterPeriodo(e.target.value)} aria-label="Filtrar por Convocatoria">
               {periodos.map(p => (
                 <option key={p.id_periodo} value={p.id_periodo}>
@@ -272,7 +269,6 @@ export default function AdminAsistenciasPage() {
             </button>
           </div>
 
-          {/* ── STAT CARDS ───────────────────────────────────────────── */}
           <div className="stat-grid">
             <div className="stat-card">
               <div className="stat-card-info">
@@ -304,7 +300,6 @@ export default function AdminAsistenciasPage() {
             </div>
           </div>
 
-          {/* ── LISTA DE ASISTENCIAS ─────────────────────────────────── */}
           <section className="row-list">
             {filteredAsistencias.length === 0 ? (
               <div className="empty-state">
