@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { apiFetch, clearSession, getToken } from '../lib/api';
 
 type SessionUser = {
   id_usuario?: number;
@@ -25,42 +26,62 @@ export default function SessionGuard({ children, allowedRoles, excludePaths = []
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const roleKey = allowedRoles?.join(',') || '';
+  const excludeKey = excludePaths.join(',');
 
   useEffect(() => {
-    if (excludePaths.includes(pathname)) {
+    if (excludeKey.split(',').includes(pathname)) {
       setIsAuthorized(true);
       setIsChecking(false);
       return;
     }
 
+    let cancelled = false;
+    const check = async () => {
     try {
       const rawUser = localStorage.getItem('user');
-      if (!rawUser) {
+      if (!rawUser || !getToken()) {
         router.replace('/login');
         return;
       }
 
       const user = JSON.parse(rawUser) as SessionUser;
       if (!user?.id_usuario || !user?.id_rol) {
-        localStorage.removeItem('user');
+        clearSession();
         router.replace('/login');
         return;
       }
 
-      if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.id_rol)) {
+      if (roleKey && !roleKey.split(',').map(Number).includes(user.id_rol)) {
         router.replace(getDefaultRouteByRole(user.id_rol));
         return;
       }
 
-      setIsAuthorized(true);
+      const response = await apiFetch('/auth/me');
+      if (!response.ok) {
+        clearSession();
+        router.replace('/login');
+        return;
+      }
+      const data = await response.json();
+      if (data.status !== 'approved') {
+        router.replace('/pending');
+        return;
+      }
+      localStorage.setItem('user', JSON.stringify(data.usuario));
+      if (data.token) localStorage.setItem('sessionToken', data.token);
+      if (!cancelled) setIsAuthorized(true);
     } catch (error) {
       console.error('Error validando sesion:', error);
-      localStorage.removeItem('user');
+      clearSession();
       router.replace('/login');
     } finally {
-      setIsChecking(false);
+      if (!cancelled) setIsChecking(false);
     }
-  }, [allowedRoles, excludePaths, pathname, router]);
+    };
+    void check();
+    return () => { cancelled = true; };
+  }, [roleKey, excludeKey, pathname, router]);
 
   if (isChecking) {
     return <div className="loader">Validando sesión...</div>;

@@ -87,6 +87,7 @@ export default function VerifyTwoFactorPage() {
 
   const redirectAfterLogin = (data: any) => {
     localStorage.setItem('user', JSON.stringify(data.usuario));
+    if (data.token) localStorage.setItem('sessionToken', data.token);
     sessionStorage.removeItem('twoFactorLogin');
 
     if (data.status === 'pending') {

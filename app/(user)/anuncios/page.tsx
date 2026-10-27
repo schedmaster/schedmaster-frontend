@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import StudentShell from '../../components/StudentShell';
 import Reveal from '../../components/Reveal';
 import { gxFontClass } from '../../styles/fonts';
+import { apiFetch } from '../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -28,7 +29,7 @@ export default function HomeUserPage() {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/anuncios`)
+    apiFetch('/anuncios')
       .then(res => res.json())
       .then(data => setAnuncios(data))
       .catch(err => console.error(err));

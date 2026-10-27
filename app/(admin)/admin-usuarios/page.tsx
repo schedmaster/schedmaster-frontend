@@ -1,4 +1,5 @@
 'use client';
+import { apiFetch } from '../../lib/api';
 
 import { useState, useEffect } from 'react';
 import { Search, UserPlus, Pencil, ClipboardList, X, Save, ToggleLeft, ToggleRight } from 'lucide-react';
@@ -63,7 +64,7 @@ export default function AdminUsuariosPage() {
 
   const fetchUsuarios = async () => {
     try {
-      const res = await fetch(`${API_URL}/usuarios`);
+      const res = await apiFetch(`${API_URL}/usuarios`);
       if (res.ok) {
         const data = await res.json();
         const formateados: Usuario[] = data.map((u: any) => ({
@@ -120,7 +121,7 @@ export default function AdminUsuariosPage() {
     e.preventDefault();
     if (!usuarioEditar) return;
     try {
-      const res = await fetch(`${API_URL}/usuarios/editar`, {
+      const res = await apiFetch(`${API_URL}/usuarios/editar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: usuarioEditar.id, nombre: formEdit.nombre, apellido_paterno: formEdit.apellido_paterno, apellido_materno: formEdit.apellido_materno, correo: formEdit.correo, id_rol: formEdit.id_rol, id_carrera: usuarioEditar.id_carrera }),
@@ -143,7 +144,7 @@ export default function AdminUsuariosPage() {
   const handleSubmitNuevo = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/usuarios/crear`, {
+      const res = await apiFetch(`${API_URL}/usuarios/crear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: formNuevo.nombre, apellido_paterno: formNuevo.apellido_paterno, apellido_materno: formNuevo.apellido_materno, correo: formNuevo.correo, contrasena: formNuevo.contrasena, id_rol: formNuevo.id_rol }),
@@ -160,7 +161,7 @@ export default function AdminUsuariosPage() {
   const confirmarToggle = async () => {
     if (!usuarioToggle) return;
     try {
-      const res = await fetch(`${API_URL}/usuarios/toggle`, {
+      const res = await apiFetch(`${API_URL}/usuarios/toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: usuarioToggle.id }),
@@ -176,7 +177,7 @@ export default function AdminUsuariosPage() {
     setBitacoraOpen(true);
     openModal();
     try {
-      const res = await fetch(`${API_URL}/usuarios/bitacora/${id}`);
+      const res = await apiFetch(`${API_URL}/usuarios/bitacora/${id}`);
       if (res.ok) {
         const data = await res.json();
         const mapped: Comentario[] = data.map((e: any) => ({
@@ -193,7 +194,7 @@ export default function AdminUsuariosPage() {
 
   const handleNuevoComentario = async (usuarioId: number, texto: string) => {
     try {
-      const res = await fetch(`${API_URL}/usuarios/bitacora`, {
+      const res = await apiFetch(`${API_URL}/usuarios/bitacora`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: usuarioId, texto, autor_nombre: 'Admin UTEQ' }),

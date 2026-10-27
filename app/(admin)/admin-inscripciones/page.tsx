@@ -1,9 +1,10 @@
 'use client';
+import { apiFetch } from '../../lib/api';
 
 import { useState, useEffect, useCallback } from 'react';
 import {
   Users, RefreshCw, Check, X, Clock, Mail, GraduationCap, Briefcase,
-  Brain, AlertTriangle, CheckCircle, Send
+  Send
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -21,6 +22,7 @@ interface Inscripcion {
   id_inscripcion?: number;
   id?: number;
   prioridad?: string;
+  constancia?: { percentage: number | null; present: number; expected: number };
   estado?: string;
 
   usuario?: {
@@ -50,18 +52,6 @@ type GraficaItem = {
   dia: string;
 };
 
-// ── resultado de la neurona por usuario ──────────────────────
-interface ResultadoNeurona {
-  id: number;
-  nombre: string;
-  correo: string;          // ← CAMBIO 1: se agrega correo
-  probabilidad: number;
-  clasificacion: 'Regular' | 'En riesgo';
-}
-
-// ── CAMBIO 2: constante correo especial ──────────────────────
-const CORREO_VIP = '2024171010';
-
 export default function AdminInscripcionesPage() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -79,8 +69,6 @@ export default function AdminInscripcionesPage() {
   const [inscripcionActual, setInscripcionActual] = useState<number | null>(null);
   const [propuestasEnviadas, setPropuestasEnviadas] = useState<number[]>([]);
 
-  const [neuronaMap, setNeuronaMap] = useState<Record<number, ResultadoNeurona>>({});
-  const [neuronaOk, setNeuronaOk] = useState(false);
 
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -92,7 +80,7 @@ export default function AdminInscripcionesPage() {
 
     try {
 
-      const res = await fetch(`${API_URL}/inscripciones/pendientes`);
+      const res = await apiFetch(`${API_URL}/inscripciones/pendientes`);
 
       if (res.ok) {
 
@@ -123,63 +111,9 @@ export default function AdminInscripcionesPage() {
 
   }, [API_URL]);
 
-  const ejecutarNeurona = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_URL}/neurona/evaluar-todos`);
-      if (!res.ok) return;
-
-      const data: ResultadoNeurona[] = await res.json();
-
-      const map: Record<number, ResultadoNeurona> = {};
-      data.forEach(r => { map[r.id] = r; });
-      setNeuronaMap(map);
-      setNeuronaOk(true);
-    } catch {
-      setNeuronaOk(false);
-    }
-  }, [API_URL]);
-
   const handleActualizar = useCallback(() => {
-    void Promise.all([fetchInscripciones(), ejecutarNeurona()]);
-  }, [fetchInscripciones, ejecutarNeurona]);
-
-  // ── CAMBIO 3: useEffect autoaceptación VIP ───────────────────
-  useEffect(() => {
-    if (!neuronaOk || inscripciones.length === 0) return;
-
-    const filtradas = inscripciones.filter(i => [1, 2].includes(i.usuario?.id_rol || 0));
-
-    filtradas.forEach(async (insc) => {
-      if (!insc.usuario?.correo?.includes(CORREO_VIP)) return;
-
-      const id = insc.id_inscripcion || insc.id || 0;
-
-      try {
-        const res = await fetch(
-          `${API_URL}/inscripciones/aceptar`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_inscripcion: id }),
-          }
-        );
-
-        if (res.ok) {
-          setInscripciones(prev =>
-            prev.filter(i => (i.id_inscripcion || i.id) !== id)
-          );
-          setAlertTitle('Auto-aceptado ✓');
-          setAlertMessage(
-            `Inscripción de ${insc.usuario?.nombre} aprobada automáticamente (100% asistencia).`
-          );
-          setAlertOpen(true);
-        }
-        // Si el backend responde 409 (horario lleno) no hacemos nada → queda pendiente
-      } catch {
-        // falla silenciosamente
-      }
-    });
-  }, [API_URL, neuronaOk, inscripciones]);
+    void fetchInscripciones();
+  }, [fetchInscripciones]);
 
   useEffect(() => {
     handleActualizar();
@@ -204,7 +138,7 @@ export default function AdminInscripcionesPage() {
 
     try {
 
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_URL}${endpoint}`,
         {
           method: 'PUT',
@@ -339,12 +273,6 @@ export default function AdminInscripcionesPage() {
               <div className="chip chip--pendiente">
                 <Clock size={14}/> {inscripcionesFiltradas.length} Solicitudes
               </div>
-
-              {neuronaOk && (
-                <div className="chip chip--aprobado">
-                  <Brain size={14}/> Neurona activa
-                </div>
-              )}
 
               <button
                 className={`btn btn--blue ${loading ? 'loading' : ''}`}
@@ -486,7 +414,7 @@ export default function AdminInscripcionesPage() {
                     <th>Horario</th>
                     <th>Días</th>
                     <th>Prioridad</th>
-                    {neuronaOk && <th>Riesgo IA</th>}
+                    <th>Constancia anterior</th>
                     <th className="text-center">Acciones</th>
                   </tr>
                 </thead>
@@ -498,11 +426,6 @@ export default function AdminInscripcionesPage() {
                     inscripcionesFiltradas.map((insc) => {
 
                       const id = insc.id_inscripcion || insc.id || 0;
-
-                      // ── CAMBIO 3: lookup por correo en vez de nombre ──
-                      const neurona = Object.values(neuronaMap).find(r =>
-                        r.correo === insc.usuario?.correo
-                      );
 
                       return (
 
@@ -529,28 +452,10 @@ export default function AdminInscripcionesPage() {
                           </td>
 
                           <td>
-                            {(insc.prioridad || 'baja').toUpperCase()}
+                            {(insc.prioridad || 'sin_historial').replace('_', ' ').toUpperCase()}
                           </td>
 
-                          {neuronaOk && (
-                            <td>
-                              {neurona ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                  <span className={`chip ${neurona.clasificacion === 'Regular' ? 'chip--presente' : 'chip--ausente'}`}>
-                                    {neurona.clasificacion === 'Regular'
-                                      ? <><CheckCircle size={11}/> Regular</>
-                                      : <><AlertTriangle size={11}/> En riesgo</>
-                                    }
-                                  </span>
-                                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 700 }}>
-                                    {neurona.probabilidad}% asistencia
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="muted" style={{ fontSize: 12 }}>Sin historial</span>
-                              )}
-                            </td>
-                          )}
+                          <td>{insc.constancia?.percentage == null ? 'Sin historial' : `${insc.constancia.percentage}% (${insc.constancia.present}/${insc.constancia.expected})`}</td>
 
                           <td>
 
@@ -604,7 +509,7 @@ export default function AdminInscripcionesPage() {
                   ) : (
 
                     <tr>
-                      <td colSpan={neuronaOk ? 8 : 7} className="empty-state">
+                      <td colSpan={8} className="empty-state">
                         <Users size={48}/>
                         No hay inscripciones pendientes
                       </td>

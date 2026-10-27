@@ -8,8 +8,7 @@ import Reveal from '../../components/Reveal';
 import Toast, { type ToastState } from '../../components/Toast';
 import RoutineDetailModal, { type RoutineDetail } from '../../components/RoutineDetailModal';
 import { gxFontClass } from '../../styles/fonts';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { apiFetch } from '../../lib/api';
 
 interface RoutineListItem {
   id_rutina: number;
@@ -47,7 +46,7 @@ export default function RutinasPage() {
 
   const cargarRutinas = useCallback(() => {
     setLoading(true);
-    fetch(`${API_URL}/rutinas`)
+    apiFetch('/rutinas')
       .then((res) => res.json())
       .then((data) => setRutinas(Array.isArray(data) ? data : []))
       .catch((err) => console.error('Error cargando rutinas:', err))
@@ -61,7 +60,7 @@ export default function RutinasPage() {
       setSelected(null);
       return;
     }
-    fetch(`${API_URL}/rutinas/${selectedId}`)
+    apiFetch(`/rutinas/${selectedId}`)
       .then((res) => res.json())
       .then((data) => setSelected(data))
       .catch((err) => console.error('Error cargando la rutina:', err));
@@ -71,7 +70,7 @@ export default function RutinasPage() {
     if (!userId || taking) return;
     setTaking(true);
     try {
-      const res = await fetch(`${API_URL}/rutinas/${routine.id_rutina}/tomar`, {
+      const res = await apiFetch(`/rutinas/${routine.id_rutina}/tomar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: userId }),
@@ -120,7 +119,7 @@ export default function RutinasPage() {
             <div className="gx-empty-state">
               <span className="gx-empty-state-icon"><Sparkles size={24} /></span>
               <h3>Aún no hay rutinas compartidas</h3>
-              <p>Sé el primero en crear una rutina desde "Mis rutinas" para que otros alumnos puedan tomarla.</p>
+              <p>Sé el primero en crear una rutina desde &ldquo;Mis rutinas&rdquo; para que otros alumnos puedan tomarla.</p>
             </div>
           )}
 

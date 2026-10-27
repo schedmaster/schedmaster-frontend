@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from '../../lib/api';
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Edit, Trash2, Filter, Calendar, X } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
@@ -57,7 +58,7 @@ export default function AdminHorariosPage() {
 
   useEffect(() => {
     fetchHorarios();
-    fetch(`${API_URL}/admin-convocatoria`)
+    apiFetch(`${API_URL}/admin-convocatoria`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -146,7 +147,7 @@ export default function AdminHorariosPage() {
     if (!pendingDeleteId) return;
 
     try {
-      const res = await fetch(`${API_URL}/horarios/eliminar/${pendingDeleteId}`, {
+      const res = await apiFetch(`${API_URL}/horarios/eliminar/${pendingDeleteId}`, {
         method: 'DELETE',
       });
 
@@ -214,7 +215,7 @@ export default function AdminHorariosPage() {
 
       const method = horarioAEditar ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

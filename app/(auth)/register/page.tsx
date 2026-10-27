@@ -21,8 +21,6 @@ const INITIAL_FORM = {
   tipo: 'estudiante',
   division: '',
   carrera: '',
-  horarioId: '',
-  diasSeleccionados: [] as number[],
   password: '',
   confirmPassword: '',
   terms: false
@@ -44,8 +42,6 @@ function getValidationErrors(form: typeof INITIAL_FORM) {
   if (!form.apellido_materno) errors.apellido_materno = 'campo obligatorio';
   if (!form.email) errors.email = 'campo obligatorio';
   addStudentValidationErrors(form, errors);
-  if (!form.horarioId) errors.horarioId = 'campo obligatorio';
-  if (form.diasSeleccionados.length === 0) errors.dias = 'selecciona al menos un dia';
   if (!form.password) errors.password = 'campo obligatorio';
   if (form.confirmPassword !== form.password) errors.confirmPassword = 'las contrasenas no coinciden';
   if (!form.terms) errors.terms = 'acepta los terminos';
@@ -73,16 +69,12 @@ export default function RegisterPage() {
 
   const [showTerminos, setShowTerminos] = useState(false);
   const [errors, setErrors] = useState<any>({});
-  const [horarios, setHorarios] = useState<any[]>([]);
-  const [diasHorario, setDiasHorario] = useState<any[]>([]);
   const [divisiones, setDivisiones] = useState<any[]>([]);
   const [carreras, setCarreras] = useState<any[]>([]);
-  const [convocatoriaActiva, setConvocatoriaActiva] = useState<any>(null);
   const [progress, setProgress] = useState(0);
   const [success, setSuccess] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [convocatoriaCargada, setConvocatoriaCargada] = useState(false);
 
   // Base API url (from env)
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -93,71 +85,6 @@ export default function RegisterPage() {
     hasNumberOrSymbol,
     level: passwordMeterLevel
   } = getPasswordStatus(form.password);
-
-  useEffect(() => {
-    fetch(`${API_URL}/lista-espera/convocatoria-activa`)
-      .then(r => r.json())
-      .then(data => {
-        setConvocatoriaActiva(data?.activa ? data.periodo : null);
-      })
-      .catch((error) => {
-        console.error('Error cargando convocatoria activa:', error);
-        setConvocatoriaActiva(null);
-      })
-      .finally(() => {
-        setConvocatoriaCargada(true);
-      });
-  }, [API_URL]);
-
-  // 1. Cargar horarios del periodo activo
-  useEffect(()=>{
-    if (!convocatoriaCargada) return;
-
-    if (!convocatoriaActiva?.id_periodo) {
-      setHorarios([]);
-      return;
-    }
-
-    const periodoQuery = convocatoriaActiva?.id_periodo
-      ? `?id_periodo=${convocatoriaActiva.id_periodo}`
-      : '';
-
-    fetch(`${API_URL}/horarios${periodoQuery}`)
-      .then(r=>r.json())
-      .then(d=>setHorarios(Array.isArray(d)?d:d?.data||[]))
-      .catch((error)=>{
-        console.error('Error cargando horarios:', error);
-        setHorarios([]);
-      });
-  },[API_URL, convocatoriaActiva?.id_periodo, convocatoriaCargada]);
-
-  // 2.  SOLUCIÓN: Extraer los días directamente de la lista que ya tenemos en memoria
-  useEffect(() => {
-    if (!form.horarioId) {
-      setDiasHorario([]);
-      setForm(prev => ({ ...prev, diasSeleccionados: [] }));
-      return;
-    }
-
-    // Buscamos el horario exacto que el alumno seleccionó en el dropdown
-    const horarioElegido = horarios.find(h => h.id_horario.toString() === form.horarioId.toString());
-
-    if (horarioElegido?.dias_ids) {
-      // Separamos el texto de los días ("Lunes, Miércoles") en un arreglo
-      const nombresDias = horarioElegido.dias_semana.split(', ');
-
-      const diasArmados = horarioElegido.dias_ids.map((id: number, index: number) => ({
-        id_dia: id,
-        nombre: nombresDias[index]
-      }));
-
-      setDiasHorario(diasArmados);
-      // Limpiamos los días seleccionados por si el alumno cambió de horario a mitad del registro
-      setForm(prev => ({ ...prev, diasSeleccionados: [] }));
-    } else {
-      setDiasHorario([]);
-    }
-  }, [form.horarioId, horarios]);
 
   useEffect(() => {
     fetch(`${API_URL}/catalogo/divisiones`)
@@ -179,7 +106,7 @@ export default function RegisterPage() {
   }, [form.division]);
 
   useEffect(() => {
-    const fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'email', 'password', 'confirmPassword', 'horarioId'];
+    const fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'email', 'password', 'confirmPassword'];
     let filled = fields.filter(f => (form as any)[f]).length;
     if (form.terms) filled++;
     setProgress((filled / (fields.length + 1)) * 100);
@@ -190,16 +117,6 @@ export default function RegisterPage() {
     setForm(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // Toggle selección de días
-  const toggleDia=(id:number)=>{
-    setForm(prev=>({
-      ...prev,
-      diasSeleccionados: prev.diasSeleccionados.includes(id)
-        ? prev.diasSeleccionados.filter(d => d !== id)
-        : [...prev.diasSeleccionados, id]
     }));
   };
 
@@ -222,9 +139,7 @@ export default function RegisterPage() {
       password: form.password,
       id_carrera: form.carrera,
       id_division: form.division,
-      id_rol: getRoleId(form.tipo),
-      id_horario: form.horarioId,
-      dias_seleccionados: form.diasSeleccionados
+      id_rol: getRoleId(form.tipo)
     };
 
     try {
@@ -337,53 +252,6 @@ export default function RegisterPage() {
                       {carreras.map(c => (<option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>))}
                     </select>
                   </div>
-                </div>
-              )}
-
-              <div className="gx-field">
-                <label>Convocatoria activa</label>
-                <div className="gx-input" style={{ display: 'flex', alignItems: 'center' }}>
-                  {convocatoriaActiva
-                    ? convocatoriaActiva.nombre_periodo
-                    : 'No hay convocatoria activa'}
-                </div>
-              </div>
-
-              <div className="gx-field">
-                <label htmlFor="horarioId">Horario</label>
-                <select
-                  id="horarioId"
-                  title="Horario"
-                  name="horarioId"
-                  value={form.horarioId}
-                  className="gx-select"
-                  onChange={handleChange}
-                  disabled={!convocatoriaActiva || horarios.length === 0}
-                >
-                  <option value="">
-                    {!convocatoriaActiva
-                      ? 'No hay convocatoria activa'
-                      : horarios.length === 0
-                        ? 'No hay horarios para esta convocatoria'
-                        : 'Selecciona horario'}
-                  </option>
-                  {horarios.map(h => (<option key={h.id_horario} value={h.id_horario}>{h.hora_inicio} - {h.hora_fin}</option>))}
-                </select>
-              </div>
-
-              {/* Días */}
-              {form.horarioId && (
-                <div className="gx-day-grid">
-                  {diasHorario.map(d => (
-                    <button
-                      key={d.id_dia}
-                      type="button"
-                      className={`gx-day-pill ${form.diasSeleccionados.includes(d.id_dia) ? 'is-active' : ''}`}
-                      onClick={() => toggleDia(d.id_dia)}
-                    >
-                      {d.nombre}
-                    </button>
-                  ))}
                 </div>
               )}
 

@@ -1,4 +1,5 @@
 'use client';
+import { apiFetch } from '../../lib/api';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, CalendarDays, Pencil, Power, PowerOff, X, Save, Search, Mail } from 'lucide-react';
@@ -184,7 +185,7 @@ export default function AdminConvocatoriasPage() {
       const queryString = params.toString();
       const endpoint = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
-      const res = await fetch(endpoint);
+      const res = await apiFetch(endpoint);
 
       if (!res.ok) {
         setConvocatorias([]);
@@ -256,7 +257,7 @@ export default function AdminConvocatoriasPage() {
         ? `${API_URL}/admin-convocatoria/${form.id}`
         : `${API_URL}/admin-convocatoria`;
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: esEdicion ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -291,7 +292,7 @@ export default function AdminConvocatoriasPage() {
     try {
       setNotificandoId(convocatoria.id);
 
-      const res = await fetch(`${API_URL}/admin-convocatoria/${convocatoria.id}/notificar`, {
+      const res = await apiFetch(`${API_URL}/admin-convocatoria/${convocatoria.id}/notificar`, {
         method: 'POST'
       });
 

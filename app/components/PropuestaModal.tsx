@@ -1,4 +1,5 @@
 'use client';
+import { apiFetch } from '../lib/api';
 
 import { useEffect, useState } from 'react';
 import { CalendarDays, Clock, Mail, Send, X } from 'lucide-react';
@@ -97,7 +98,7 @@ export default function PropuestaModal({
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/propuestas/propuesta-inscripcion`, {
+      const res = await apiFetch(`${API_URL}/propuestas/propuesta-inscripcion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -112,6 +112,7 @@ export default function LoginPage() {
 
       if (data.status === 'approved') {
         localStorage.setItem('user', JSON.stringify(data.usuario));
+        localStorage.setItem('sessionToken', data.token);
 
         if (data.usuario.id_rol === 1 || data.usuario.id_rol === 2) {
           router.push('/anuncios');

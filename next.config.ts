@@ -17,6 +17,7 @@ const apiImageOrigin = (() => {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  devIndicators: false,
   images: {
     remotePatterns: [
       {

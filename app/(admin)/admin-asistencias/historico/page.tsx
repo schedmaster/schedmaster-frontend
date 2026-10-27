@@ -1,4 +1,5 @@
 'use client'
+import { apiFetch } from '../../../lib/api';
 
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Eye, Upload, CheckCircle, Search } from 'lucide-react'
@@ -37,7 +38,7 @@ export default function HistoricoAsistenciasPage() {
         ? `${API_URL}/asistencias/historico?q=${encodeURIComponent(term)}`
         : `${API_URL}/asistencias/historico`
 
-      const res = await fetch(endpoint)
+      const res = await apiFetch(endpoint)
 
       if (!res.ok) {
         // Intenta leer el mensaje del backend antes de mostrar error genérico
@@ -76,7 +77,7 @@ export default function HistoricoAsistenciasPage() {
     formData.append('fecha_lista', fecha)
 
     try {
-      const res = await fetch(`${API_URL}/asistencias/historico`, {
+      const res = await apiFetch(`${API_URL}/asistencias/historico`, {
         method: 'POST',
         body: formData,
       })

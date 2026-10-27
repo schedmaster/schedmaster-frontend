@@ -1,4 +1,5 @@
 'use client';
+import { apiFetch } from '../../lib/api';
 
 import { useState, useEffect } from 'react';
 import { RefreshCw, Search } from 'lucide-react'; 
@@ -82,7 +83,7 @@ export default function AdminAsistenciasPage() {
       const term = query.trim();
       if (term) params.set('q', term);
 
-      const res = await fetch(`${API_URL}/asistencias/admin?${params.toString()}`);
+      const res = await apiFetch(`${API_URL}/asistencias/admin?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         const datosFormateados = data.map((item: any) => {
@@ -137,29 +138,6 @@ export default function AdminAsistenciasPage() {
   // ✅ Siempre recalcula en el momento del clic usando hora local
   const getHoyString = () => getLocalDateString(new Date());
 
-  const isWithinSchedule = (inicio: string, fin: string): boolean => {
-    // Si no hay horario definido, permitir siempre
-    if (!inicio || !fin || inicio === '00:00') return true;
-
-    const now = new Date();
-    const hoy = getHoyString();
-
-    // Si la fecha seleccionada no es hoy, no aplica restricción de horario
-    if (fecha !== hoy) return true;
-
-    // Hora actual en formato HH:mm (local)
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const currentTime = `${hh}:${mm}`;
-
-    // Horario normal (ej. 07:00 - 09:00)
-    if (inicio <= fin) {
-      return currentTime >= inicio && currentTime <= fin;
-    }
-    // Horario que cruza medianoche (ej. 22:00 - 02:00)
-    return currentTime >= inicio || currentTime <= fin;
-  };
-
   const registrarAsistenciaBD = async (asist: Asistencia, asistio: boolean) => {
     const hoy = getHoyString(); // ✅ Recalcula en el momento exacto del clic
 
@@ -169,17 +147,8 @@ export default function AdminAsistenciasPage() {
       return;
     }
 
-    if (!isWithinSchedule(asist.horarioInicio, asist.horarioFin)) {
-      setModalMessage(
-        `Acción denegada: no puedes pasar asistencia fuera de horario. ` +
-        `El horario de ${asist.nombre} es de ${asist.horarioInicio} a ${asist.horarioFin}.`
-      );
-      setModalOpen(true);
-      return; 
-    }
-
     try {
-      const res = await fetch(`${API_URL}/asistencias/registrar`, {
+      const res = await apiFetch(`${API_URL}/asistencias/registrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,7 +156,6 @@ export default function AdminAsistenciasPage() {
           id_inscripcion:    asist.id_inscripcion,
           id_horario:        asist.id_horario,
           asistio,
-          id_registrado_por: 1, 
           fecha_registro:    fecha,
         })
       });

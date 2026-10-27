@@ -207,7 +207,7 @@ export default function Home() {
           <div className="gx-cta-card">
             <div className="gx-cta-inner">
               <h2>¿Listo para comenzar tu transformación?</h2>
-              <p>Únete a nuestra comunidad y descubre la mejor versión de ti mismo. Las próximas convocatorias se abren pronto.</p>
+              <p>Crea tu cuenta hoy, descubre rutinas y anuncios, y postúlate cuando abra la próxima convocatoria.</p>
               <Link href="/seleccion-servicio" className="gx-btn gx-btn--energy gx-btn--lg">
                 Quiero entrenar <ArrowRight size={18} />
               </Link>

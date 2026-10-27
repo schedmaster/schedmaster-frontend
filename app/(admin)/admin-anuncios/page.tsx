@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Search, Megaphone } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
 import ConfirmModal from '../../components/ConfirmModal';
+import { apiFetch } from '../../lib/api';
 
 interface Anuncio {
   id: number;
@@ -72,7 +73,7 @@ export default function AdminAnunciosPage() {
   };
 
   useEffect(() => {
-    fetch(`${API_URL}/anuncios`)
+    apiFetch('/anuncios')
       .then(res => res.json())
       .then(data => setAnuncios(normalizeAnuncios(data)))
       .catch(err => console.error(err));
@@ -109,7 +110,7 @@ export default function AdminAnunciosPage() {
   const confirmarDelete = async () => {
     if (!pendingDeleteId) return;
     try {
-      await fetch(`${API_URL}/anuncios/${pendingDeleteId}`, { method: 'DELETE' });
+      await apiFetch(`/anuncios/${pendingDeleteId}`, { method: 'DELETE' });
       setAnuncios(prev => prev.filter(a => a.id !== pendingDeleteId));
     } catch (error) {
       console.error(error);
@@ -136,7 +137,7 @@ export default function AdminAnunciosPage() {
       const url = editing ? `${API_URL}/anuncios/${editing.id}` : `${API_URL}/anuncios`;
       const method = editing ? 'PUT' : 'POST';
 
-      const res = await fetch(url, { method, body: formData });
+      const res = await apiFetch(url, { method, body: formData });
       const data = await res.json();
 
       if (!res.ok) {

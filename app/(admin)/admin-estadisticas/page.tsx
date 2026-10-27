@@ -1,4 +1,5 @@
 'use client';
+import { apiFetch } from '../../lib/api';
 
 import { useState, useEffect } from 'react';
 import { RefreshCw, Download, FileText, Check, X } from 'lucide-react';
@@ -60,7 +61,7 @@ export default function AdminEstadisticasPage() {
 
   const cargarReporte = async () => {
     try {
-      const res = await fetch(`${API_URL}/asistencias/reporte`);
+      const res = await apiFetch(`${API_URL}/asistencias/reporte`);
       if (res.ok) {
         const data = await res.json();
         setDatosTabla(data);

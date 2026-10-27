@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from '../../lib/api';
 
 import React from 'react';
 import { useEffect, useState } from 'react';
@@ -81,7 +82,7 @@ export default function DashboardPage() {
 
     const cargarStats = async () => {
       try {
-        const res = await fetch(`${API_URL}/asistencias/dashboard-stats`);
+        const res = await apiFetch(`${API_URL}/asistencias/dashboard-stats`);
         if (res.ok) {
           const data = await res.json();
           if (data && data.basicos) {

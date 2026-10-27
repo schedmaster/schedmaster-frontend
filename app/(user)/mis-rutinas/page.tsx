@@ -21,8 +21,7 @@ import Toast, { type ToastState } from '../../components/Toast';
 import RoutineDetailModal, { type RoutineDetail } from '../../components/RoutineDetailModal';
 import RoutineFormModal, { emptyRoutineDraft, type RoutineDraft } from '../../components/RoutineFormModal';
 import { gxFontClass } from '../../styles/fonts';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { apiFetch } from '../../lib/api';
 
 function routineToDraft(routine: RoutineDetail): RoutineDraft {
   return {
@@ -142,7 +141,7 @@ export default function MisRutinasPage() {
 
   const cargarRutinas = useCallback((uid: number) => {
     setLoading(true);
-    fetch(`${API_URL}/rutinas/usuario/${uid}`)
+    apiFetch(`/rutinas/usuario/${uid}`)
       .then((res) => res.json())
       .then((data) => setRutinas(Array.isArray(data) ? data : []))
       .catch((err) => console.error('Error cargando tus rutinas:', err))
@@ -177,12 +176,12 @@ export default function MisRutinasPage() {
 
     try {
       const res = formMode === 'create'
-        ? await fetch(`${API_URL}/rutinas`, {
+        ? await apiFetch('/rutinas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_usuario: userId, ...payload }),
           })
-        : await fetch(`${API_URL}/rutinas/${editingId}`, {
+        : await apiFetch(`/rutinas/${editingId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -212,7 +211,7 @@ export default function MisRutinasPage() {
     if (!deleteId || !userId || deleting) return;
     setDeleting(true);
     try {
-      const res = await fetch(`${API_URL}/rutinas/${deleteId}`, { method: 'DELETE' });
+      const res = await apiFetch(`/rutinas/${deleteId}`, { method: 'DELETE' });
       if (!res.ok) {
         setToast({ open: true, variant: 'error', message: 'No se pudo eliminar la rutina.' });
         return;
