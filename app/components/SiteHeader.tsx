@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Dumbbell, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import BrandLogo from './BrandLogo';
 
 const NAV_LINKS = [
-  { href: '/#instalaciones', label: 'Instalaciones' },
+  { href: '/#recursos', label: 'Recursos' },
   { href: '/#beneficios', label: 'Beneficios' },
   { href: '/ejercicios', label: 'Ejercicios' },
-  { href: '/#contacto', label: 'Contacto' },
+  { href: '/#preguntas-frecuentes', label: 'Ayuda' },
 ];
 
 export default function SiteHeader() {
@@ -32,8 +33,7 @@ export default function SiteHeader() {
     <header className={`gx-site-header ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="gx-site-header-inner">
         <Link href="/" className="gx-brand" onClick={() => setMenuOpen(false)}>
-          <span className="gx-brand-mark"><Dumbbell size={19} strokeWidth={2.4} /></span>
-          <span className="gx-brand-name">SchedMaster</span>
+          <BrandLogo eager />
         </Link>
 
         <nav className="gx-site-nav" aria-label="Navegación principal">

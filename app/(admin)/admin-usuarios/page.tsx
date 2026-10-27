@@ -293,7 +293,7 @@ export default function AdminUsuariosPage() {
                 </div>
 
                 {/* row-actions con flex-wrap para que no se desborde en móvil */}
-                <div className="row-actions" style={{ flexWrap: 'wrap', gap: '6px' }}>
+                <div className="row-actions">
                   <span className={`chip chip--${usr.rol}`}>{ROL_LABELS[usr.rol]}</span>
                   <span className={`chip chip--${usr.estado}`}>{usr.estado}</span>
                   {ROLES_CON_BITACORA.has(usr.rol) && (

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { BRAND_ICON_URL } from './lib/brand';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -12,9 +13,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#124a9c',
     lang: 'es-MX',
     icons: [
-      { src: '/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+      { src: BRAND_ICON_URL, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/brand/schedmaster-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/brand/schedmaster-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }
     ]
   };
 }

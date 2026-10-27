@@ -29,13 +29,10 @@
 .gx-auth-brand-inner { position: relative; z-index: 2; max-width: 420px; width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
 
 .gx-auth-logo {
-  width: 84px; height: 84px; border-radius: 24px;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  display: grid; place-items: center;
-  box-shadow: var(--gx-shadow-glow-blue);
+  display: inline-flex;
+  max-width: 100%;
+  text-decoration: none;
 }
-.gx-auth-logo img { width: 48px; height: 48px; object-fit: contain; }
 
 .gx-auth-brand-inner h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 0; color: #fff; }
 .gx-auth-brand-inner > p { font-size: 15.5px; color: var(--gx-ink-text-dim); margin: 0; font-weight: 500; }

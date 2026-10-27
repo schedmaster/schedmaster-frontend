@@ -227,7 +227,7 @@ export default function AdminInscripcionesPage() {
     }, {})
   ).sort((a, b) => a.hora.localeCompare(b.hora));
 
-  const chartWidth = 760;
+  const chartWidth = Math.max(760, cuposPorHora.length * 72);
   const chartHeight = 220;
   const chartPadding = 34;
   const maxCupo = Math.max(...cuposPorHora.map(item => item.ocupados), 1);
@@ -319,8 +319,8 @@ export default function AdminInscripcionesPage() {
               </div>
 
               {chartPoints.length > 0 ? (
-                <div className="capacity-line-chart__canvas">
-                  <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Grafico lineal de cupos ocupados por hora">
+                <div className="capacity-line-chart__canvas" role="region" aria-label="Cupos por hora; desplaza horizontalmente para ver todos los horarios" tabIndex={0}>
+                  <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ minWidth: chartWidth }} role="img" aria-label="Grafico lineal de cupos ocupados por hora">
                     {[0, 0.5, 1].map((ratio) => (
                       <line
                         key={ratio}

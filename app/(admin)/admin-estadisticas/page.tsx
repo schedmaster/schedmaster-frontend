@@ -140,36 +140,36 @@ export default function AdminEstadisticasPage() {
         <main className="main">
           <div className="main-inner">
 
-            <header className="section-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
+            <header className="section-header reports-header">
               <div>
                 <h2>Reportes</h2>
                 <p>Visión completa del ciclo: interesados, notificados, inscritos, asistencia.</p>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
+              <div className="stats-header-actions">
                 
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <div className="chip chip--blue" style={{ fontSize: '14px', padding: '8px 15px', background: '#e0f2fe', color: '#0369a1', borderRadius: '20px' }}>
-                    <span style={{ marginRight: '5px' }}></span> Inscritos totales: <strong>{totalInscritos}</strong>
+                <div className="stats-summary">
+                  <div className="chip chip--blue" style={{ background: '#e0f2fe', color: '#0369a1' }}>
+                    Inscritos totales: <strong>{totalInscritos}</strong>
                   </div>
-                  <div className="chip chip--outline" style={{ fontSize: '14px', padding: '8px 15px', border: '1px solid #ddd', borderRadius: '20px' }}>
-                    <span style={{ marginRight: '5px' }}></span> Convocatorias activas: <strong>{convActivas}</strong>
+                  <div className="chip chip--outline" style={{ border: '1px solid #ddd' }}>
+                    Convocatorias activas: <strong>{convActivas}</strong>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="stats-buttons">
                   <button className="btn btn--outline" type="button" onClick={cargarReporte}>
-                    <RefreshCw size={18} style={{ marginRight: '5px' }} /> Actualizar
+                    <RefreshCw size={18} /> Actualizar
                   </button>
                   <button className="btn btn--blue" type="button" onClick={() => setModalExport(true)}>
-                    <Download size={18} style={{ marginRight: '5px' }} /> Exportar reporte
+                    <Download size={18} /> Exportar reporte
                   </button>
                 </div>
               </div>
 
-              <div className="tabs-bar" style={{ marginTop: '8px', borderBottom: 'none', width: '100%' }}>
-                <span className="period-label" style={{ fontWeight: 'bold', fontSize: '12px', color: '#666', marginRight: '15px', textTransform: 'uppercase' }}>Periodo:</span>
-                <div className="tab-group" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <div className="tabs-bar">
+                <span className="period-label">Periodo:</span>
+                <div className="tab-group">
                   {TABS.map(t => (
                     <button 
                       key={t.value} 
@@ -184,17 +184,17 @@ export default function AdminEstadisticasPage() {
               </div>
             </header>
 
-            <section className="table-area" style={{ marginTop: '12px' }}>
+            <section className="table-area">
               <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ padding: '15px' }}>Matrícula</th>
-                      <th style={{ padding: '15px' }}>Nombre del alumno</th>
-                      <th style={{ padding: '15px' }}>Carrera</th>
-                      <th style={{ padding: '15px' }}>Servicio</th>
-                      <th style={{ padding: '15px' }}>Asistencia Prom.</th>
-                      <th style={{ padding: '15px' }}>Estado</th>
+                      <th>Matrícula</th>
+                      <th>Nombre del alumno</th>
+                      <th>Carrera</th>
+                      <th>Servicio</th>
+                      <th>Asistencia Prom.</th>
+                      <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -209,11 +209,11 @@ export default function AdminEstadisticasPage() {
                     ) : (
                       datosFiltrados.map((fila) => (
                         <tr key={fila.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px' }}>
-                          <td style={{ padding: '15px', color: '#475569', fontWeight: '500' }}>{fila.matricula}</td>
-                          <td style={{ padding: '15px', fontWeight: 'bold', color: '#1e293b' }}>{fila.nombre}</td>
-                          <td style={{ padding: '15px', color: '#64748b' }}>{fila.carrera}</td>
-                          <td style={{ padding: '15px', color: '#64748b' }}>{fila.servicio}</td>
-                          <td style={{ padding: '15px' }}>
+                          <td style={{ color: '#475569', fontWeight: '500' }}>{fila.matricula}</td>
+                          <td style={{ fontWeight: 'bold', color: '#1e293b' }}>{fila.nombre}</td>
+                          <td style={{ color: '#64748b' }}>{fila.carrera}</td>
+                          <td style={{ color: '#64748b' }}>{fila.servicio}</td>
+                          <td>
                             <span style={{ 
                               ...getAttendanceStyle(fila.asistencia),
                               fontWeight: 'bold',

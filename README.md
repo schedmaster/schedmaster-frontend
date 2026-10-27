@@ -2,7 +2,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies from the lockfile:
+
+```bash
+npm ci
+```
+
+Repeat this step after pulling changes to `package-lock.json`. If Next.js reports
+`Module not found: Can't resolve 'lucide-react'`, stop the development server and
+run `npm ci` before starting it again.
+
+Then, run the development server:
 
 ```bash
 npm run dev

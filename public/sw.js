@@ -1,5 +1,5 @@
-const CACHE_NAME = 'schedmaster-offline-v1';
-const OFFLINE_FILES = ['/offline.html', '/pwa-192.png', '/pwa-512.png'];
+const CACHE_NAME = 'schedmaster-offline-v5';
+const OFFLINE_FILES = ['/offline.html', '/brand/schedmaster-symbol.svg?v=2', '/brand/schedmaster-icon-192.png', '/brand/schedmaster-icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_FILES)));

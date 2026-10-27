@@ -1,0 +1,37 @@
+/* Original artwork, with no added background or frame. */
+.sm-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  vertical-align: middle;
+  line-height: 0;
+}
+.sm-logo img { display: block; height: auto; object-fit: contain; }
+.sm-logo--horizontal { width: 192px; gap: 8px; }
+.sm-logo--horizontal .sm-logo__symbol { width: 30px; flex: 0 0 30px; }
+.sm-logo--horizontal .sm-logo__wordmark { width: calc(100% - 38px); min-width: 0; }
+.sm-logo--full { width: 260px; }
+.sm-logo--full .sm-logo__full,
+.sm-logo--symbol .sm-logo__symbol,
+.sm-logo--wordmark .sm-logo__wordmark { width: 100%; }
+.sm-logo--symbol { width: 48px; }
+.sm-logo--wordmark { width: 180px; }
+.sm-logo--sidebar { width: 64px; }
+.gx-brand { flex-shrink: 0; }
+.gx-auth-logo .sm-logo--symbol { width: 128px; }
+.gx-reg-brand .sm-logo--symbol { width: 64px; }
+.gx-service-entry .sm-logo--symbol { width: 128px; }
+.gx-reg-brand { display: inline-flex; max-width: 100%; }
+.gx-status-top a { display: inline-flex; max-width: 100%; }
+
+@media (max-width: 480px) {
+  .sm-logo--horizontal { width: 160px; }
+  .sm-logo--full { width: 210px; }
+  .gx-auth-logo .sm-logo--symbol { width: 104px; }
+}

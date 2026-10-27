@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { CircleCheck, ListOrdered, Bell } from 'lucide-react';
 import AlertModal from '../../components/AlertModal';
 import ThemeToggle from '../../components/ThemeToggle';
+import BrandLogo from '../../components/BrandLogo';
 import { gxFontClass } from '../../styles/fonts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -150,10 +152,9 @@ export default function LoginPage() {
           <div className="gx-hero-orb gx-hero-orb--2 gx-float-b" />
         </div>
         <div className="gx-auth-brand-inner">
-          <div className="gx-auth-logo">
-            <img src="/logo.png" alt="Logo" width="48" height="48" />
-          </div>
-          <h1>SchedMaster</h1>
+          <Link href="/" className="gx-auth-logo" aria-label="SchedMaster: ir al inicio">
+            <BrandLogo eager />
+          </Link>
           <p>Gestión inteligente de horarios UTEQ.</p>
 
           <div className="gx-auth-feature-list">

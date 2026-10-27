@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BRAND_ICON_URL } from './lib/brand';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./styles/globals.css";
 import "./styles/carrusel.css";
@@ -22,6 +23,10 @@ export const metadata: Metadata = {
   title: "SchedMaster · Gimnasio universitario UTEQ",
   description: "Reserva tu horario, consulta convocatorias y gestiona tu acceso al gimnasio universitario UTEQ.",
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: { url: BRAND_ICON_URL, type: 'image/svg+xml', sizes: 'any' },
+    shortcut: '/favicon.ico?v=2',
+  },
   appleWebApp: { capable: true, title: 'SchedMaster', statusBarStyle: 'default' },
 };
 

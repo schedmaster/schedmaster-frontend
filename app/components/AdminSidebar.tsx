@@ -9,6 +9,7 @@ import {
   Sun, Moon, X
 } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
+import BrandLogo from './BrandLogo';
 
 interface AdminSidebarProps {
   userName?: string;
@@ -83,9 +84,8 @@ export default function AdminSidebar({
         className={`sidebar ${open ? 'active' : ''}`}
       >
         <div className="sb-brand">
-          <div className="sb-logo"><LayoutGrid /></div>
           <div className="sb-brand-text">
-            <h1>SchedMaster</h1>
+            <Link href="/dashboard" onClick={() => setOpen(false)}><BrandLogo className="sm-logo--sidebar" eager /></Link>
             <p>Panel de Administración</p>
             <button className="theme-switch" type="button" onClick={toggle}>
               {darkMode ? <Moon size={16} /> : <Sun size={16} />}

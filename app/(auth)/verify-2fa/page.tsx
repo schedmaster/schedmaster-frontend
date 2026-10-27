@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ShieldCheck, Mail, RotateCw } from 'lucide-react';
 import AlertModal from '../../components/AlertModal';
 import ThemeToggle from '../../components/ThemeToggle';
+import BrandLogo from '../../components/BrandLogo';
 import { gxFontClass } from '../../styles/fonts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -282,9 +283,9 @@ export default function VerifyTwoFactorPage() {
           <div className="gx-hero-orb gx-hero-orb--2 gx-float-b" />
         </div>
         <div className="gx-auth-brand-inner">
-          <div className="gx-auth-logo">
-            <img src="/logo.png" alt="Logo" width="48" height="48" />
-          </div>
+          <Link href="/" className="gx-auth-logo" aria-label="SchedMaster: ir al inicio">
+            <BrandLogo eager />
+          </Link>
           <h1>Verificación 2FA</h1>
           <p>Protegemos tu acceso con un segundo factor de autenticación.</p>
 

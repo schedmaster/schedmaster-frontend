@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft, CircleCheck, Lock } from 'lucide-react';
 import TerminosModal from "@/app/components/TerminosModal";
 import AlertModal from '../../components/AlertModal';
+import BrandLogo from '../../components/BrandLogo';
 import { gxFontClass } from '../../styles/fonts';
 
 function getRoleId(tipo: string) {
@@ -176,6 +178,7 @@ export default function RegisterPage() {
       <div className="gx-reg-container">
         {success ? (
           <div className="gx-card gx-reg-success">
+            <BrandLogo />
             <div className="gx-reg-success-icon"><CircleCheck size={36}/></div>
             <h2>¡Cuenta creada!</h2>
             <p>Redirigiendo al inicio de sesión…</p>
@@ -187,7 +190,7 @@ export default function RegisterPage() {
             </button>
 
             <div className="gx-reg-head">
-              <div className="gx-reg-badge"><CircleCheck size={28}/></div>
+              <Link href="/" className="gx-reg-brand" aria-label="SchedMaster: ir al inicio"><BrandLogo eager /></Link>
               <h1>Únete a <span className="gx-grad-text">SchedMaster</span></h1>
               <p>Completa tu información para crear tu cuenta</p>
             </div>

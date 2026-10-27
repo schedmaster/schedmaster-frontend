@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Dumbbell, House, NotebookPen, User } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import BrandLogo from './BrandLogo';
 
 const TABS = [
   { href: '/anuncios', label: 'Inicio', icon: House, paths: ['/anuncios'] },
@@ -35,8 +36,7 @@ export default function StudentShell() {
     <header className="gx-app-topbar">
       <div className="gx-app-topbar-inner">
         <Link href="/anuncios" className="gx-brand">
-          <span className="gx-brand-mark"><Dumbbell size={18} strokeWidth={2.4} /></span>
-          <span className="gx-brand-name">SchedMaster</span>
+          <BrandLogo eager />
         </Link>
         <div className="gx-app-topbar-actions">
           <ThemeToggle />

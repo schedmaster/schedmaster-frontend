@@ -28,8 +28,9 @@ const Sparkline = ({ data, secondary, color = '#00a4e0' }: { data: number[]; sec
   const mesesLabels = obtenerNombresMeses();
 
   return (
-    <div className="sparkline-container">
-      <svg viewBox={`0 0 ${w} ${h}`} className="sparkline-svg" preserveAspectRatio="none">
+    <div className="trend-chart-scroll" role="region" aria-label="Tendencia mensual; desplaza horizontalmente para ver todos los meses" tabIndex={0}>
+      <div className="sparkline-container">
+      <svg viewBox={`-8 -8 ${w + 16} ${h + 16}`} className="sparkline-svg" preserveAspectRatio="none" role="img" aria-label="Inscritos e interesados por mes">
         {[0.25,0.5,0.75].map(r => <line key={r} x1={0} x2={w} y1={h*(1-r)} y2={h*(1-r)} stroke="rgba(15,23,42,0.06)" strokeWidth={1} />)}
         {secondary && <path d={toArea(secondary)} fill="rgba(59,130,246,0.07)" />}
         <path d={toArea(data)} fill={`${color}18`} />
@@ -40,19 +41,20 @@ const Sparkline = ({ data, secondary, color = '#00a4e0' }: { data: number[]; sec
       <div className="kpi-label kpi-months">
         {mesesLabels.map((m, i) => <span key={i}>{m}</span>)}
       </div>
+      </div>
     </div>
   );
 };
 
-const CompactKpi = ({ icon, color, label, value, suffix = '' }: any) => (
-  <div className="kpi-row flex items-center justify-between py-3">
-    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-      <div style={{ backgroundColor: `${color}15`, color: color, padding: '10px', borderRadius: '10px', display: 'flex' }}>
+const CompactKpi = ({ icon, color, label, value, suffix = '' }: { icon: React.ReactNode; color: string; label: string; value?: number; suffix?: string }) => (
+  <div className="kpi-row">
+    <div className="kpi-row-main">
+      <div className="kpi-row-icon" style={{ backgroundColor: `${color}15`, color }}>
         {icon}
       </div>
-      <span style={{ fontWeight: '600', fontSize: '14px' }} className="kpi-label">{label}</span>
+      <span className="kpi-label">{label}</span>
     </div>
-    <span style={{ fontWeight: '800', fontSize: '20px' }} className="kpi-value">{value !== undefined ? formatNumber(value) : '0'}{suffix}</span>
+    <span className="kpi-row-value">{value !== undefined ? formatNumber(value) : '0'}{suffix}</span>
   </div>
 );
 
@@ -105,7 +107,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="app">
+    <div className="app app--admin-dashboard">
       <AdminSidebar />
 
       <main className="main">
@@ -117,7 +119,7 @@ export default function DashboardPage() {
             </div>
           </header>
 
-          <section className="stat-grid" style={{ marginBottom: '25px' }}>
+          <section className="stat-grid">
             <div className="stat-card" style={{ borderTop: '4px solid #00a4e0' }}>
               <span className="stat-card-label" style={{ fontWeight: 'bold' }}>INSCRIPCIONES PENDIENTES</span>
               <span className="stat-card-value" style={{ fontSize: '28px' }}>{stats.basicos.inscripcionesPendientes}</span>
@@ -137,28 +139,28 @@ export default function DashboardPage() {
           </section>
 
           <section className="dashboard-panel">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="dashboard-panel-heading">
               <div>
-                <h3 style={{ fontSize: '18px' }}>Tendencia mensual</h3>
-                <p style={{ marginTop: '5px', fontSize: '14px' }}>Interesados (Lista de espera) vs Inscripciones aprobadas — últimos 12 meses</p>
+                <h3>Tendencia mensual</h3>
+                <p>Interesados (Lista de espera) vs Inscripciones aprobadas — últimos 12 meses</p>
               </div>
-              <div style={{ display: 'flex', gap: '15px', fontSize: '13px', fontWeight: 'bold' }} className="kpi-label">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00a4e0' }} /> Inscritos
+              <div className="dashboard-panel-legend kpi-label">
+                <div className="dashboard-legend-item">
+                  <span className="dashboard-legend-dot" style={{ backgroundColor: '#00a4e0' }} /> Inscritos
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'rgba(59,130,246,0.3)' }} /> Interesados
+                <div className="dashboard-legend-item">
+                  <span className="dashboard-legend-dot" style={{ backgroundColor: 'rgba(59,130,246,0.3)' }} /> Interesados
                 </div>
               </div>
             </div>
             <Sparkline data={stats.tendencias.inscripcionesMes} secondary={stats.tendencias.interesadosMes} />
           </section>
 
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
+          <section className="dashboard-detail-grid">
 
-            <div className="dashboard-panel" style={{ marginBottom: 0 }}>
-              <h3 style={{ margin: '0 0 20px 0', fontSize: '16px' }}>Métricas de rendimiento</h3>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="dashboard-panel">
+              <h3 className="dashboard-panel-title">Métricas de rendimiento</h3>
+              <div className="dashboard-kpis">
                 <CompactKpi icon={<Eye size={20}/>} color="#3b82f6" label="Interesados registrados" value={stats.kpis.interesados} />
                 <CompactKpi icon={<Mail size={20}/>} color="#a855f7" label="Notificados por correo" value={stats.kpis.notificados} />
                 <CompactKpi icon={<UserPlus size={20}/>} color="#22c55e" label="Inscripciones completadas" value={stats.kpis.inscritos} />
@@ -167,8 +169,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div className="dashboard-panel" style={{ padding: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start', marginBottom: 0 }}>
+            <div className="dashboard-insights">
+              <div className="dashboard-panel dashboard-insight">
                 <div style={{ backgroundColor: '#dcfce7', color: '#22c55e', padding: '10px', borderRadius: '10px' }}><Award size={24} /></div>
                 <div>
                   <h4 style={{ margin: '0 0 5px 0', fontSize: '15px' }}>Tasa de conversión actual</h4>
@@ -176,7 +178,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="dashboard-panel" style={{ padding: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start', marginBottom: 0 }}>
+              <div className="dashboard-panel dashboard-insight">
                 <div style={{ backgroundColor: '#fef3c7', color: '#eab308', padding: '10px', borderRadius: '10px' }}><AlertTriangle size={24} /></div>
                 <div>
                   <h4 style={{ margin: '0 0 5px 0', fontSize: '15px' }}>Rendimiento de asistencia</h4>
@@ -184,7 +186,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="dashboard-panel" style={{ padding: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start', marginBottom: 0 }}>
+              <div className="dashboard-panel dashboard-insight">
                 <div style={{ backgroundColor: '#e0f2fe', color: '#0ea5e9', padding: '10px', borderRadius: '10px' }}><Flame size={24} /></div>
                 <div>
                   <h4 style={{ margin: '0 0 5px 0', fontSize: '15px' }}>DTAI lidera inscripciones</h4>
